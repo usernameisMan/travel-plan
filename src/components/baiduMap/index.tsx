@@ -105,5 +105,5 @@ const BaiduMap: React.FC<Props> = React.memo(({ className, ...props }) => {
     </div>
   );
 });
-
+BaiduMap.displayName = "BaiduMap";
 export default BaiduMap;
