@@ -55,7 +55,7 @@ const BaiduMap: React.FC<Props> = React.memo(({ className, ...props }) => {
         const { lng, lat } = latlng;
         if (currentSelectMarkerType.current) {
           // ready for add marker to map
-          // addMakerToMap(lng, lat)
+          addMakerToMap(lng, lat)
           props.openCreateMarkerDialog()
         }
       })
