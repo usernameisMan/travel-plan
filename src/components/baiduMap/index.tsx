@@ -11,7 +11,6 @@ interface Props {
   onAddOneMarker: (fileName: string, lng: string, lat: string) => void,
   openCreateMarkerDialog: any,
   createMarkerDialogIsOpen: boolean,
-  tracks: any
 }
 
 const BaiduMap: React.FC<Props> = React.memo(({ className, ...props }) => {
@@ -75,7 +74,6 @@ const BaiduMap: React.FC<Props> = React.memo(({ className, ...props }) => {
       const myIcon = new (window as any).BMapGL.Icon(`/markers/resized/${currentSelectMarkerType.current}.png`, new (window as any).BMapGL.Size(50, 50), {
         anchor: new (window as any).BMapGL.Size(25, 51),
       });
-      console.log(props.tracks.length)
       props.onAddOneMarker(currentSelectMarkerType.current, lng, lat)
       currentSelectMarkerType.current = ''
 

@@ -14,6 +14,7 @@ const fontSans = FontSans({
 });
 
 const TravelPlan = () => {
+  let currentTrack = {};
   const [tracks, setTracks] = useState<any>([]);
   const [createMarkerDialogIsOpen, setOpenCreateMarkerDialog] =
     useState<any>(false);
@@ -28,22 +29,25 @@ const TravelPlan = () => {
 
   const addToTracks = (title: string, description: string) => {
     setTracks((prev: any) => {
-      prev[prev.length - 1].title = title;
-      prev[prev.length - 1].description = description;
-      return [...prev];
+      return [
+        ...prev,
+        {
+          ...currentTrack,
+          title,
+          description,
+        },
+      ];
     });
+    currentTrack = {};
   };
 
   const onAddOneMarker = useCallback(
     (fileName: string, lng: string, lat: string) => {
-      setTracks((prev: any) => [
-        ...prev,
-        {
-          type: fileName,
-          lng,
-          lat,
-        },
-      ]);
+      currentTrack = {
+        type: fileName,
+        lng,
+        lat,
+      };
     },
     []
   );
@@ -60,7 +64,6 @@ const TravelPlan = () => {
       <BaiduMap
         className={cn("grow")}
         onAddOneMarker={onAddOneMarker}
-        tracks={tracks}
         createMarkerDialogIsOpen={createMarkerDialogIsOpen}
         openCreateMarkerDialog={openCreateMarkerDialogHandle}
       />
