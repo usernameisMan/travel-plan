@@ -74,6 +74,39 @@ const TravelPlan = () => {
     []
   );
 
+  const createTracksPath = () => {
+    if(tracks.length === 0) {
+      alert('先添加标记点才能生成路径哟！')
+      return;
+    }
+    const overlays = mapInstance.getOverlays(); // [2,3](@ref)
+    overlays.forEach((overlay: any) => {
+      if (overlay instanceof (window as any).BMapGL.Polyline) {
+        mapInstance.removeOverlay(overlay); // [2,5](@ref)
+      }
+    });
+
+    const points = tracks.map((track: any) => {
+      return new (window as any).BMapGL.Point(track.lng, track.lat);
+    });
+
+    const polyline = new (window as any).BMapGL.Polyline(points, {
+      enableEditing: false, //是否启用线编辑，默认为false
+      enableClicking: true, //是否响应点击事件，默认为true
+      // strokeColor: "#18a45b", //折线颜色
+      strokeTexture: {
+        url: "/markers/lineArrowRight.png", // 箭头纹理图路径
+        width: 16, // 图片宽度（需为2的n次方）
+        height: 64, // 图片高度（需为2的n次方）
+      },
+      strokeWeight: 10, //折线的宽度，以像素为单位
+      strokeOpacity:1, //折线的透明度，取值范围0 - 1
+
+    });
+
+    mapInstance.addOverlay(polyline);
+  };
+
   const handleTracksChange = (newTracks: any[]) => {
     setTracks(newTracks);
   };
@@ -86,8 +119,9 @@ const TravelPlan = () => {
         setCreateMarkerDialogDisplayStatus={setOpenCreateMarkerDialog}
         onconfirm={addToTracks}
       />
-      <TravelTracks 
-        tracks={tracks} 
+      <TravelTracks
+        createTracksPath={createTracksPath}
+        tracks={tracks}
         onTracksChange={handleTracksChange}
       />
       <BaiduMap
