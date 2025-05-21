@@ -31,15 +31,15 @@ const Track: React.FC<Props> = ({ step, ...props }) => {
 
   return (
     <Card
-      className={cn("w-full h-[150px] my-3 first:mt-0 last:mb-0")}
+      className={cn("w-full h-[150px] my-3 first:mt-0 last:mb-0 cursor-pointer hover:border-2 hover:border-blue-500")}
       onClick={onClick}
     >
       <CardHeader className="p-[15px]">
         <CardTitle>
           <Button variant="link" className="px-0">
-            #{step + 1}
+            标记点#{step + 1}
           </Button>
-          {title}
+          【{title}】
         </CardTitle>
         <CardDescription>类型: {name}</CardDescription>
         <CardDescription>描述: {description}</CardDescription>
