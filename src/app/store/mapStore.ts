@@ -1,11 +1,12 @@
 import { create } from 'zustand'
+import mapboxgl from 'mapbox-gl'
 
 interface MapState {
-  baiduInstance: any
-  addBaiduMap: (baiduInstance: any) => void
+  mapboxInstance: mapboxgl.Map | null
+  addMapboxMap: (mapboxInstance: mapboxgl.Map) => void
 }
 
 export const useMapStore = create<MapState>()((set) => ({
-  baiduInstance: null,
-  addBaiduMap: (baiduInstance) => set(() => ({ baiduInstance })),
+  mapboxInstance: null,
+  addMapboxMap: (mapboxInstance) => set(() => ({ mapboxInstance })),
 }))

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { markers } from "../../../constant";
 import { Button } from "@/components/ui/button";
 import { useMapStore } from "@/app/store/mapStore";
+
 interface Props {
   track: {
     type: string;
@@ -20,13 +21,17 @@ interface Props {
 }
 
 const Track: React.FC<Props> = ({ step, ...props }) => {
-  const { type, lng, lat, title, description} = props.track;
+  const { type, lng, lat, title, description } = props.track;
   const name = markers.find(({ fileName }) => fileName === type)?.name;
-  const baiduInstance = useMapStore((state) => state.baiduInstance);
+  const mapInstance = useMapStore((state) => state.mapboxInstance);
 
   const onClick = () => {
-    const point = new (window as any).BMapGL.Point(lng, lat); // 创建点坐标
-    baiduInstance.centerAndZoom(point, 15);
+    if (mapInstance) {
+      mapInstance.flyTo({
+        center: [parseFloat(lng), parseFloat(lat)],
+        zoom: 15
+      });
+    }
   };
 
   return (
@@ -47,4 +52,5 @@ const Track: React.FC<Props> = ({ step, ...props }) => {
     </Card>
   );
 };
+
 export default Track;
