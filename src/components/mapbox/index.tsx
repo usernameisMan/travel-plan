@@ -10,6 +10,7 @@ import { useMapStore } from "@/app/store/mapStore";
 interface Props {
   className?: string;
   onAddOneMarker: (fileName: string, lng: string, lat: string) => void;
+  onLoadMap: () => void;
   openCreateMarkerDialog: any;
   createMarkerDialogIsOpen: boolean;
 }
@@ -28,12 +29,13 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, ...props }) => {
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
+      style: "mapbox://styles/mapbox/streets-v12",
       center: [116.404, 39.915],
-      zoom: 15
+      zoom: 15,
     });
 
-    map.current.on('load', () => {
+    map.current.addControl(new mapboxgl.ScaleControl());
+    map.current.on("load", () => {
       if (map.current) {
         addMapboxMap(map.current);
       }
@@ -48,10 +50,15 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, ...props }) => {
 
   useEffect(() => {
     if (mapInstance) {
-      mapInstance.on('click', (e) => {
+      props.onLoadMap();
+      mapInstance.on("click", (e) => {
         const { lng, lat } = e.lngLat;
         if (currentSelectMarkerType.current) {
-          props.onAddOneMarker(currentSelectMarkerType.current, lng.toString(), lat.toString());
+          props.onAddOneMarker(
+            currentSelectMarkerType.current,
+            lng.toString(),
+            lat.toString()
+          );
           props.openCreateMarkerDialog();
         }
       });
@@ -60,7 +67,7 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, ...props }) => {
 
   useEffect(() => {
     if (!props.createMarkerDialogIsOpen && mapInstance) {
-      mapInstance.getCanvas().style.cursor = 'grab';
+      mapInstance.getCanvas().style.cursor = "grab";
       currentSelectMarkerType.current = "";
     }
   }, [props.createMarkerDialogIsOpen, mapInstance]);
@@ -85,4 +92,4 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, ...props }) => {
 
 MapboxMap.displayName = "MapboxMap";
 
-export default MapboxMap; 
+export default MapboxMap;

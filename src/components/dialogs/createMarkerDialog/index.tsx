@@ -29,6 +29,7 @@ const CreateMarkerDialog: React.FC<Props> = (props) => {
     setDescription("");
     props.setCreateMarkerDialogDisplayStatus(false);
   };
+
   return (
     <Dialog
       defaultOpen={false}
