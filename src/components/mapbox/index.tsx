@@ -23,10 +23,8 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, ...props }) => {
 
   useEffect(() => {
     if (!mapContainer.current) return;
-    console.log('CLIENT: ', process.env.NEXT_PUBLIC_MAPBOX_TOKEN);
-    const token = process.env?.NEXT_PUBLIC_MAPBOX_TOKEN || '';
-    
-    mapboxgl.accessToken = token;
+
+    mapboxgl.accessToken = process?.env?.NEXT_PUBLIC_MAPBOX_TOKEN;
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
