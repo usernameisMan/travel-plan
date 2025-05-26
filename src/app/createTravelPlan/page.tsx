@@ -102,7 +102,7 @@ const TravelPlan = () => {
 
   const createTracksPath = () => {
     if (tracks.length === 0) {
-      alert("先添加标记点才能生成路径哟！");
+      alert("Please add markers first to generate a path!");
       return;
     }
 

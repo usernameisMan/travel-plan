@@ -38,14 +38,14 @@ const CreateMarkerDialog: React.FC<Props> = (props) => {
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>创建一个标记</DialogTitle>
+          <DialogTitle>Create a Marker</DialogTitle>
           <DialogDescription>
-            你可以设置标记名称、时间、等任何文字信息
+            You can set the marker name, time, and any text information
           </DialogDescription>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
-                标题
+                Title
               </Label>
               <Input
                 id="name"
@@ -56,7 +56,7 @@ const CreateMarkerDialog: React.FC<Props> = (props) => {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="username" className="text-right">
-                详情
+                Description
               </Label>
               <Input
                 id="username"
@@ -69,7 +69,7 @@ const CreateMarkerDialog: React.FC<Props> = (props) => {
         </DialogHeader>
         <DialogFooter>
           <Button type="submit" onClick={onconfirm}>
-            确定创建
+            Confirm
           </Button>
         </DialogFooter>
       </DialogContent>

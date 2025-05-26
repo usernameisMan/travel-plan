@@ -13,9 +13,9 @@ const ToolsMenu: React.FC<Props> = ({ className, onClickMenu = (fileName: string
     <Menubar className={cn("w-[300px] h-[45px]", className)}>
       <MenubarMenu>
         <MenubarMenu>
-          <MenubarTrigger>快捷标记</MenubarTrigger>
+          <MenubarTrigger>Quick Markers</MenubarTrigger>
         </MenubarMenu>
-        <MenubarTrigger>特殊标记</MenubarTrigger>
+        <MenubarTrigger>Special Markers</MenubarTrigger>
         <MenubarContent>
           {markers.map((marker) => (
             <MenubarItem key={marker.name} onClick={() => onClickMenu(marker.fileName)}>

@@ -38,21 +38,21 @@ export default function RootLayout({
             <NavigationMenuItem>
               <Link href="/" legacyBehavior passHref>
                 <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), (passName === "/" && "text-[#35b368]"))}>
-                  主页
+                  Home
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
               <Link href="/travelPlans" legacyBehavior passHref>
                 <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), passName === "/travelPlans" && "text-[#35b368]")}>
-                  旅行计划仓库
+                  Travel Plan Repository
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
               <Link href="/createTravelPlan" legacyBehavior passHref>
                 <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), passName === "/createTravelPlan" && "text-[#35b368]")}>
-                  创建旅行计划
+                  Create Travel Plan
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
