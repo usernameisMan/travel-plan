@@ -52,11 +52,11 @@ const TravelTracks: React.FC<Props> = ({
     <ScrollArea className="h-full w-[400px] overflow-y-auto rounded-md border p-4">
       <Viewport asChild className={cn("w-full h-full")}>
         <div>
-          <h4 className="mb-2 text-sm font-medium leading-none">Path Markers</h4>
+          <h4 className="mb-1 text-sm font-medium leading-none">Path Markers</h4>
           <p className=" text-[12px] text-[#999] font-medium leading-none">
               Dragging the marker points can adjust the order
           </p>
-          <div className="flex items-center justify-end">
+          <div className="mt-1 flex items-center justify-end">
             <Button variant={"default"} onClick={props.createTracksPath}>Generate Path</Button>
           </div>
           <div className="space-y-2 mt-4">

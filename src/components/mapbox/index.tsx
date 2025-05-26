@@ -6,6 +6,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import ToolsMenu from "./toolsMenu";
 import { cn } from "@/lib/utils";
 import { useMapStore } from "@/app/store/mapStore";
+import { MapboxSearchBox } from '@mapbox/search-js-web';
 
 interface Props {
   className?: string;
@@ -30,16 +31,50 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, ...props }) => {
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/streets-v12",
-      center: [116.404, 39.915],
-      zoom: 15,
+      zoom: 11,
     });
 
+    const geolocateControl = new mapboxgl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true
+      },
+      fitBoundsOptions: {
+        zoom: 10
+      },
+      trackUserLocation: true,
+      showUserHeading: true
+    });
+
+    map.current.addControl(geolocateControl, "bottom-right")
     map.current.addControl(new mapboxgl.ScaleControl());
+
     map.current.on("load", () => {
       if (map.current) {
+
+        // const searchBox = new MapboxSearchBox();
+        // searchBox.accessToken = process?.env?.NEXT_PUBLIC_MAPBOX_TOKEN || '';
+        // searchBox.options = {
+        //     types: 'address,poi',
+        //     proximity: [-73.99209, 40.68933]
+        // };
+        // searchBox.marker = true;
+        // searchBox.mapboxgl = mapboxgl;
+        // map.current.addControl(searchBox as unknown as mapboxgl.IControl, "top-left");
+
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { longitude, latitude } = position.coords;
+            map.current?.setCenter([longitude, latitude]);
+          },
+          (error) => {
+            console.error('Error getting location:', error);
+          }
+        );
         addMapboxMap(map.current);
       }
     });
+
 
     return () => {
       if (map.current) {

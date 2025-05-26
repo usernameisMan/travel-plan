@@ -1,4 +1,5 @@
-"use client";
+'use client'
+
 import { Inter as FontSans } from "next/font/google";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -17,15 +18,16 @@ const fontSans = FontSans({
 const TravelPlan = () => {
   const mapInstance = useMapStore((state) => state.mapboxInstance);
   const currentTrackRef = useRef<any>({});
-  const currentTracks = JSON.parse(
-    localStorage.getItem("currentTracks") || "[]"
+  let currentTracks = []
+  currentTracks = JSON.parse(
+    typeof window !== 'undefined'&& localStorage?.getItem("currentTracks") || "[]"
   );
   const [tracks, setTracks] = useState<any>(currentTracks);
   const [createMarkerDialogIsOpen, setOpenCreateMarkerDialog] =
     useState<any>(false);
 
   useEffect(() => {
-    localStorage.setItem("currentTracks", JSON.stringify(tracks));
+    localStorage?.setItem("currentTracks", JSON.stringify(tracks));
   }, [tracks]);
 
   const onLoadMap = () => {
@@ -115,7 +117,7 @@ const TravelPlan = () => {
       mapInstance.removeSource("route");
     }
 
-    const coordinates = tracks.map((track: any) => [
+    const coordinates = tracks?.map((track: any) => [
       parseFloat(track.lng),
       parseFloat(track.lat),
     ]);
