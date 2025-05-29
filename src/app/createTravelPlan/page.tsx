@@ -154,6 +154,14 @@ const TravelPlan = () => {
     setTracks(newTracks);
   };
 
+  const handleDeleteTrack = (index: number) => {
+    setTracks((prev: any) => {
+      const newTracks = [...prev];
+      newTracks.splice(index, 1);
+      return newTracks;
+    });
+  };
+
   return (
     <div className={cn("w-full h-full flex")}>
       <CreateMarkerDialog
@@ -166,6 +174,7 @@ const TravelPlan = () => {
         createTracksPath={createTracksPath}
         tracks={tracks}
         onTracksChange={handleTracksChange}
+        onDeleteTrack={handleDeleteTrack}
       />
       <MapboxMap
         className={cn("grow")}

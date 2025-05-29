@@ -18,9 +18,10 @@ interface Props {
     description: string;
   };
   step: number;
+  onDelete?: () => void;
 }
 
-const Track: React.FC<Props> = ({ step, ...props }) => {
+const Track: React.FC<Props> = ({ step, onDelete, ...props }) => {
   const { type, lng, lat, title, description } = props.track;
   const name = markers.find(({ fileName }) => fileName === type)?.name;
   const mapInstance = useMapStore((state) => state.mapboxInstance);
@@ -34,18 +35,33 @@ const Track: React.FC<Props> = ({ step, ...props }) => {
     }
   };
 
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete?.();
+  };
+
   return (
     <Card
       className={cn("w-full h-[150px] my-3 first:mt-0 last:mb-0 cursor-pointer hover:border-2 hover:border-blue-500")}
       onClick={onClick}
     >
       <CardHeader className="p-[15px]">
-        <CardTitle>
-          <Button variant="link" className="px-0">
-            标记点#{step + 1}
+        <div className="flex justify-between items-start">
+          <CardTitle>
+            <Button variant="link" className="px-0">
+              标记点#{step + 1}
+            </Button>
+            【{title}】
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-red-500 hover:text-red-700 hover:bg-red-100"
+            onClick={handleDelete}
+          >
+            delete
           </Button>
-          【{title}】
-        </CardTitle>
+        </div>
         <CardDescription>类型: {name}</CardDescription>
         <CardDescription>描述: {description}</CardDescription>
       </CardHeader>

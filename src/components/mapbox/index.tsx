@@ -6,7 +6,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import ToolsMenu from "./toolsMenu";
 import { cn } from "@/lib/utils";
 import { useMapStore } from "@/app/store/mapStore";
-import { MapboxSearchBox } from '@mapbox/search-js-web';
+// import { MapboxSearchBox } from '@mapbox/search-js-web';
 
 interface Props {
   className?: string;

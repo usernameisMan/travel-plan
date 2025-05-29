@@ -9,12 +9,14 @@ interface Props {
   tracks: any[];
   createTracksPath?: () => void;
   onTracksChange?: (newTracks: any[]) => void;
+  onDeleteTrack?: (index: number) => void;
 }
 
 const TravelTracks: React.FC<Props> = ({
   className,
   tracks,
   onTracksChange,
+  onDeleteTrack,
   ...props
 }) => {
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
@@ -73,7 +75,7 @@ const TravelTracks: React.FC<Props> = ({
                   draggedItem === index && "opacity-50"
                 )}
               >
-                <Track track={track} step={index} />
+                <Track track={track} step={index} onDelete={() => onDeleteTrack?.(index)} />
               </div>
             ))}
           </div>
