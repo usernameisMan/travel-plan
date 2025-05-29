@@ -18,20 +18,25 @@ const fontSans = FontSans({
 const TravelPlan = () => {
   const mapInstance = useMapStore((state) => state.mapboxInstance);
   const currentTrackRef = useRef<any>({});
-  let currentTracks = []
-  currentTracks = JSON.parse(
-    typeof window !== 'undefined'&& localStorage?.getItem("currentTracks") || "[]"
-  );
-  const [tracks, setTracks] = useState<any>(currentTracks);
+  const [tracks, setTracks] = useState<any>();
   const [createMarkerDialogIsOpen, setOpenCreateMarkerDialog] =
     useState<any>(false);
 
   useEffect(() => {
+    const savedTracks = localStorage?.getItem("currentTracks")
+    debugger
+    if (savedTracks) {
+      setTracks(JSON.parse(savedTracks));
+    }
+  }, []);
+
+  useEffect(() => {
+    debugger
     localStorage?.setItem("currentTracks", JSON.stringify(tracks));
   }, [tracks]);
 
   const onLoadMap = () => {
-    if (tracks.length) {
+    if (tracks?.length) {
       tracks.forEach((track: any) => {
         addMarkerToMap(track.type, track.lng, track.lat);
       });

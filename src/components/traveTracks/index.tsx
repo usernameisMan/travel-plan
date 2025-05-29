@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from "react";
 import Track from "./Track";
 import { cn } from "@/lib/utils";
@@ -62,7 +64,7 @@ const TravelTracks: React.FC<Props> = ({
             <Button variant={"default"} onClick={props.createTracksPath}>Generate Path</Button>
           </div>
           <div className="space-y-2 mt-4">
-            {tracks.map((track, index) => (
+            {tracks?.map((track, index) => (
               <div
                 key={`${index}`}
                 draggable
