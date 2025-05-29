@@ -9,6 +9,7 @@ import TravelTracks from "@/components/traveTracks";
 import CreateMarkerDialog from "@/components/dialogs/createMarkerDialog";
 import { useMapStore } from "@/app/store/mapStore";
 import mapboxgl from "mapbox-gl";
+import _ from "lodash"
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -18,21 +19,22 @@ const fontSans = FontSans({
 const TravelPlan = () => {
   const mapInstance = useMapStore((state) => state.mapboxInstance);
   const currentTrackRef = useRef<any>({});
-  const [tracks, setTracks] = useState<any>();
+  const [tracks, setTracks] = useState<any>(false);
   const [createMarkerDialogIsOpen, setOpenCreateMarkerDialog] =
     useState<any>(false);
 
   useEffect(() => {
     const savedTracks = localStorage?.getItem("currentTracks")
-    debugger
     if (savedTracks) {
       setTracks(JSON.parse(savedTracks));
     }
   }, []);
 
   useEffect(() => {
-    debugger
-    localStorage?.setItem("currentTracks", JSON.stringify(tracks));
+    console.log('currentTrackRef', currentTrackRef)
+    if (_.isArray(tracks)) {
+      localStorage?.setItem("currentTracks", JSON.stringify(tracks));
+    }
   }, [tracks]);
 
   const onLoadMap = () => {
@@ -72,6 +74,7 @@ const TravelPlan = () => {
   };
 
   const addToTracks = (title: string, description: string) => {
+
     addMarkerToMap(
       currentTrackRef?.current?.type,
       currentTrackRef?.current?.lng,

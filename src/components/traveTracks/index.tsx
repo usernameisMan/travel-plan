@@ -5,6 +5,7 @@ import Track from "./Track";
 import { cn } from "@/lib/utils";
 import { ScrollArea, Viewport } from "@radix-ui/react-scroll-area";
 import { Button } from "../ui/button";
+import _ from "lodash";
 
 interface Props {
   className?: string;
@@ -64,7 +65,7 @@ const TravelTracks: React.FC<Props> = ({
             <Button variant={"default"} onClick={props.createTracksPath}>Generate Path</Button>
           </div>
           <div className="space-y-2 mt-4">
-            {tracks?.map((track, index) => (
+            {_.isArray(tracks) && tracks?.map((track, index) => (
               <div
                 key={`${index}`}
                 draggable
