@@ -1,9 +1,9 @@
-"use client"
+"use client";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Script from 'next/script'
-import { usePathname } from 'next/navigation'
+import Script from "next/script";
+import { usePathname } from "next/navigation";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -11,8 +11,8 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu"
-import classNames from 'classnames';
+} from "@/components/ui/navigation-menu";
+import classNames from "classnames";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -28,40 +28,53 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const passName = usePathname()
+  const passName = usePathname();
   return (
-    <html lang="en" className={cn(' w-full h-full')} >
-      <body className={cn(inter.className,'flex flex-col w-full h-full')}>
-        <section className={cn('block w-full mb-5 border-b')}>
-        <NavigationMenu>
-          <NavigationMenuList>
-            <NavigationMenuItem>
-              <Link href="/" legacyBehavior passHref>
-                <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), (passName === "/" && "text-[#35b368]"))}>
-                  主页
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <Link href="/travelPlans" legacyBehavior passHref>
-                <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), passName === "/travelPlans" && "text-[#35b368]")}>
-                  旅行计划仓库
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <Link href="/createTravelPlan" legacyBehavior passHref>
-                <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), passName === "/createTravelPlan" && "text-[#35b368]")}>
-                  创建旅行计划
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-          </NavigationMenuList>
-        </NavigationMenu>
+    <html lang="en" className={cn(" w-full h-full")}>
+      <body className={cn(inter.className, "flex flex-col w-full h-full")}>
+        <section className={cn("block w-full mb-5 border-b")}>
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <Link href="/" legacyBehavior passHref>
+                  <NavigationMenuLink
+                    className={cn(
+                      navigationMenuTriggerStyle(),
+                      passName === "/" && "text-[#35b368]"
+                    )}
+                  >
+                    Home
+                  </NavigationMenuLink>
+                </Link>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <Link href="/travelPlans" legacyBehavior passHref>
+                  <NavigationMenuLink
+                    className={cn(
+                      navigationMenuTriggerStyle(),
+                      passName === "/travelPlans" && "text-[#35b368]"
+                    )}
+                  >
+                    Travel Plan Repository
+                  </NavigationMenuLink>
+                </Link>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <Link href="/createTravelPlan" legacyBehavior passHref>
+                  <NavigationMenuLink
+                    className={cn(
+                      navigationMenuTriggerStyle(),
+                      passName === "/createTravelPlan" && "text-[#35b368]"
+                    )}
+                  >
+                    Create Travel Plan
+                  </NavigationMenuLink>
+                </Link>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
         </section>
-        <section className={cn("grow overflow-hidden")}>
-        {children}
-        </section>
+        <section className={cn("grow overflow-hidden")}>{children}</section>
       </body>
     </html>
   );
