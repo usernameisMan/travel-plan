@@ -1,54 +1,54 @@
 export const markers = [
   {
-    name: '普通标记',
+    name: 'Normal Marker',
     fileName: 'star',
   },
   {
-    name: '喜欢的标记',
+    name: 'Favorite',
     fileName: 'favorite',
   },
   {
-    name: '飞机场',
+    name: 'Airport',
     fileName: 'airport',
   },
   {
-    name: '车站',
+    name: 'Bus Stop',
     fileName: 'bus-stop',
   },
   {
-    name: '自然景观',
+    name: 'Natural Scenery',
     fileName: 'forest',
   },
   {
-    name: '加油/充电',
+    name: 'Gas Station',
     fileName: 'gas-station',
   },
   {
-    name: '码头',
+    name: 'Harbor',
     fileName: 'harbor',
   },
   {
-    name: '医院',
+    name: 'Hospital',
     fileName: 'hospital',
   },
   {
-    name: '停车场',
+    name: 'Parking',
     fileName: 'parking',
   },
   {
-    name: '休息/用餐',
+    name: 'Restaurant',
     fileName: 'restaurant'
   },
   {
-    name: '购物',
+    name: 'Shopping',
     fileName: 'shopping'
   },
   {
-    name: '景观',
+    name: 'Scenic Spot',
     fileName: 'studio'
   },
   {
-    name: '露营点/酒店',
+    name: 'Camping/Hotel',
     fileName: 'town-hall'
   }
 ]

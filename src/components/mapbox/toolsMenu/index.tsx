@@ -10,12 +10,9 @@ interface Props {
 
 const ToolsMenu: React.FC<Props> = ({ className, onClickMenu = (fileName: string) => { } }) => {
   return (
-    <Menubar className={cn("w-[300px] h-[45px]", className)}>
+    <Menubar className={cn("w-[100px] h-[45px]", className)}>
       <MenubarMenu>
-        <MenubarMenu>
-          <MenubarTrigger>Quick Markers</MenubarTrigger>
-        </MenubarMenu>
-        <MenubarTrigger>Special Markers</MenubarTrigger>
+        <MenubarTrigger>Quick Markers</MenubarTrigger>
         <MenubarContent>
           {markers.map((marker) => (
             <MenubarItem key={marker.name} onClick={() => onClickMenu(marker.fileName)}>
