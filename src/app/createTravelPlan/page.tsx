@@ -22,6 +22,7 @@ const TravelPlan = () => {
   const [tracks, setTracks] = useState<any>(false);
   const [createMarkerDialogIsOpen, setOpenCreateMarkerDialog] =
     useState<any>(false);
+  const [routeProfile, setRouteProfile] = useState<string>('driving');
 
   useEffect(() => {
     const savedTracks = localStorage?.getItem("currentTracks");
@@ -140,7 +141,12 @@ const TravelPlan = () => {
     []
   );
 
-  const createTracksPath = async () => {
+  const createTracksPath = async (mode: string) => {
+    let effectiveProfile = mode;
+    if (mode === 'transit') {
+      alert('公交路线暂不支持，已为你用步行路线代替。');
+      effectiveProfile = 'walking';
+    }
     if (!Array.isArray(tracks) || tracks.length < 2) {
       alert("Please add at least two markers to generate a path!");
       return;
@@ -173,7 +179,7 @@ const TravelPlan = () => {
       const waypoints = `${parseFloat(from.lng)},${parseFloat(from.lat)};${parseFloat(to.lng)},${parseFloat(to.lat)}`;
       try {
         const response = await fetch(
-          `https://api.mapbox.com/directions/v5/mapbox/driving/${waypoints}?geometries=geojson&access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
+          `https://api.mapbox.com/directions/v5/mapbox/${effectiveProfile}/${waypoints}?geometries=geojson&access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
         );
         const data = await response.json();
         if (!data.routes || data.routes.length === 0) continue;

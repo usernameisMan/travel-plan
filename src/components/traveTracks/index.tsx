@@ -6,11 +6,12 @@ import { cn } from "@/lib/utils";
 import { ScrollArea, Viewport } from "@radix-ui/react-scroll-area";
 import { Button } from "../ui/button";
 import _ from "lodash";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 interface Props {
   className?: string;
   tracks: any[];
-  createTracksPath?: () => void;
+  createTracksPath?: (mode: string) => void;
   onTracksChange?: (newTracks: any[]) => void;
   onDeleteTrack?: (index: number) => void;
 }
@@ -23,6 +24,7 @@ const TravelTracks: React.FC<Props> = ({
   ...props
 }) => {
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
+  const [transportMode, setTransportMode] = useState<string>("driving");
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedItem(index);
@@ -60,8 +62,23 @@ const TravelTracks: React.FC<Props> = ({
           <p className=" text-[12px] text-[#999] font-medium leading-none">
             Drag markers to adjust their order
           </p>
-          <div className="mt-1 flex items-center justify-end">
-            <Button variant={"default"} onClick={props.createTracksPath}>Generate Path</Button>
+          <div className="mt-1 flex items-center justify-end gap-2">
+            <Select 
+              defaultValue="driving" 
+              value={transportMode}
+              onValueChange={(value: string) => setTransportMode(value)}
+            >
+              <SelectTrigger className="w-[100px]">
+                <SelectValue placeholder="Mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="walking">步行</SelectItem>
+                <SelectItem value="cycling">骑行</SelectItem>
+                <SelectItem value="driving">驾车</SelectItem>
+                <SelectItem value="transit">公交</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant={"default"} onClick={() => props.createTracksPath?.(transportMode)}>Generate Path</Button>
           </div>
           <div className="space-y-2 mt-4">
             {_.isArray(tracks) && tracks?.map((track, index) => (
