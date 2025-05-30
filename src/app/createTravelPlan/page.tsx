@@ -58,11 +58,13 @@ const TravelPlan = () => {
     if (!mapInstance) return;
     const el = document.createElement("div");
     el.className = "marker";
-    el.style.position = "relative";
+    el.style.position = "absolute";
     el.style.width = "50px";
     el.style.height = "50px";
     el.style.backgroundImage = `url('/markers/resized/${type}.png')`;
     el.style.backgroundSize = "cover";
+    el.style.transform = "translate(-50%, -100%)";
+    el.style.pointerEvents = "none";
 
     if (typeof idx === 'number') {
       const label = document.createElement('div');
