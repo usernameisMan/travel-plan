@@ -36,21 +36,20 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, ...props }) => {
 
     const geolocateControl = new mapboxgl.GeolocateControl({
       positionOptions: {
-        enableHighAccuracy: true
+        enableHighAccuracy: true,
       },
       fitBoundsOptions: {
-        zoom: 10
+        zoom: 10,
       },
       trackUserLocation: true,
-      showUserHeading: true
+      showUserHeading: true,
     });
 
-    map.current.addControl(geolocateControl, "bottom-right")
+    map.current.addControl(geolocateControl, "bottom-right");
     map.current.addControl(new mapboxgl.ScaleControl());
 
     map.current.on("load", () => {
       if (map.current) {
-
         // const searchBox = new MapboxSearchBox();
         // searchBox.accessToken = process?.env?.NEXT_PUBLIC_MAPBOX_TOKEN || '';
         // searchBox.options = {
@@ -61,20 +60,18 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, ...props }) => {
         // searchBox.mapboxgl = mapboxgl;
         // map.current.addControl(searchBox as unknown as mapboxgl.IControl, "top-left");
 
-
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const { longitude, latitude } = position.coords;
             map.current?.setCenter([longitude, latitude]);
           },
           (error) => {
-            console.error('Error getting location:', error);
+            console.error("Error getting location:", error);
           }
         );
         addMapboxMap(map.current);
       }
     });
-
 
     return () => {
       if (map.current) {
@@ -102,7 +99,9 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, ...props }) => {
 
   useEffect(() => {
     if (!props.createMarkerDialogIsOpen && mapInstance) {
-      mapInstance.getCanvas().style.cursor = "grab";
+      if (mapInstance.getCanvas()?.style) {
+        mapInstance.getCanvas().style.cursor = "grab";
+      }
       currentSelectMarkerType.current = "";
     }
   }, [props.createMarkerDialogIsOpen, mapInstance]);
