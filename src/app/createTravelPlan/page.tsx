@@ -69,8 +69,9 @@ const TravelPlan = () => {
     })
       .setLngLat([parseFloat(lng), parseFloat(lat)])
       .addTo(mapInstance);
-
-    mapInstance.getCanvas().style.cursor = "grab";
+    if (mapInstance.getCanvas()?.style) {
+      mapInstance.getCanvas().style.cursor = "grab";
+    }
   };
 
   const addToTracks = (title: string, description: string) => {
