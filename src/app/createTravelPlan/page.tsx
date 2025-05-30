@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { Inter as FontSans } from "next/font/google";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -9,7 +9,7 @@ import TravelTracks from "@/components/traveTracks";
 import CreateMarkerDialog from "@/components/dialogs/createMarkerDialog";
 import { useMapStore } from "@/app/store/mapStore";
 import mapboxgl from "mapbox-gl";
-import _ from "lodash"
+import _ from "lodash";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -24,14 +24,14 @@ const TravelPlan = () => {
     useState<any>(false);
 
   useEffect(() => {
-    const savedTracks = localStorage?.getItem("currentTracks")
+    const savedTracks = localStorage?.getItem("currentTracks");
     if (savedTracks) {
       setTracks(JSON.parse(savedTracks));
     }
   }, []);
 
   useEffect(() => {
-    console.log('currentTrackRef', currentTrackRef)
+    console.log("currentTrackRef", currentTrackRef);
     if (_.isArray(tracks)) {
       localStorage?.setItem("currentTracks", JSON.stringify(tracks));
     }
@@ -64,8 +64,8 @@ const TravelPlan = () => {
 
     new mapboxgl.Marker({
       element: el,
-      anchor: 'bottom',
-      offset: [0, 0]
+      anchor: "bottom",
+      offset: [0, 0],
     })
       .setLngLat([parseFloat(lng), parseFloat(lat)])
       .addTo(mapInstance);
@@ -74,7 +74,6 @@ const TravelPlan = () => {
   };
 
   const addToTracks = (title: string, description: string) => {
-
     addMarkerToMap(
       currentTrackRef?.current?.type,
       currentTrackRef?.current?.lng,
@@ -85,15 +84,24 @@ const TravelPlan = () => {
       if (!currentTrackRef.current.lng) {
         return prev;
       }
-      const newTracks = [
-        ...prev,
+
+      if (!_.isBoolean(prev)) {
+        return [
+          ...prev,
+          {
+            ...currentTrackRef.current,
+            title,
+            description,
+          },
+        ];
+      }
+      return [
         {
           ...currentTrackRef.current,
           title,
           description,
         },
       ];
-      return newTracks;
     });
 
     currentTrackRef.current = {};
