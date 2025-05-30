@@ -22,6 +22,11 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, ...props }) => {
   const currentSelectMarkerType = useRef("");
   const addMapboxMap = useMapStore((state) => state.addMapboxMap);
   const mapInstance = useMapStore((state) => state.mapboxInstance);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; lngLat: mapboxgl.LngLat | null }>({
+    x: 0,
+    y: 0,
+    lngLat: null
+  });
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -73,6 +78,24 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, ...props }) => {
       }
     });
 
+    // Add context menu event listener
+    map.current.on("contextmenu", (e) => {
+      e.preventDefault();
+      if (mapContainer.current) {
+        const rect = mapContainer.current.getBoundingClientRect();
+        setContextMenu({
+          x: rect.left + e.point.x,
+          y: rect.top + e.point.y,
+          lngLat: e.lngLat
+        });
+      }
+    });
+
+    // Close context menu on map click
+    map.current.on("click", () => {
+      setContextMenu({ x: 0, y: 0, lngLat: null });
+    });
+
     return () => {
       if (map.current) {
         map.current.remove();
@@ -113,13 +136,40 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, ...props }) => {
     }
   };
 
+  const handleContextMenuClick = (fileName: string) => {
+    if (contextMenu.lngLat) {
+      props.onAddOneMarker(
+        fileName,
+        contextMenu.lngLat.lng.toString(),
+        contextMenu.lngLat.lat.toString()
+      );
+      props.openCreateMarkerDialog();
+    }
+    setContextMenu({ x: 0, y: 0, lngLat: null });
+  };
+
   return (
     <div className={cn("relative", className)}>
-      <ToolsMenu
+      {/* <ToolsMenu
         className={cn("z-10 absolute top-3 right-5")}
         onClickMenu={selectMenu}
-      />
+      /> */}
       <div ref={mapContainer} style={{ width: "100%", height: "100%" }} />
+      {contextMenu.lngLat && (
+        <div
+          className="fixed z-50 bg-white rounded-lg shadow-lg border border-gray-200"
+          style={{
+            left: contextMenu.x + 5,
+            top: contextMenu.y + 5,
+            transform: 'translate(0, 0)'
+          }}
+        >
+          <ToolsMenu
+            className="w-[150px]"
+            onClickMenu={handleContextMenuClick}
+          />
+        </div>
+      )}
     </div>
   );
 });

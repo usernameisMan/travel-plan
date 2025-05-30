@@ -51,7 +51,7 @@ const Track: React.FC<Props> = ({ step, onDelete, ...props }) => {
         <div className="flex justify-between items-start">
           <CardTitle>
             <Button variant="link" className="px-0">
-              标记点#{step + 1}
+              Marker #{step + 1}
             </Button>
             【{title}】
           </CardTitle>
@@ -61,11 +61,11 @@ const Track: React.FC<Props> = ({ step, onDelete, ...props }) => {
             className="text-red-500 hover:text-red-700 hover:bg-red-100"
             onClick={handleDelete}
           >
-            delete
+            Delete
           </Button>
         </div>
-        <CardDescription>类型: {name}</CardDescription>
-        <CardDescription>描述: {description}</CardDescription>
+        <CardDescription>Type: {name}</CardDescription>
+        <CardDescription>Description: {description}</CardDescription>
       </CardHeader>
     </Card>
   );
