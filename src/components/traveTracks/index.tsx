@@ -1,16 +1,17 @@
 'use client';
 
 import { useState } from "react";
-import Track from "./Track";
+import Track, { DayTrack } from "./Track";
 import { cn } from "@/lib/utils";
 import { ScrollArea, Viewport } from "@radix-ui/react-scroll-area";
 import { Button } from "../ui/button";
 import _ from "lodash";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
+
 interface Props {
   className?: string;
-  tracks: any[];
+  tracks: DayTrack[];
   createTracksPath?: (mode: string) => void;
   onTracksChange?: (newTracks: any[]) => void;
   onDeleteTrack?: (index: number) => void;
@@ -23,6 +24,7 @@ const TravelTracks: React.FC<Props> = ({
   onDeleteTrack,
   ...props
 }) => {
+  const [currentDay, setCurrentDay] = useState<DayTrack | null>(null);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [transportMode, setTransportMode] = useState<string>("driving");
 

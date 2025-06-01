@@ -11,20 +11,39 @@ import { markers } from "../../../constant";
 import { Button } from "@/components/ui/button";
 import { useMapStore } from "@/app/store/mapStore";
 
+// this track just show one day
 interface Props {
-  track: {
-    type: string;
-    lng: string;
-    lat: string;
-    title: string;
-    description: string;
-  };
+  track: Track;
   step: number;
   onDelete?: () => void;
 }
 
+export interface Location {
+  lng: string;
+  lat: string;
+}
+
+export interface Track {
+  id: string;
+  title: string;
+  description: string;
+  imgs: string[];
+  refUrls: string[];
+  type: string;
+  location: Location;
+}
+
+export interface DayTrack {
+  day: string;
+  dayText: string;
+  description: string;
+  tracks: Track[];
+}
+
 const Track: React.FC<Props> = ({ step, onDelete, ...props }) => {
-  const { type, lng, lat, title, description } = props.track;
+  const { type,location, title, description } = props.track;
+
+  const { lng, lat } = location;
   const name = markers.find(({ fileName }) => fileName === type)?.name;
   const mapInstance = useMapStore((state) => state.mapboxInstance);
 

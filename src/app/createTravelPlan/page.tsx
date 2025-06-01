@@ -41,7 +41,7 @@ const TravelPlan = () => {
   const onLoadMap = () => {
     if (tracks?.length) {
       tracks.forEach((track: any, idx: number) => {
-        addMarkerToMap(track.type, track.lng, track.lat, idx);
+        addMarkerToMap(track.type, track.location.lng, track.location.lat, idx);
       });
     }
   };
@@ -100,13 +100,13 @@ const TravelPlan = () => {
     const idx = Array.isArray(tracks) ? tracks.length : 0;
     addMarkerToMap(
       currentTrackRef?.current?.type,
-      currentTrackRef?.current?.lng,
-      currentTrackRef?.current?.lat,
+      currentTrackRef?.current?.location.lng,
+      currentTrackRef?.current?.location.lat,
       idx
     );
 
     setTracks((prev: any) => {
-      if (!currentTrackRef.current.lng) {
+      if (!currentTrackRef.current?.location?.lng) {
         return prev;
       }
 
@@ -136,8 +136,10 @@ const TravelPlan = () => {
     (fileName: string, lng: string, lat: string) => {
       currentTrackRef.current = {
         type: fileName,
-        lng,
-        lat,
+        location: {
+          lng,
+          lat,
+        },
       };
     },
     []
@@ -178,7 +180,7 @@ const TravelPlan = () => {
     for (let i = 0; i < tracks.length - 1; i++) {
       const from = tracks[i];
       const to = tracks[i + 1];
-      const waypoints = `${parseFloat(from.lng)},${parseFloat(from.lat)};${parseFloat(to.lng)},${parseFloat(to.lat)}`;
+      const waypoints = `${parseFloat(from.location.lng)},${parseFloat(from.location.lat)};${parseFloat(to.location.lng)},${parseFloat(to.location.lat)}`;
       try {
         const response = await fetch(
           `https://api.mapbox.com/directions/v5/mapbox/${effectiveProfile}/${waypoints}?geometries=geojson&access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
