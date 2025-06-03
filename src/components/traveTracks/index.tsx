@@ -7,9 +7,12 @@ import { ScrollArea, Viewport } from "@radix-ui/react-scroll-area";
 import { Button } from "../ui/button";
 import _ from "lodash";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Map } from "lucide-react";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
+import { DndContext, closestCenter, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { SortableTrack } from "./SortableTrack";
 
 interface Props {
   className?: string;
@@ -19,6 +22,7 @@ interface Props {
   onDeleteTrack?: (dayIndex: number, trackIndex: number) => void;
   currentDayIndex: number;
   onDaySelect: (dayIndex: number) => void;
+  createAllTracksPath?: (mode: string) => void;
 }
 
 const TravelTracks: React.FC<Props> = ({
@@ -28,6 +32,7 @@ const TravelTracks: React.FC<Props> = ({
   onDeleteTrack,
   currentDayIndex,
   onDaySelect,
+  createAllTracksPath,
   ...props
 }) => {
   const [draggedItem, setDraggedItem] = useState<{ dayIndex: number; trackIndex: number } | null>(null);
@@ -35,6 +40,14 @@ const TravelTracks: React.FC<Props> = ({
   const [editingDay, setEditingDay] = useState<number | null>(null);
   const [dayTitle, setDayTitle] = useState("");
   const [dayDescription, setDayDescription] = useState("");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    })
+  );
 
   const handleDragStart = (e: React.DragEvent, dayIndex: number, trackIndex: number) => {
     setDraggedItem({ dayIndex, trackIndex });
@@ -46,8 +59,7 @@ const TravelTracks: React.FC<Props> = ({
     e.dataTransfer.dropEffect = "move";
   };
 
-  const handleDragEnd = (e: React.DragEvent) => {
-    (e.target as HTMLElement).style.opacity = "1";
+  const handleDragEnd = (event: any) => {
     setDraggedItem(null);
   };
 
@@ -104,149 +116,158 @@ const TravelTracks: React.FC<Props> = ({
   };
 
   return (
-    <ScrollArea className="h-full w-[400px] overflow-y-auto rounded-md border p-4">
-      <Viewport asChild className={cn("w-full h-full")}>
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="text-sm font-medium leading-none">行程安排</h4>
-            <Button 
-              variant="outline" 
-              size="sm" 
+    <div className="w-[400px] h-full flex flex-col bg-white border-r border-gray-200">
+      <div className="p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">行程安排</h2>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
               onClick={addNewDay}
               className="flex items-center gap-1"
             >
-              <Plus className="w-4 h-4" />
-              添加新的一天
+              <Plus className="h-4 w-4" />
+              添加行程日
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => createAllTracksPath?.(transportMode)}
+              className="flex items-center gap-1"
+            >
+              <Map className="h-4 w-4" />
+              生成总路线
             </Button>
           </div>
-          
-          <div className="space-y-4">
-            {tracks.map((dayTrack, dayIndex) => (
-              <div 
-                key={dayIndex} 
-                className={cn(
-                  "border rounded-lg p-3 cursor-pointer transition-all duration-200",
-                  currentDayIndex === dayIndex && "border-blue-500 bg-blue-50"
-                )}
-                onClick={() => onDaySelect(dayIndex)}
-              >
-                <div className="flex justify-between items-center mb-2">
-                  {editingDay === dayIndex ? (
-                    <div className="flex-1 mr-2">
-                      <Input
-                        value={dayTitle}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDayTitle(e.target.value)}
-                        className="mb-2"
-                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                      />
-                      <Textarea
-                        value={dayDescription}
-                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDayDescription(e.target.value)}
-                        placeholder="添加描述..."
-                        className="mb-2"
-                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                      />
-                      <Button 
-                        size="sm" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          saveDayEdit();
-                        }}
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {tracks.map((dayTrack, index) => (
+            <Button
+              key={index}
+              variant={currentDayIndex === index ? "default" : "outline"}
+              size="sm"
+              onClick={() => onDaySelect(index)}
+              className="whitespace-nowrap"
+            >
+              {dayTrack.dayText}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-hidden flex flex-col">
+        {tracks.length > 0 && (
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4 border-b border-gray-200">
+              <div className="flex items-center justify-between mb-2">
+                {editingDay === currentDayIndex ? (
+                  <div className="flex-1 mr-2">
+                    <Input
+                      value={dayTitle}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setDayTitle(e.target.value)
+                      }
+                      className="mb-2"
+                      placeholder="输入行程日标题"
+                    />
+                    <Textarea
+                      value={dayDescription}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        setDayDescription(e.target.value)
+                      }
+                      placeholder="输入行程日描述"
+                      className="mb-2"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => saveDayEdit()}
                       >
                         保存
                       </Button>
-                    </div>
-                  ) : (
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h5 className="font-medium">{dayTrack.dayText}</h5>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            startEditingDay(dayIndex);
-                          }}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteDay(dayIndex);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      {dayTrack.description && (
-                        <p className="text-sm text-gray-500 mt-1">{dayTrack.description}</p>
-                      )}
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <Select 
-                      defaultValue="driving" 
-                      value={transportMode}
-                      onValueChange={(value: string) => setTransportMode(value)}
-                    >
-                      <SelectTrigger className="w-[100px]">
-                        <SelectValue placeholder="Mode" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="walking">步行</SelectItem>
-                        <SelectItem value="cycling">骑行</SelectItem>
-                        <SelectItem value="driving">驾车</SelectItem>
-                        <SelectItem value="transit">公交</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {currentDayIndex === dayIndex && (
-                      <Button 
-                        variant="default" 
+                      <Button
                         size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          props.createTracksPath?.(transportMode);
-                        }}
+                        variant="outline"
+                        onClick={() => setEditingDay(null)}
                       >
-                        生成路径
+                        取消
                       </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-medium">{tracks[currentDayIndex].dayText}</h3>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => startEditingDay(currentDayIndex)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        {tracks.length > 1 && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => deleteDay(currentDayIndex)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    {tracks[currentDayIndex].description && (
+                      <p className="text-sm text-gray-600 mb-4">
+                        {tracks[currentDayIndex].description}
+                      </p>
                     )}
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  {dayTrack.tracks.map((track, trackIndex) => (
-                    <div
-                      key={`${dayIndex}-${trackIndex}`}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, dayIndex, trackIndex)}
-                      onDragOver={handleDragOver}
-                      onDragEnd={handleDragEnd}
-                      onDrop={(e) => handleDrop(e, dayIndex, trackIndex)}
-                      className={cn(
-                        "cursor-move transition-all duration-200",
-                        draggedItem?.dayIndex === dayIndex && 
-                        draggedItem?.trackIndex === trackIndex && 
-                        "opacity-50"
-                      )}
-                    >
-                      <Track 
-                        track={track} 
-                        step={trackIndex} 
-                        onDelete={() => onDeleteTrack?.(dayIndex, trackIndex)} 
-                      />
-                    </div>
-                  ))}
-                </div>
+                )}
               </div>
-            ))}
+            </div>
+
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-medium">行程点</h4>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => props.createTracksPath?.(transportMode)}
+                  className="flex items-center gap-1"
+                >
+                  <Map className="h-4 w-4" />
+                  生成路径
+                </Button>
+              </div>
+
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={tracks[currentDayIndex].tracks.map((_, index) => index)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2">
+                    {tracks[currentDayIndex].tracks.map((track, index) => (
+                      <SortableTrack
+                        key={index}
+                        id={index}
+                        track={track}
+                        onDelete={() => onDeleteTrack?.(currentDayIndex, index)}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            </div>
           </div>
-        </div>
-      </Viewport>
-    </ScrollArea>
+        )}
+      </div>
+    </div>
   );
 };
 

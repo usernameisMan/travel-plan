@@ -347,6 +347,119 @@ const TravelPlan = () => {
     }
   };
 
+  // 生成所有天的总路线
+  const createAllTracksPath = async (mode: string) => {
+    let effectiveProfile = mode;
+    if (mode === "transit") {
+      alert("公交路线暂不支持，已为你用步行路线代替。");
+      effectiveProfile = "walking";
+    }
+    if (!mapInstance) return;
+
+    // 清理旧的路径和箭头
+    const layers = mapInstance.getStyle().layers;
+    if (layers) {
+      layers.forEach((layer: any) => {
+        if (
+          layer.id.startsWith("route-segment-") ||
+          layer.id.startsWith("route-arrows-")
+        ) {
+          if (mapInstance.getLayer(layer.id)) mapInstance.removeLayer(layer.id);
+        }
+      });
+    }
+    const sources = mapInstance.getStyle().sources;
+    Object.keys(sources).forEach((sourceId) => {
+      if (sourceId.startsWith("route-segment-")) {
+        if (mapInstance.getSource(sourceId)) mapInstance.removeSource(sourceId);
+      }
+    });
+
+    // 颜色数组
+    const colors = [
+      "#FF0000",
+      "#00FF00",
+      "#0000FF",
+      "#FFA500",
+      "#800080",
+      "#008080",
+      "#FFC0CB",
+      "#A52A2A",
+      "#808080",
+      "#000000",
+    ];
+
+    for (let dayIndex = 0; dayIndex < tracks.length; dayIndex++) {
+      const dayTracks = tracks[dayIndex].tracks;
+      if (dayTracks.length < 2) {
+        continue;
+      }
+      for (let i = 0; i < dayTracks.length - 1; i++) {
+        const from = dayTracks[i];
+        const to = dayTracks[i + 1];
+        const waypoints = `${parseFloat(from.location.lng)},${parseFloat(
+          from.location.lat
+        )};${parseFloat(to.location.lng)},${parseFloat(to.location.lat)}`;
+        try {
+          const response = await fetch(
+            `https://api.mapbox.com/directions/v5/mapbox/${effectiveProfile}/${waypoints}?geometries=geojson&access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
+          );
+          const data = await response.json();
+          if (!data.routes || data.routes.length === 0) continue;
+          const geometry = data.routes[0].geometry;
+          const segmentSourceId = `route-segment-${dayIndex}-${i}`;
+          // 添加 source
+          mapInstance.addSource(segmentSourceId, {
+            type: "geojson",
+            data: {
+              type: "Feature",
+              properties: {},
+              geometry,
+            },
+          });
+          // 添加线条 layer
+          mapInstance.addLayer({
+            id: segmentSourceId,
+            type: "line",
+            source: segmentSourceId,
+            layout: {
+              "line-join": "round",
+              "line-cap": "round",
+            },
+            paint: {
+              "line-color": colors[dayIndex % colors.length],
+              "line-width": 8,
+              "line-opacity": 1,
+            },
+          });
+          // 添加箭头 layer
+          mapInstance.addLayer({
+            id: `route-arrows-${dayIndex}-${i}`,
+            type: "symbol",
+            source: segmentSourceId,
+            layout: {
+              "symbol-placement": "line",
+              "text-field": `${dayIndex + 1}-${i + 1}>>`,
+              "text-size": 24,
+              "text-allow-overlap": true,
+              "text-ignore-placement": true,
+              "text-keep-upright": false,
+              "symbol-spacing": 20,
+            },
+            paint: {
+              "text-color": colors[dayIndex % colors.length],
+              "text-halo-color": "#ffffff",
+              "text-halo-width": 2,
+              "text-opacity": 0.9,
+            },
+          });
+        } catch (error) {
+          console.error("Error generating segment", dayIndex, i, error);
+        }
+      }
+    }
+  };
+
   const handleTracksChange = (newTracks: DayTrack[]) => {
     setTracks(newTracks);
   };
@@ -367,6 +480,7 @@ const TravelPlan = () => {
       />
       <TravelTracks
         createTracksPath={createTracksPath}
+        createAllTracksPath={createAllTracksPath}
         tracks={tracks}
         onTracksChange={handleTracksChange}
         onDeleteTrack={handleDeleteTrack}
