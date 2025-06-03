@@ -10,8 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Plus, Pencil, Trash2, Map } from "lucide-react";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
-import { DndContext, closestCenter, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { SortableTrack } from "./SortableTrack";
 
 interface Props {
@@ -35,7 +35,6 @@ const TravelTracks: React.FC<Props> = ({
   createAllTracksPath,
   ...props
 }) => {
-  const [draggedItem, setDraggedItem] = useState<{ dayIndex: number; trackIndex: number } | null>(null);
   const [transportMode, setTransportMode] = useState<string>("driving");
   const [editingDay, setEditingDay] = useState<number | null>(null);
   const [dayTitle, setDayTitle] = useState("");
@@ -49,34 +48,29 @@ const TravelTracks: React.FC<Props> = ({
     })
   );
 
-  const handleDragStart = (e: React.DragEvent, dayIndex: number, trackIndex: number) => {
-    setDraggedItem({ dayIndex, trackIndex });
-    (e.currentTarget as HTMLElement).style.opacity = '0.5';
-  };
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-  };
+    if (!over || active.id === over.id) {
+      return;
+    }
 
-  const handleDragEnd = (event: any) => {
-    setDraggedItem(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, dayIndex: number, trackIndex: number) => {
-    e.preventDefault();
-    if (!draggedItem) return;
+    const oldIndex = active.id as number;
+    const newIndex = over.id as number;
 
     const newTracks = _.cloneDeep(tracks);
-    const draggedTrack = newTracks[draggedItem.dayIndex].tracks[draggedItem.trackIndex];
-    
-    // Remove from original position
-    newTracks[draggedItem.dayIndex].tracks.splice(draggedItem.trackIndex, 1);
-    
-    // Add to new position
-    newTracks[dayIndex].tracks.splice(trackIndex, 0, draggedTrack);
+    const currentDayTracks = newTracks[currentDayIndex].tracks;
 
+    // 使用数组方法直接移动元素
+    const [movedItem] = currentDayTracks.splice(oldIndex, 1);
+    currentDayTracks.splice(newIndex, 0, movedItem);
+
+    // 确保触发父组件的更新
     onTracksChange?.(newTracks);
+
+    // 打印日志以便调试
+    console.log('Track moved:', { oldIndex, newIndex, currentDayIndex });
+    console.log('New tracks order:', newTracks[currentDayIndex].tracks.map(t => t.title));
   };
 
   const addNewDay = () => {
@@ -97,11 +91,11 @@ const TravelTracks: React.FC<Props> = ({
 
   const saveDayEdit = () => {
     if (editingDay === null) return;
-    
+
     const newTracks = _.cloneDeep(tracks);
     newTracks[editingDay].dayText = dayTitle;
     newTracks[editingDay].description = dayDescription;
-    
+
     onTracksChange?.(newTracks);
     setEditingDay(null);
   };
@@ -120,6 +114,8 @@ const TravelTracks: React.FC<Props> = ({
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">行程安排</h2>
+        </div>
+        <div className="flex items-center justify-between mb-4">
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -130,15 +126,31 @@ const TravelTracks: React.FC<Props> = ({
               <Plus className="h-4 w-4" />
               添加行程日
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => createAllTracksPath?.(transportMode)}
-              className="flex items-center gap-1"
-            >
-              <Map className="h-4 w-4" />
-              生成总路线
-            </Button>
+            <div className="flex items-center gap-2">
+              <Select
+                value={transportMode}
+                onValueChange={setTransportMode}
+              >
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="选择交通方式" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="driving">驾车</SelectItem>
+                  <SelectItem value="walking">步行</SelectItem>
+                  <SelectItem value="cycling">骑行</SelectItem>
+                  <SelectItem value="transit">公交</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => createAllTracksPath?.(transportMode)}
+                className="flex items-center gap-1"
+              >
+                <Map className="h-4 w-4" />
+                生成总路线
+              </Button>
+            </div>
           </div>
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2">
@@ -231,15 +243,31 @@ const TravelTracks: React.FC<Props> = ({
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-medium">行程点</h4>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => props.createTracksPath?.(transportMode)}
-                  className="flex items-center gap-1"
-                >
-                  <Map className="h-4 w-4" />
-                  生成路径
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={transportMode}
+                    onValueChange={setTransportMode}
+                  >
+                    <SelectTrigger className="w-[120px]">
+                      <SelectValue placeholder="选择交通方式" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="driving">驾车</SelectItem>
+                      <SelectItem value="walking">步行</SelectItem>
+                      <SelectItem value="cycling">骑行</SelectItem>
+                      <SelectItem value="transit">公交</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => props.createTracksPath?.(transportMode)}
+                    className="flex items-center gap-1"
+                  >
+                    <Map className="h-4 w-4" />
+                    生成路径
+                  </Button>
+                </div>
               </div>
 
               <DndContext

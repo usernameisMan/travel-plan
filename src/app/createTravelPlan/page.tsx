@@ -483,6 +483,26 @@ const TravelPlan = () => {
 
   const handleTracksChange = (newTracks: DayTrack[]) => {
     setTracks(newTracks);
+    // 强制触发地图标记重新渲染
+    if (mapInstance) {
+      // 清除所有现有的标记点
+      const markers = document.getElementsByClassName("marker");
+      while (markers.length > 0) {
+        markers[0].remove();
+      }
+
+      // 重新添加所有标记点
+      newTracks.forEach((dayTrack: DayTrack, dayIndex: number) => {
+        dayTrack.tracks.forEach((track: any, idx: number) => {
+          addMarkerToMap(
+            track.type,
+            track.location.lng,
+            track.location.lat,
+            `${dayIndex + 1}-${idx + 1}`
+          );
+        });
+      });
+    }
   };
 
   const handleDeleteTrack = (dayIndex: number, trackIndex: number) => {
