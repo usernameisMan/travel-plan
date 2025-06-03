@@ -30,7 +30,7 @@ const TravelPlan = () => {
   // 初始化数据
   useEffect(() => {
     if (isInitialized) return;
-    
+
     const savedTracks = localStorage?.getItem("currentTracks");
     if (savedTracks) {
       try {
@@ -39,31 +39,37 @@ const TravelPlan = () => {
           setTracks(parsedTracks);
         } else {
           // 如果没有保存的数据，创建一个初始的行程日
-          setTracks([{
-            day: 'Day 1',
-            dayText: '第1天',
-            description: '',
-            tracks: []
-          }]);
+          setTracks([
+            {
+              day: "Day 1",
+              dayText: "第1天",
+              description: "",
+              tracks: [],
+            },
+          ]);
         }
       } catch (error) {
         console.error("Error parsing saved tracks:", error);
         // 如果解析出错，创建一个初始的行程日
-        setTracks([{
-          day: 'Day 1',
-          dayText: '第1天',
-          description: '',
-          tracks: []
-        }]);
+        setTracks([
+          {
+            day: "Day 1",
+            dayText: "第1天",
+            description: "",
+            tracks: [],
+          },
+        ]);
       }
     } else {
       // 如果没有保存的数据，创建一个初始的行程日
-      setTracks([{
-        day: 'Day 1',
-        dayText: '第1天',
-        description: '',
-        tracks: []
-      }]);
+      setTracks([
+        {
+          day: "Day 1",
+          dayText: "第1天",
+          description: "",
+          tracks: [],
+        },
+      ]);
     }
     setIsInitialized(true);
   }, [isInitialized]);
@@ -71,7 +77,7 @@ const TravelPlan = () => {
   // 保存数据
   useEffect(() => {
     if (!isInitialized) return;
-    
+
     if (Array.isArray(tracks) && tracks.length > 0) {
       try {
         localStorage?.setItem("currentTracks", JSON.stringify(tracks));
@@ -97,8 +103,8 @@ const TravelPlan = () => {
     }
 
     // 清除所有现有的路径和箭头
-    const layers = mapInstance.getStyle().layers;
-    if (layers) {
+    const layers = mapInstance.getStyle()?.layers || [];
+    if (layers.length > 0) {
       layers.forEach((layer: any) => {
         if (
           layer.id.startsWith("route-segment-") ||
@@ -108,7 +114,7 @@ const TravelPlan = () => {
         }
       });
     }
-    const sources = mapInstance.getStyle().sources;
+    const sources = mapInstance.getStyle()?.sources || {};
     Object.keys(sources).forEach((sourceId) => {
       if (sourceId.startsWith("route-segment-")) {
         if (mapInstance.getSource(sourceId)) mapInstance.removeSource(sourceId);
@@ -144,8 +150,18 @@ const TravelPlan = () => {
     lat: string,
     label?: string
   ) => {
-    if (!mapInstance) return;
-
+    if (!mapInstance) {
+      console.error("mapInstance is not ready in addMarkerToMap", mapInstance);
+      return;
+    }
+    if (!(mapInstance instanceof mapboxgl.Map)) {
+      console.error("mapInstance is not a valid mapboxgl.Map instance", mapInstance);
+      return;
+    }
+    if (!mapInstance._container) {
+      console.error("mapInstance container is destroyed, cannot add marker", mapInstance);
+      return;
+    }
     const el = document.createElement("div");
     el.className = "marker";
     el.style.position = "absolute";
@@ -181,6 +197,7 @@ const TravelPlan = () => {
     })
       .setLngLat([parseFloat(lng), parseFloat(lat)])
       .addTo(mapInstance);
+    console.log("addTo mapInstance 成功", marker);
 
     if (mapInstance.getCanvas()?.style) {
       mapInstance.getCanvas().style.cursor = "grab";
@@ -191,18 +208,22 @@ const TravelPlan = () => {
 
   const addToTracks = (title: string, description: string) => {
     if (!currentTrackRef.current?.location?.lng) return;
+    if (!mapInstance) {
+      alert("地图还没加载好，请稍后再试！");
+      return;
+    }
 
     const newTracks = _.cloneDeep(tracks);
     if (newTracks.length === 0) {
       // 如果没有行程日，创建一个
       newTracks.push({
-        day: 'Day 1',
-        dayText: '第1天',
-        description: '',
-        tracks: []
+        day: "Day 1",
+        dayText: "第1天",
+        description: "",
+        tracks: [],
       });
     }
-    
+
     newTracks[currentDayIndex].tracks.push({
       ...currentTrackRef.current,
       title,
@@ -243,8 +264,8 @@ const TravelPlan = () => {
     if (!mapInstance) return;
 
     // 清理旧的路径和箭头
-    const layers = mapInstance.getStyle().layers;
-    if (layers) {
+    const layers = mapInstance.getStyle()?.layers || [];
+    if (layers.length > 0) {
       layers.forEach((layer: any) => {
         if (
           layer.id.startsWith("route-segment-") ||
@@ -254,7 +275,7 @@ const TravelPlan = () => {
         }
       });
     }
-    const sources = mapInstance.getStyle().sources;
+    const sources = mapInstance.getStyle()?.sources || {};
     Object.keys(sources).forEach((sourceId) => {
       if (sourceId.startsWith("route-segment-")) {
         if (mapInstance.getSource(sourceId)) mapInstance.removeSource(sourceId);
@@ -357,8 +378,8 @@ const TravelPlan = () => {
     if (!mapInstance) return;
 
     // 清理旧的路径和箭头
-    const layers = mapInstance.getStyle().layers;
-    if (layers) {
+    const layers = mapInstance.getStyle()?.layers || [];
+    if (layers.length > 0) {
       layers.forEach((layer: any) => {
         if (
           layer.id.startsWith("route-segment-") ||
@@ -368,7 +389,7 @@ const TravelPlan = () => {
         }
       });
     }
-    const sources = mapInstance.getStyle().sources;
+    const sources = mapInstance.getStyle()?.sources || {};
     Object.keys(sources).forEach((sourceId) => {
       if (sourceId.startsWith("route-segment-")) {
         if (mapInstance.getSource(sourceId)) mapInstance.removeSource(sourceId);

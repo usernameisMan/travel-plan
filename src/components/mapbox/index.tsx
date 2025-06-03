@@ -100,6 +100,7 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, ...props }) => {
       if (map.current) {
         map.current.remove();
       }
+      addMapboxMap(null);
     };
   }, []);
 
