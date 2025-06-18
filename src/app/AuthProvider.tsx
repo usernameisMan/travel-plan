@@ -8,6 +8,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       clientId={process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID || "SdCXKYIoR8oRbxZl7FzNKh6giVdxAhSm"}
       authorizationParams={{
         redirect_uri: typeof window !== "undefined" ? window.location.origin : "",
+        audience: "https://travel-plan-api",
       }}
     >
       {children}

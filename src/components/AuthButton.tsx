@@ -1,9 +1,33 @@
 "use client";
+import { http } from "@/lib/http";
+import { useAuthStore } from "@/store/authStore";
+
 import { useAuth0 } from "@auth0/auth0-react";
 import Link from "next/link";
+import { useEffect } from "react";
 
 export default function AuthButton() {
-  const { isAuthenticated, logout, isLoading, user } = useAuth0();
+  const setToken = useAuthStore((state) => state.setToken);
+  const token = useAuthStore().token;
+  const { isAuthenticated, logout, isLoading, user, getAccessTokenSilently } =
+    useAuth0();
+
+  useEffect(() => {
+    const fetchToken = async () => {
+      const token = await getAccessTokenSilently();
+      setToken(token as any);
+    };
+    fetchToken();
+  }, [getAccessTokenSilently, setToken]);
+
+  useEffect(() => {
+    if (token) {
+      const getUserInfo = async () => {
+        const userInfo = await http.get("/");
+      };
+      getUserInfo();
+    }
+  }, [token]);
 
   if (isLoading)
     return (
