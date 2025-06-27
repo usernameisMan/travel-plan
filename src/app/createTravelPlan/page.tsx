@@ -41,10 +41,10 @@ const TravelPlan = () => {
           // 如果没有保存的数据，创建一个初始的行程日
           setTracks([
             {
-              day: "Day 1",
-              dayText: "第1天",
+              day: "one Day",
+              dayText: "first day",
               description: "",
-              tracks: [],
+              markers: [],
             },
           ]);
         }
@@ -53,10 +53,10 @@ const TravelPlan = () => {
         // 如果解析出错，创建一个初始的行程日
         setTracks([
           {
-            day: "Day 1",
-            dayText: "第1天",
+            day: "one Day",
+            dayText: "first day",
             description: "",
-            tracks: [],
+            markers: [],
           },
         ]);
       }
@@ -64,10 +64,10 @@ const TravelPlan = () => {
       // 如果没有保存的数据，创建一个初始的行程日
       setTracks([
         {
-          day: "Day 1",
-          dayText: "第1天",
+          day: "one Day",
+          dayText: "first day",
           description: "",
-          tracks: [],
+          markers: [],
         },
       ]);
     }
@@ -124,7 +124,7 @@ const TravelPlan = () => {
     // 重新添加所有标记点
     if (tracks?.length) {
       tracks.forEach((dayTrack: DayTrack, dayIndex: number) => {
-        dayTrack.tracks.forEach((track: any, idx: number) => {
+        dayTrack.markers.forEach((track: any, idx: number) => {
           addMarkerToMap(
             track.type,
             track.location.lng,
@@ -220,11 +220,11 @@ const TravelPlan = () => {
         day: "Day 1",
         dayText: "第1天",
         description: "",
-        tracks: [],
+        markers: [],
       });
     }
 
-    newTracks[currentDayIndex].tracks.push({
+    newTracks[currentDayIndex].markers.push({
       ...currentTrackRef.current,
       title,
       description,
@@ -235,7 +235,7 @@ const TravelPlan = () => {
       currentTrackRef.current.type,
       currentTrackRef.current.location.lng,
       currentTrackRef.current.location.lat,
-      `${currentDayIndex + 1}-${newTracks[currentDayIndex].tracks.length}`
+      `${currentDayIndex + 1}-${newTracks[currentDayIndex].markers.length}`
     );
 
     currentTrackRef.current = {};
@@ -296,7 +296,7 @@ const TravelPlan = () => {
       "#000000",
     ];
 
-    const dayTracks = tracks[currentDayIndex].tracks;
+    const dayTracks = tracks[currentDayIndex].markers;
     if (dayTracks.length < 2) {
       alert("请至少添加两个标记点来生成路径！");
       return;
@@ -411,7 +411,7 @@ const TravelPlan = () => {
     ];
 
     for (let dayIndex = 0; dayIndex < tracks.length; dayIndex++) {
-      const dayTracks = tracks[dayIndex].tracks;
+      const dayTracks = tracks[dayIndex].markers;
       if (dayTracks.length < 2) {
         continue;
       }
@@ -493,7 +493,7 @@ const TravelPlan = () => {
 
       // 重新添加所有标记点
       newTracks.forEach((dayTrack: DayTrack, dayIndex: number) => {
-        dayTrack.tracks.forEach((track: any, idx: number) => {
+        dayTrack.markers.forEach((track: any, idx: number) => {
           addMarkerToMap(
             track.type,
             track.location.lng,
@@ -507,7 +507,7 @@ const TravelPlan = () => {
 
   const handleDeleteTrack = (dayIndex: number, trackIndex: number) => {
     const newTracks = _.cloneDeep(tracks);
-    newTracks[dayIndex].tracks.splice(trackIndex, 1);
+    newTracks[dayIndex].markers.splice(trackIndex, 1);
     setTracks(newTracks);
   };
 

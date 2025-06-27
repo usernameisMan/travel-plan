@@ -5,7 +5,6 @@ import Script from "next/script";
 import { usePathname } from "next/navigation";
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
@@ -15,9 +14,7 @@ import classNames from "classnames";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import AuthProvider from "./AuthProvider";
-import { useEffect } from "react";
 import AuthButton from "@/components/AuthButton";
-import { useAuth0 } from "@auth0/auth0-react";
 
 const inter = Inter({ subsets: ["latin"] });
 
