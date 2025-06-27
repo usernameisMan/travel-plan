@@ -11,6 +11,8 @@ import { useMapStore } from "@/app/store/mapStore";
 import mapboxgl from "mapbox-gl";
 import _ from "lodash";
 import { DayTrack } from "@/components/traveTracks/Track";
+import { useAuth0 } from "@auth0/auth0-react";
+import Link from "next/link";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -18,6 +20,7 @@ const fontSans = FontSans({
 });
 
 const TravelPlan = () => {
+  const { isAuthenticated, isLoading, user } = useAuth0();
   const mapInstance = useMapStore((state) => state.mapboxInstance);
   const currentTrackRef = useRef<any>({});
   const [tracks, setTracks] = useState<DayTrack[]>([]);
@@ -26,6 +29,42 @@ const TravelPlan = () => {
   const [routeProfile, setRouteProfile] = useState<string>("driving");
   const [currentDayIndex, setCurrentDayIndex] = useState<number>(0);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // 如果正在加载认证状态，显示加载提示
+  if (isLoading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-semibold text-gray-700 mb-4">
+            正在验证登录状态...
+          </div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // 如果用户未登录，显示需要登录的提示
+  if (!isAuthenticated) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-4">
+          <div className="text-6xl mb-6">🔒</div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">
+            需要登录
+          </h1>
+          <p className="text-gray-600 mb-6">
+            您需要登录才能创建旅行计划。请先登录您的账户。
+          </p>
+          <Link href="/login">
+            <Button className="bg-[#35b368] hover:bg-[#2d9a5a] text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+              前往登录
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // 初始化数据
   useEffect(() => {
