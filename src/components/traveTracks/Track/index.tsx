@@ -37,7 +37,7 @@ export interface DayTrack {
   day: string;
   dayText: string;
   description: string;
-  tracks: Track[];
+  markers: Track[];
 }
 
 const Track: React.FC<Props> = ({ step, onDelete, ...props }) => {

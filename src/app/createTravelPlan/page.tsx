@@ -11,6 +11,8 @@ import { useMapStore } from "@/app/store/mapStore";
 import mapboxgl from "mapbox-gl";
 import _ from "lodash";
 import { DayTrack } from "@/components/traveTracks/Track";
+import { useAuth0 } from "@auth0/auth0-react";
+import Link from "next/link";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -18,6 +20,7 @@ const fontSans = FontSans({
 });
 
 const TravelPlan = () => {
+  const { isAuthenticated, isLoading, user } = useAuth0();
   const mapInstance = useMapStore((state) => state.mapboxInstance);
   const currentTrackRef = useRef<any>({});
   const [tracks, setTracks] = useState<DayTrack[]>([]);
@@ -26,11 +29,10 @@ const TravelPlan = () => {
   const [routeProfile, setRouteProfile] = useState<string>("driving");
   const [currentDayIndex, setCurrentDayIndex] = useState<number>(0);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isMobileView, setIsMobileView] = useState<"tracks" | "map">("map");
 
-  // 初始化数据
   useEffect(() => {
     if (isInitialized) return;
-
     const savedTracks = localStorage?.getItem("currentTracks");
     if (savedTracks) {
       try {
@@ -38,46 +40,41 @@ const TravelPlan = () => {
         if (Array.isArray(parsedTracks) && parsedTracks.length > 0) {
           setTracks(parsedTracks);
         } else {
-          // 如果没有保存的数据，创建一个初始的行程日
           setTracks([
             {
-              day: "Day 1",
-              dayText: "第1天",
+              day: "one Day",
+              dayText: "first day",
               description: "",
-              tracks: [],
+              markers: [],
             },
           ]);
         }
       } catch (error) {
         console.error("Error parsing saved tracks:", error);
-        // 如果解析出错，创建一个初始的行程日
         setTracks([
           {
-            day: "Day 1",
-            dayText: "第1天",
+            day: "one Day",
+            dayText: "first day",
             description: "",
-            tracks: [],
+            markers: [],
           },
         ]);
       }
     } else {
-      // 如果没有保存的数据，创建一个初始的行程日
       setTracks([
         {
-          day: "Day 1",
-          dayText: "第1天",
+          day: "one Day",
+          dayText: "first day",
           description: "",
-          tracks: [],
+          markers: [],
         },
       ]);
     }
     setIsInitialized(true);
   }, [isInitialized]);
 
-  // 保存数据
   useEffect(() => {
     if (!isInitialized) return;
-
     if (Array.isArray(tracks) && tracks.length > 0) {
       try {
         localStorage?.setItem("currentTracks", JSON.stringify(tracks));
@@ -87,7 +84,6 @@ const TravelPlan = () => {
     }
   }, [tracks, isInitialized]);
 
-  // 更新地图
   useEffect(() => {
     if (!isInitialized || !mapInstance) return;
     onLoadMap();
@@ -124,7 +120,7 @@ const TravelPlan = () => {
     // 重新添加所有标记点
     if (tracks?.length) {
       tracks.forEach((dayTrack: DayTrack, dayIndex: number) => {
-        dayTrack.tracks.forEach((track: any, idx: number) => {
+        dayTrack.markers.forEach((track: any, idx: number) => {
           addMarkerToMap(
             track.type,
             track.location.lng,
@@ -187,6 +183,7 @@ const TravelPlan = () => {
       labelEl.style.padding = "2px 8px";
       labelEl.style.borderRadius = "12px";
       labelEl.style.pointerEvents = "none";
+      labelEl.style.width = "max-content";
       el.appendChild(labelEl);
     }
 
@@ -220,11 +217,11 @@ const TravelPlan = () => {
         day: "Day 1",
         dayText: "第1天",
         description: "",
-        tracks: [],
+        markers: [],
       });
     }
 
-    newTracks[currentDayIndex].tracks.push({
+    newTracks[currentDayIndex].markers.push({
       ...currentTrackRef.current,
       title,
       description,
@@ -235,7 +232,7 @@ const TravelPlan = () => {
       currentTrackRef.current.type,
       currentTrackRef.current.location.lng,
       currentTrackRef.current.location.lat,
-      `${currentDayIndex + 1}-${newTracks[currentDayIndex].tracks.length}`
+      `${currentDayIndex + 1}-${newTracks[currentDayIndex].markers.length}`
     );
 
     currentTrackRef.current = {};
@@ -296,7 +293,7 @@ const TravelPlan = () => {
       "#000000",
     ];
 
-    const dayTracks = tracks[currentDayIndex].tracks;
+    const dayTracks = tracks[currentDayIndex].markers;
     if (dayTracks.length < 2) {
       alert("请至少添加两个标记点来生成路径！");
       return;
@@ -411,7 +408,7 @@ const TravelPlan = () => {
     ];
 
     for (let dayIndex = 0; dayIndex < tracks.length; dayIndex++) {
-      const dayTracks = tracks[dayIndex].tracks;
+      const dayTracks = tracks[dayIndex].markers;
       if (dayTracks.length < 2) {
         continue;
       }
@@ -493,7 +490,7 @@ const TravelPlan = () => {
 
       // 重新添加所有标记点
       newTracks.forEach((dayTrack: DayTrack, dayIndex: number) => {
-        dayTrack.tracks.forEach((track: any, idx: number) => {
+        dayTrack.markers.forEach((track: any, idx: number) => {
           addMarkerToMap(
             track.type,
             track.location.lng,
@@ -507,34 +504,107 @@ const TravelPlan = () => {
 
   const handleDeleteTrack = (dayIndex: number, trackIndex: number) => {
     const newTracks = _.cloneDeep(tracks);
-    newTracks[dayIndex].tracks.splice(trackIndex, 1);
+    newTracks[dayIndex].markers.splice(trackIndex, 1);
     setTracks(newTracks);
   };
 
+  if (isLoading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-semibold text-gray-700 mb-4">
+            正在验证登录状态...
+          </div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
+  if (!isAuthenticated) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-4">
+          <div className="text-6xl mb-6">🔒</div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">
+            需要登录
+          </h1>
+          <p className="text-gray-600 mb-6">
+            您需要登录才能创建旅行计划。请先登录您的账户。
+          </p>
+          <Link href="/login">
+            <Button className="bg-[#35b368] hover:bg-[#2d9a5a] text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+              前往登录
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={cn("w-full h-full flex")}>
+    <div className={cn("w-full h-full flex flex-col md:flex-row")}>
       <CreateMarkerDialog
         onOpenChange={onOpenDialogChange}
         open={createMarkerDialogIsOpen}
         setCreateMarkerDialogDisplayStatus={setOpenCreateMarkerDialog}
         onconfirm={addToTracks}
       />
-      <TravelTracks
-        createTracksPath={createTracksPath}
-        createAllTracksPath={createAllTracksPath}
-        tracks={tracks}
-        onTracksChange={handleTracksChange}
-        onDeleteTrack={handleDeleteTrack}
-        currentDayIndex={currentDayIndex}
-        onDaySelect={setCurrentDayIndex}
-      />
-      <MapboxMap
-        className={cn("grow")}
-        onAddOneMarker={onAddOneMarker}
-        onLoadMap={onLoadMap}
-        createMarkerDialogIsOpen={createMarkerDialogIsOpen}
-        openCreateMarkerDialog={openCreateMarkerDialogHandle}
-      />
+      
+      {/* Mobile Toggle Buttons */}
+      <div className="md:hidden flex bg-white border-b border-gray-200 p-2 gap-2">
+        <button
+          onClick={() => setIsMobileView("tracks")}
+          className={cn(
+            "flex-1 py-2 px-4 rounded-lg font-medium transition-colors",
+            isMobileView === "tracks"
+              ? "bg-[#35b368] text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          )}
+        >
+          行程规划
+        </button>
+        <button
+          onClick={() => setIsMobileView("map")}
+          className={cn(
+            "flex-1 py-2 px-4 rounded-lg font-medium transition-colors",
+            isMobileView === "map"
+              ? "bg-[#35b368] text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          )}
+        >
+          地图视图
+        </button>
+      </div>
+
+      {/* Travel Tracks Panel */}
+      <div className={cn(
+        "md:block",
+        isMobileView === "tracks" ? "block" : "hidden"
+      )}>
+        <TravelTracks
+          createTracksPath={createTracksPath}
+          createAllTracksPath={createAllTracksPath}
+          tracks={tracks}
+          onTracksChange={handleTracksChange}
+          onDeleteTrack={handleDeleteTrack}
+          currentDayIndex={currentDayIndex}
+          onDaySelect={setCurrentDayIndex}
+        />
+      </div>
+
+      {/* Map Panel */}
+      <div className={cn(
+        "flex-1 md:grow",
+        isMobileView === "map" ? "block" : "hidden"
+      )}>
+        <MapboxMap
+          className={cn("w-full h-full")}
+          onAddOneMarker={onAddOneMarker}
+          onLoadMap={onLoadMap}
+          createMarkerDialogIsOpen={createMarkerDialogIsOpen}
+          openCreateMarkerDialog={openCreateMarkerDialogHandle}
+        />
+      </div>
     </div>
   );
 };

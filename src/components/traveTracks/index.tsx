@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState } from "react";
 import Track, { DayTrack } from "./Track";
@@ -6,13 +6,31 @@ import { cn } from "@/lib/utils";
 import { ScrollArea, Viewport } from "@radix-ui/react-scroll-area";
 import { Button } from "../ui/button";
 import _ from "lodash";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { Plus, Pencil, Trash2, Map } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { Plus, Pencil, Trash2, Map, Save } from "lucide-react";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
-import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import {
+  DndContext,
+  closestCenter,
+  useSensor,
+  useSensors,
+  PointerSensor,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { SortableTrack } from "./SortableTrack";
+import { httpRequest } from "@/lib/http";
 
 interface Props {
   className?: string;
@@ -59,7 +77,7 @@ const TravelTracks: React.FC<Props> = ({
     const newIndex = over.id as number;
 
     const newTracks = _.cloneDeep(tracks);
-    const currentDayTracks = newTracks[currentDayIndex].tracks;
+    const currentDayTracks = newTracks[currentDayIndex].markers;
 
     // 使用数组方法直接移动元素
     const [movedItem] = currentDayTracks.splice(oldIndex, 1);
@@ -69,18 +87,30 @@ const TravelTracks: React.FC<Props> = ({
     onTracksChange?.(newTracks);
 
     // 打印日志以便调试
-    console.log('Track moved:', { oldIndex, newIndex, currentDayIndex });
-    console.log('New tracks order:', newTracks[currentDayIndex].tracks.map(t => t.title));
+    console.log("Track moved:", { oldIndex, newIndex, currentDayIndex });
+    console.log(
+      "New tracks order:",
+      newTracks[currentDayIndex].markers.map((t) => t.title)
+    );
   };
 
   const addNewDay = () => {
     const newDay: DayTrack = {
       day: `Day ${tracks.length + 1}`,
       dayText: `第${tracks.length + 1}天`,
-      description: '',
-      tracks: []
+      description: "",
+      markers: [],
     };
     onTracksChange?.([...tracks, newDay]);
+  };
+
+  const saveAllItinerary = async () => {
+    // call api
+    const newTracks = _.cloneDeep(tracks);
+    const response = await httpRequest("/api/itinerary", {
+      method: "POST",
+      body: JSON.stringify(newTracks),
+    });
   };
 
   const startEditingDay = (dayIndex: number) => {
@@ -110,28 +140,38 @@ const TravelTracks: React.FC<Props> = ({
   };
 
   return (
-    <div className="w-[400px] h-full flex flex-col bg-white border-r border-gray-200">
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between mb-4">
+    <div className="w-full md:w-[400px] h-full flex flex-col bg-white border-r border-gray-200">
+      <div className="p-3 md:p-4 border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
           <h2 className="text-lg font-semibold">行程安排</h2>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={saveAllItinerary}
+            className="flex items-center gap-1 bg-[#35b368] hover:bg-[#2d9a5a] w-full sm:w-auto"
+          >
+            <Save className="h-4 w-4" />
+            <span className="hidden sm:inline">Save All Itinerary</span>
+            <span className="sm:hidden">Save</span>
+          </Button>
         </div>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex gap-2">
+        
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={addNewDay}
-              className="flex items-center gap-1"
+              className="flex items-center justify-center gap-1 w-full sm:w-auto"
             >
               <Plus className="h-4 w-4" />
-              添加行程日
+              <span className="hidden sm:inline">添加行程日</span>
+              <span className="sm:hidden">添加日程</span>
             </Button>
-            <div className="flex items-center gap-2">
-              <Select
-                value={transportMode}
-                onValueChange={setTransportMode}
-              >
-                <SelectTrigger className="w-[120px]">
+            
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Select value={transportMode} onValueChange={setTransportMode}>
+                <SelectTrigger className="w-full sm:w-[120px]">
                   <SelectValue placeholder="选择交通方式" />
                 </SelectTrigger>
                 <SelectContent>
@@ -145,22 +185,24 @@ const TravelTracks: React.FC<Props> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => createAllTracksPath?.(transportMode)}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 whitespace-nowrap"
               >
                 <Map className="h-4 w-4" />
-                生成总路线
+                <span className="hidden lg:inline">生成总路线</span>
+                <span className="lg:hidden">路线</span>
               </Button>
             </div>
           </div>
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        
+        <div className="flex gap-2 overflow-x-auto pb-2 mt-3 scrollbar-hide">
           {tracks.map((dayTrack, index) => (
             <Button
               key={index}
               variant={currentDayIndex === index ? "default" : "outline"}
               size="sm"
               onClick={() => onDaySelect(index)}
-              className="whitespace-nowrap"
+              className="whitespace-nowrap flex-shrink-0"
             >
               {dayTrack.dayText}
             </Button>
@@ -171,7 +213,7 @@ const TravelTracks: React.FC<Props> = ({
       <div className="flex-1 overflow-hidden flex flex-col">
         {tracks.length > 0 && (
           <div className="flex-1 overflow-y-auto">
-            <div className="p-4 border-b border-gray-200">
+            <div className="p-3 md:p-4 border-b border-gray-200">
               <div className="flex items-center justify-between mb-2">
                 {editingDay === currentDayIndex ? (
                   <div className="flex-1 mr-2">
@@ -192,10 +234,7 @@ const TravelTracks: React.FC<Props> = ({
                       className="mb-2"
                     />
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => saveDayEdit()}
-                      >
+                      <Button size="sm" onClick={() => saveDayEdit()}>
                         保存
                       </Button>
                       <Button
@@ -210,8 +249,10 @@ const TravelTracks: React.FC<Props> = ({
                 ) : (
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-medium">{tracks[currentDayIndex].dayText}</h3>
-                      <div className="flex gap-2">
+                      <h3 className="text-lg font-medium truncate">
+                        {tracks[currentDayIndex].dayText}
+                      </h3>
+                      <div className="flex gap-1 flex-shrink-0">
                         <Button
                           size="sm"
                           variant="ghost"
@@ -240,15 +281,15 @@ const TravelTracks: React.FC<Props> = ({
               </div>
             </div>
 
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
+            <div className="p-3 md:p-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
                 <h4 className="font-medium">行程点</h4>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                   <Select
                     value={transportMode}
                     onValueChange={setTransportMode}
                   >
-                    <SelectTrigger className="w-[120px]">
+                    <SelectTrigger className="w-full sm:w-[120px]">
                       <SelectValue placeholder="选择交通方式" />
                     </SelectTrigger>
                     <SelectContent>
@@ -262,10 +303,11 @@ const TravelTracks: React.FC<Props> = ({
                     variant="outline"
                     size="sm"
                     onClick={() => props.createTracksPath?.(transportMode)}
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 whitespace-nowrap"
                   >
                     <Map className="h-4 w-4" />
-                    生成路径
+                    <span className="hidden lg:inline">生成路径</span>
+                    <span className="lg:hidden">路径</span>
                   </Button>
                 </div>
               </div>
@@ -276,11 +318,13 @@ const TravelTracks: React.FC<Props> = ({
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={tracks[currentDayIndex].tracks.map((_, index) => index)}
+                  items={tracks[currentDayIndex].markers.map(
+                    (_, index) => index
+                  )}
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="space-y-2">
-                    {tracks[currentDayIndex].tracks.map((track, index) => (
+                    {tracks[currentDayIndex].markers.map((track, index) => (
                       <SortableTrack
                         key={index}
                         id={index}
