@@ -7,7 +7,7 @@ interface RequestOptions extends RequestInit {
   requiresAuth?: boolean;
 }
 
-class HttpError extends Error {
+export class HttpError extends Error {
   constructor(public status: number, message: string) {
     super(message);
     this.name = 'HttpError';
@@ -34,19 +34,42 @@ export async function httpRequest<T>(
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...fetchOptions,
-    headers,
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...fetchOptions,
+      headers,
+    });
 
-  if (!response.ok) {
-    throw new HttpError(
-      response.status,
-      `HTTP error! status: ${response.status}`
-    );
+    if (!response.ok) {
+      throw new HttpError(
+        response.status,
+        `HTTP error! status: ${response.status}`
+      );
+    }
+
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        return await response.json();
+      } catch (jsonError) {
+        console.error('Failed to parse JSON response:', jsonError);
+        throw new HttpError(500, 'Invalid JSON response from server');
+      }
+    } else {
+      // Handle non-JSON responses
+      const text = await response.text();
+      console.warn('Received non-JSON response:', text);
+      return text as unknown as T;
+    }
+  } catch (error) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new HttpError(0, 'Network error: Could not connect to server');
+    }
+    throw new HttpError(500, `Request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-
-  return response.json();
 }
 
 // Convenience methods for common HTTP verbs
@@ -54,18 +77,18 @@ export const http = {
   get: <T>(endpoint: string, options?: RequestOptions) =>
     httpRequest<T>(endpoint, { ...options, method: 'GET' }),
 
-  post: <T>(endpoint: string, data?: any, options?: RequestOptions) =>
+  post: <T>(endpoint: string, body?: any, options?: RequestOptions) =>
     httpRequest<T>(endpoint, {
       ...options,
       method: 'POST',
-      body: JSON.stringify(data),
+      body: body ? JSON.stringify(body) : undefined,
     }),
 
-  put: <T>(endpoint: string, data?: any, options?: RequestOptions) =>
+  put: <T>(endpoint: string, body?: any, options?: RequestOptions) =>
     httpRequest<T>(endpoint, {
       ...options,
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: body ? JSON.stringify(body) : undefined,
     }),
 
   delete: <T>(endpoint: string, options?: RequestOptions) =>
