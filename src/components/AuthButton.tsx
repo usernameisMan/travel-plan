@@ -13,12 +13,13 @@ export default function AuthButton() {
     useAuth0();
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     const fetchToken = async () => {
       const token = await getAccessTokenSilently();
       setToken(token as any);
     };
     fetchToken();
-  }, [getAccessTokenSilently, setToken]);
+  }, [getAccessTokenSilently, setToken, isAuthenticated]);
 
   useEffect(() => {
     if (token) {

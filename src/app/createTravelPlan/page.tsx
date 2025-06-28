@@ -30,46 +30,8 @@ const TravelPlan = () => {
   const [currentDayIndex, setCurrentDayIndex] = useState<number>(0);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // 如果正在加载认证状态，显示加载提示
-  if (isLoading) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-2xl font-semibold text-gray-700 mb-4">
-            正在验证登录状态...
-          </div>
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto"></div>
-        </div>
-      </div>
-    );
-  }
-
-  // 如果用户未登录，显示需要登录的提示
-  if (!isAuthenticated) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-4">
-          <div className="text-6xl mb-6">🔒</div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">
-            需要登录
-          </h1>
-          <p className="text-gray-600 mb-6">
-            您需要登录才能创建旅行计划。请先登录您的账户。
-          </p>
-          <Link href="/login">
-            <Button className="bg-[#35b368] hover:bg-[#2d9a5a] text-white px-8 py-3 rounded-lg font-semibold transition-colors">
-              前往登录
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  // 初始化数据
   useEffect(() => {
     if (isInitialized) return;
-
     const savedTracks = localStorage?.getItem("currentTracks");
     if (savedTracks) {
       try {
@@ -77,7 +39,6 @@ const TravelPlan = () => {
         if (Array.isArray(parsedTracks) && parsedTracks.length > 0) {
           setTracks(parsedTracks);
         } else {
-          // 如果没有保存的数据，创建一个初始的行程日
           setTracks([
             {
               day: "one Day",
@@ -89,7 +50,6 @@ const TravelPlan = () => {
         }
       } catch (error) {
         console.error("Error parsing saved tracks:", error);
-        // 如果解析出错，创建一个初始的行程日
         setTracks([
           {
             day: "one Day",
@@ -100,7 +60,6 @@ const TravelPlan = () => {
         ]);
       }
     } else {
-      // 如果没有保存的数据，创建一个初始的行程日
       setTracks([
         {
           day: "one Day",
@@ -113,10 +72,8 @@ const TravelPlan = () => {
     setIsInitialized(true);
   }, [isInitialized]);
 
-  // 保存数据
   useEffect(() => {
     if (!isInitialized) return;
-
     if (Array.isArray(tracks) && tracks.length > 0) {
       try {
         localStorage?.setItem("currentTracks", JSON.stringify(tracks));
@@ -126,7 +83,6 @@ const TravelPlan = () => {
     }
   }, [tracks, isInitialized]);
 
-  // 更新地图
   useEffect(() => {
     if (!isInitialized || !mapInstance) return;
     onLoadMap();
@@ -549,6 +505,39 @@ const TravelPlan = () => {
     newTracks[dayIndex].markers.splice(trackIndex, 1);
     setTracks(newTracks);
   };
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-semibold text-gray-700 mb-4">
+            正在验证登录状态...
+          </div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
+  if (!isAuthenticated) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-4">
+          <div className="text-6xl mb-6">🔒</div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">
+            需要登录
+          </h1>
+          <p className="text-gray-600 mb-6">
+            您需要登录才能创建旅行计划。请先登录您的账户。
+          </p>
+          <Link href="/login">
+            <Button className="bg-[#35b368] hover:bg-[#2d9a5a] text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+              前往登录
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("w-full h-full flex")}>

@@ -147,7 +147,7 @@ const TravelTracks: React.FC<Props> = ({
           <Button
             variant="default"
             size="sm"
-            onClick={addNewDay}
+            onClick={saveAllItinerary}
             className="flex items-center gap-1 bg-[#35b368] hover:bg-[#2d9a5a]"
           >
             <Save className="h-4 w-4" />
@@ -159,7 +159,7 @@ const TravelTracks: React.FC<Props> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={saveAllItinerary}
+              onClick={addNewDay}
               className="flex items-center gap-1"
             >
               <Plus className="h-4 w-4" />
