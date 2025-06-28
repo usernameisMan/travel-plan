@@ -89,7 +89,7 @@ const TravelPlan = () => {
     onLoadMap();
   }, [tracks, mapInstance, isInitialized]);
 
-  const onLoadMap = () => {
+  const onLoadMap = useCallback(() => {
     if (!mapInstance) return;
 
     // 清除所有现有的标记点
@@ -118,19 +118,23 @@ const TravelPlan = () => {
     });
 
     // 重新添加所有标记点
-    if (tracks?.length) {
+    if (Array.isArray(tracks) && tracks.length > 0) {
       tracks.forEach((dayTrack: DayTrack, dayIndex: number) => {
-        dayTrack.markers.forEach((track: any, idx: number) => {
-          addMarkerToMap(
-            track.type,
-            track.location.lng,
-            track.location.lat,
-            `${dayIndex + 1}-${idx + 1}`
-          );
-        });
+        if (dayTrack && Array.isArray(dayTrack.markers)) {
+          dayTrack.markers.forEach((track: any, idx: number) => {
+            if (track && track.type && track.location) {
+              addMarkerToMap(
+                track.type,
+                track.location.lng,
+                track.location.lat,
+                `${dayIndex + 1}-${idx + 1}`
+              );
+            }
+          });
+        }
       });
     }
-  };
+  }, [mapInstance, tracks]);
 
   const openCreateMarkerDialogHandle = () => {
     setOpenCreateMarkerDialog(true);
@@ -260,6 +264,18 @@ const TravelPlan = () => {
 
     if (!mapInstance) return;
 
+    // 检查当前day的tracks是否存在
+    if (!tracks[currentDayIndex] || !Array.isArray(tracks[currentDayIndex].markers)) {
+      alert("当前行程日没有有效的标记点！");
+      return;
+    }
+
+    const dayTracks = tracks[currentDayIndex].markers;
+    if (dayTracks.length < 2) {
+      alert("请至少添加两个标记点来生成路径！");
+      return;
+    }
+
     // 清理旧的路径和箭头
     const layers = mapInstance.getStyle()?.layers || [];
     if (layers.length > 0) {
@@ -293,16 +309,16 @@ const TravelPlan = () => {
       "#000000",
     ];
 
-    const dayTracks = tracks[currentDayIndex].markers;
-    if (dayTracks.length < 2) {
-      alert("请至少添加两个标记点来生成路径！");
-      return;
-    }
-
     // 依次请求每一段的 directions
     for (let i = 0; i < dayTracks.length - 1; i++) {
       const from = dayTracks[i];
       const to = dayTracks[i + 1];
+      
+      if (!from || !to || !from.location || !to.location) {
+        console.error("Invalid track data:", { from, to });
+        continue;
+      }
+
       const waypoints = `${parseFloat(from.location.lng)},${parseFloat(
         from.location.lat
       )};${parseFloat(to.location.lng)},${parseFloat(to.location.lat)}`;
@@ -479,6 +495,11 @@ const TravelPlan = () => {
   };
 
   const handleTracksChange = (newTracks: DayTrack[]) => {
+    if (!Array.isArray(newTracks)) {
+      console.error("Invalid tracks data:", newTracks);
+      return;
+    }
+    
     setTracks(newTracks);
     // 强制触发地图标记重新渲染
     if (mapInstance) {
@@ -490,14 +511,18 @@ const TravelPlan = () => {
 
       // 重新添加所有标记点
       newTracks.forEach((dayTrack: DayTrack, dayIndex: number) => {
-        dayTrack.markers.forEach((track: any, idx: number) => {
-          addMarkerToMap(
-            track.type,
-            track.location.lng,
-            track.location.lat,
-            `${dayIndex + 1}-${idx + 1}`
-          );
-        });
+        if (dayTrack && Array.isArray(dayTrack.markers)) {
+          dayTrack.markers.forEach((track: any, idx: number) => {
+            if (track && track.type && track.location) {
+              addMarkerToMap(
+                track.type,
+                track.location.lng,
+                track.location.lat,
+                `${dayIndex + 1}-${idx + 1}`
+              );
+            }
+          });
+        }
       });
     }
   };

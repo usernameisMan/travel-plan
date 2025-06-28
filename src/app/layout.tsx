@@ -17,6 +17,7 @@ import AuthProvider from "./AuthProvider";
 import AuthButton from "@/components/AuthButton";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useState } from "react";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -175,10 +176,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn(" w-full h-full")}>
       <body className={cn(inter.className, "flex flex-col w-full h-full")}>
-        <AuthProvider>
-          <NavigationBar />
-          <section className="w-full h-full">{children}</section>
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <NavigationBar />
+            <section className="w-full h-full">{children}</section>
+          </AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

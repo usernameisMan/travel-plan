@@ -77,6 +77,10 @@ const TravelTracks: React.FC<Props> = ({
     const newIndex = over.id as number;
 
     const newTracks = _.cloneDeep(tracks);
+    if (!newTracks[currentDayIndex] || !Array.isArray(newTracks[currentDayIndex].markers)) {
+      return;
+    }
+    
     const currentDayTracks = newTracks[currentDayIndex].markers;
 
     // 使用数组方法直接移动元素
@@ -196,7 +200,7 @@ const TravelTracks: React.FC<Props> = ({
         </div>
         
         <div className="flex gap-2 overflow-x-auto pb-2 mt-3 scrollbar-hide">
-          {tracks.map((dayTrack, index) => (
+          {Array.isArray(tracks) && tracks.map((dayTrack, index) => (
             <Button
               key={index}
               variant={currentDayIndex === index ? "default" : "outline"}
@@ -318,20 +322,24 @@ const TravelTracks: React.FC<Props> = ({
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={tracks[currentDayIndex].markers.map(
-                    (_, index) => index
-                  )}
+                  items={tracks[currentDayIndex] && Array.isArray(tracks[currentDayIndex].markers) 
+                    ? tracks[currentDayIndex].markers.map((_, index) => index)
+                    : []
+                  }
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="space-y-2">
-                    {tracks[currentDayIndex].markers.map((track, index) => (
-                      <SortableTrack
-                        key={index}
-                        id={index}
-                        track={track}
-                        onDelete={() => onDeleteTrack?.(currentDayIndex, index)}
-                      />
-                    ))}
+                    {tracks[currentDayIndex] && Array.isArray(tracks[currentDayIndex].markers) 
+                      ? tracks[currentDayIndex].markers.map((track, index) => (
+                          <SortableTrack
+                            key={index}
+                            id={index}
+                            track={track}
+                            onDelete={() => onDeleteTrack?.(currentDayIndex, index)}
+                          />
+                        ))
+                      : <div className="text-gray-500 text-sm">No tracks available</div>
+                    }
                   </div>
                 </SortableContext>
               </DndContext>
