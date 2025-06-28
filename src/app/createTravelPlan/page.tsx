@@ -127,7 +127,7 @@ const TravelPlan = () => {
                 track.type,
                 track.location.lng,
                 track.location.lat,
-                `${dayIndex + 1}-${idx + 1}`
+                `[${dayIndex + 1}-${idx + 1}]${track.title}`
               );
             }
           });
@@ -182,10 +182,10 @@ const TravelPlan = () => {
       labelEl.style.marginTop = "2px";
       labelEl.style.background = "rgba(0,0,0,0.7)";
       labelEl.style.color = "#fff";
-      labelEl.style.fontSize = "16px";
-      labelEl.style.fontWeight = "bold";
-      labelEl.style.padding = "2px 8px";
-      labelEl.style.borderRadius = "12px";
+      labelEl.style.fontSize = "13px";
+      labelEl.style.fontWeight = "400";
+      labelEl.style.padding = "2px 4px";
+      labelEl.style.borderRadius = "8px";
       labelEl.style.pointerEvents = "none";
       labelEl.style.width = "max-content";
       el.appendChild(labelEl);
@@ -208,38 +208,73 @@ const TravelPlan = () => {
   };
 
   const addToTracks = (title: string, description: string) => {
-    if (!currentTrackRef.current?.location?.lng) return;
+    if (!currentTrackRef.current?.location?.lng) {
+      console.error("No location data available");
+      return;
+    }
     if (!mapInstance) {
       alert("地图还没加载好，请稍后再试！");
       return;
     }
 
-    const newTracks = _.cloneDeep(tracks);
-    if (newTracks.length === 0) {
+    try {
+      const newTracks = _.cloneDeep(tracks);
+      
+      // 确保tracks数组存在
+      if (!Array.isArray(newTracks)) {
+        console.error("Tracks is not an array:", newTracks);
+        return;
+      }
+
       // 如果没有行程日，创建一个
-      newTracks.push({
-        day: "Day 1",
-        dayText: "第1天",
-        description: "",
-        markers: [],
+      if (newTracks.length === 0) {
+        newTracks.push({
+          day: "Day 1",
+          dayText: "第1天",
+          description: "",
+          markers: [],
+        });
+        // 重置currentDayIndex为0
+        setCurrentDayIndex(0);
+      }
+
+      // 确保currentDayIndex在有效范围内
+      const validDayIndex = Math.min(currentDayIndex, newTracks.length - 1);
+      
+      // 确保当前day存在且有markers数组
+      if (!newTracks[validDayIndex]) {
+        console.error("Day not found at index:", validDayIndex);
+        return;
+      }
+      
+      if (!Array.isArray(newTracks[validDayIndex].markers)) {
+        console.error("Markers is not an array for day:", validDayIndex);
+        newTracks[validDayIndex].markers = [];
+      }
+
+      // 安全地添加新标记
+      newTracks[validDayIndex].markers.push({
+        ...currentTrackRef.current,
+        title,
+        description,
       });
+
+      setTracks(newTracks);
+      // 添加地图标记
+      addMarkerToMap(
+        currentTrackRef.current.type,
+        currentTrackRef.current.location.lng,
+        currentTrackRef.current.location.lat,
+        `${validDayIndex + 1}-${newTracks[validDayIndex].markers.length}${title}`
+      );
+
+      // 清理当前引用
+      currentTrackRef.current = {};
+      
+    } catch (error) {
+      console.error("Error adding track:", error);
+      alert("添加标记点时出现错误，请重试");
     }
-
-    newTracks[currentDayIndex].markers.push({
-      ...currentTrackRef.current,
-      title,
-      description,
-    });
-
-    setTracks(newTracks);
-    addMarkerToMap(
-      currentTrackRef.current.type,
-      currentTrackRef.current.location.lng,
-      currentTrackRef.current.location.lat,
-      `${currentDayIndex + 1}-${newTracks[currentDayIndex].markers.length}`
-    );
-
-    currentTrackRef.current = {};
   };
 
   const onAddOneMarker = useCallback(
@@ -518,7 +553,7 @@ const TravelPlan = () => {
                 track.type,
                 track.location.lng,
                 track.location.lat,
-                `${dayIndex + 1}-${idx + 1}`
+                `${dayIndex + 1}-${idx + 1}${dayTrack.markers[idx].title}`
               );
             }
           });
@@ -528,9 +563,35 @@ const TravelPlan = () => {
   };
 
   const handleDeleteTrack = (dayIndex: number, trackIndex: number) => {
-    const newTracks = _.cloneDeep(tracks);
-    newTracks[dayIndex].markers.splice(trackIndex, 1);
-    setTracks(newTracks);
+    try {
+      if (!Array.isArray(tracks)) {
+        console.error("Tracks is not an array");
+        return;
+      }
+      
+      if (dayIndex < 0 || dayIndex >= tracks.length) {
+        console.error("Invalid day index:", dayIndex);
+        return;
+      }
+      
+      if (!tracks[dayIndex] || !Array.isArray(tracks[dayIndex].markers)) {
+        console.error("Invalid day or markers array:", dayIndex);
+        return;
+      }
+      
+      if (trackIndex < 0 || trackIndex >= tracks[dayIndex].markers.length) {
+        console.error("Invalid track index:", trackIndex);
+        return;
+      }
+
+      const newTracks = _.cloneDeep(tracks);
+      newTracks[dayIndex].markers.splice(trackIndex, 1);
+      setTracks(newTracks);
+      
+    } catch (error) {
+      console.error("Error deleting track:", error);
+      alert("删除标记点时出现错误");
+    }
   };
 
   if (isLoading) {

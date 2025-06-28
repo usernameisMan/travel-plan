@@ -109,12 +109,49 @@ const TravelTracks: React.FC<Props> = ({
   };
 
   const saveAllItinerary = async () => {
-    // call api
-    const newTracks = _.cloneDeep(tracks);
-    const response = await httpRequest("/api/itinerary", {
-      method: "POST",
-      body: JSON.stringify(newTracks),
-    });
+    try {
+      // 验证数据
+      if (!Array.isArray(tracks) || tracks.length === 0) {
+        alert("没有行程数据可保存");
+        return;
+      }
+
+      // 检查是否有有效的标记点
+      const hasValidMarkers = tracks.some(track => 
+        track && Array.isArray(track.markers) && track.markers.length > 0
+      );
+      
+      if (!hasValidMarkers) {
+        alert("请至少添加一些行程标记点后再保存");
+        return;
+      }
+
+      console.log("Saving itinerary:", tracks);
+      
+      const newTracks = _.cloneDeep(tracks);
+      const response = await httpRequest("/api/itinerary", {
+        method: "POST",
+        body: JSON.stringify(newTracks),
+      });
+      
+      console.log("Save response:", response);
+      alert("行程保存成功！");
+      
+    } catch (error) {
+      console.error("Error saving itinerary:", error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes('non-JSON response')) {
+          alert("服务器暂时不可用，请稍后重试");
+        } else if (error.message.includes('Network error')) {
+          alert("网络连接错误，请检查网络后重试");
+        } else {
+          alert(`保存失败: ${error.message}`);
+        }
+      } else {
+        alert("保存行程时出现未知错误，请重试");
+      }
+    }
   };
 
   const startEditingDay = (dayIndex: number) => {
