@@ -122,34 +122,36 @@ const TravelPlansMarket = () => {
         </div>
 
         {/* Search & filter bar */}
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-8 bg-white/80 rounded-xl shadow p-4">
-          <div className="flex-1 flex gap-2 w-full">
+        <div className="flex flex-col gap-4 mb-8 bg-white/80 rounded-xl shadow p-4">
+          <div className="flex flex-col md:flex-row gap-3 w-full">
             <input
-              className="flex-1 px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#35b368] bg-white"
+              className="flex-1 px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#35b368] bg-white text-base"
               placeholder="Search by title, author, or description..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
-            <input
-              type="number"
-              min={0}
-              className="w-24 px-2 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#35b368] bg-white"
-              placeholder="Min $"
-              value={minPrice}
-              onChange={e => setMinPrice(e.target.value)}
-            />
-            <input
-              type="number"
-              min={0}
-              className="w-24 px-2 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#35b368] bg-white"
-              placeholder="Max $"
-              value={maxPrice}
-              onChange={e => setMaxPrice(e.target.value)}
-            />
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min={0}
+                className="w-full md:w-24 px-3 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#35b368] bg-white text-base"
+                placeholder="Min $"
+                value={minPrice}
+                onChange={e => setMinPrice(e.target.value)}
+              />
+              <input
+                type="number"
+                min={0}
+                className="w-full md:w-24 px-3 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#35b368] bg-white text-base"
+                placeholder="Max $"
+                value={maxPrice}
+                onChange={e => setMaxPrice(e.target.value)}
+              />
+            </div>
           </div>
-          <div className="flex gap-2 items-center w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
             <select
-              className="px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#35b368] bg-white"
+              className="px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#35b368] bg-white text-base"
               value={sort}
               onChange={e => setSort(e.target.value)}
             >
@@ -158,9 +160,10 @@ const TravelPlansMarket = () => {
               <option value="price-desc">Price ↓</option>
               <option value="likes">Most Liked</option>
             </select>
-            <div className="hidden md:block border-l h-6 mx-2 border-gray-200"></div>
-            <button className="flex items-center gap-1 px-3 py-2 rounded-lg bg-[#35b368]/10 text-[#35b368] font-semibold hover:bg-[#35b368]/20 transition">
-              <i className="icon-[mdi--star-outline] text-lg" /> My Favorites
+            <button className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-[#35b368]/10 text-[#35b368] font-semibold hover:bg-[#35b368]/20 transition">
+              <i className="icon-[mdi--star-outline] text-lg" />
+              <span className="hidden sm:inline">My Favorites</span>
+              <span className="sm:hidden">Favorites</span>
             </button>
           </div>
         </div>
@@ -269,58 +272,64 @@ const TravelPlansMarket = () => {
 
       {/* Plan Detail Modal */}
       {showDetail && activePlan && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-8 relative">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
             <button
-              className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 text-2xl"
+              className="sticky top-4 right-4 ml-auto z-10 flex items-center justify-center w-8 h-8 bg-white rounded-full shadow-md text-gray-400 hover:text-gray-600 text-xl float-right"
               onClick={() => setShowDetail(false)}
             >
               ×
             </button>
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="relative w-full md:w-1/2 h-56 md:h-64 rounded-xl overflow-hidden">
-                <Image src={activePlan.cover} alt={activePlan.title} fill className="object-cover" />
-              </div>
-              <div className="flex-1 flex flex-col">
-                <div className="flex items-center gap-3 mb-2">
-                  <Image src={activePlan.avatar} alt={activePlan.author} width={40} height={40} className="rounded-full border border-[#e6f5ed] object-cover" />
-                  <span className="text-gray-700 font-medium text-base flex items-center gap-1">
-                    Seller: {activePlan.author}
-                    {activePlan.verified && <i className="icon-[mdi--check-decagram] text-[#35b368] text-lg" title="Verified" />}
-                  </span>
+            <div className="p-6 pt-2">
+              <div className="flex flex-col lg:flex-row gap-6">
+                <div className="relative w-full lg:w-1/2 h-56 lg:h-64 rounded-xl overflow-hidden">
+                  <Image src={activePlan.cover} alt={activePlan.title} fill className="object-cover" />
                 </div>
-                <button className="mb-2 px-4 py-1 rounded-full border border-[#35b368] text-[#35b368] text-xs font-semibold hover:bg-[#35b368]/10 transition w-fit">View Seller Profile</button>
-                <div className="text-2xl font-bold text-gray-900 mb-2">{activePlan.title}</div>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {activePlan.tags.map((tag: string) => (
-                    <span key={tag} className="px-3 py-1 rounded-full bg-[#f0f9f4] text-[#35b368] text-xs font-semibold border border-[#e6f5ed]">{tag}</span>
-                  ))}
+                <div className="flex-1 flex flex-col">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Image src={activePlan.avatar} alt={activePlan.author} width={40} height={40} className="rounded-full border border-[#e6f5ed] object-cover" />
+                    <span className="text-gray-700 font-medium text-base flex items-center gap-1">
+                      Seller: {activePlan.author}
+                      {activePlan.verified && <i className="icon-[mdi--check-decagram] text-[#35b368] text-lg" title="Verified" />}
+                    </span>
+                  </div>
+                  <button className="mb-3 px-4 py-2 rounded-full border border-[#35b368] text-[#35b368] text-sm font-semibold hover:bg-[#35b368]/10 transition w-fit">View Seller Profile</button>
+                  <div className="text-xl lg:text-2xl font-bold text-gray-900 mb-3">{activePlan.title}</div>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {activePlan.tags.map((tag: string) => (
+                      <span key={tag} className="px-3 py-1 rounded-full bg-[#f0f9f4] text-[#35b368] text-xs font-semibold border border-[#e6f5ed]">{tag}</span>
+                    ))}
+                  </div>
+                  <div className="text-gray-600 text-base mb-4">{activePlan.desc}</div>
+                  <div className="flex flex-wrap items-center gap-4 mb-4">
+                    <span className="text-[#35b368] font-bold text-xl">${activePlan.price}</span>
+                    <span className="flex items-center gap-1 text-gray-400 text-sm">
+                      <i className="icon-[mdi--heart-outline]" /> {activePlan.likes}
+                    </span>
+                    <span className="flex items-center gap-1 text-gray-400 text-sm">
+                      <i className="icon-[mdi--star-outline]" /> {activePlan.favorites}
+                    </span>
+                    <span className="flex items-center gap-1 text-gray-400 text-sm">
+                      <i className="icon-[mdi--comment-outline]" /> {activePlan.comments}
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    <button className="w-full py-3 rounded-lg bg-[#35b368] text-white font-semibold hover:bg-[#2d9a5a] transition text-lg shadow-md">
+                      Buy this plan
+                    </button>
+                    <button className="w-full py-3 rounded-lg border border-[#35b368] text-[#35b368] font-semibold hover:bg-[#35b368]/10 transition text-base">
+                      Add to cart
+                    </button>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button className="py-2 rounded-lg border border-gray-200 text-gray-500 font-semibold hover:bg-gray-100 transition text-base">
+                        Share
+                      </button>
+                      <button className="py-2 rounded-lg border border-blue-200 text-blue-500 font-semibold hover:bg-blue-50 transition text-base">
+                        Contact Seller
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-gray-600 text-base mb-4">{activePlan.desc}</div>
-                <div className="flex items-center gap-4 mb-4">
-                  <span className="text-[#35b368] font-bold text-xl">${activePlan.price}</span>
-                  <span className="flex items-center gap-1 text-gray-400 text-sm">
-                    <i className="icon-[mdi--heart-outline]" /> {activePlan.likes}
-                  </span>
-                  <span className="flex items-center gap-1 text-gray-400 text-sm">
-                    <i className="icon-[mdi--star-outline]" /> {activePlan.favorites}
-                  </span>
-                  <span className="flex items-center gap-1 text-gray-400 text-sm">
-                    <i className="icon-[mdi--comment-outline]" /> {activePlan.comments}
-                  </span>
-                </div>
-                <button className="w-full py-3 rounded-lg bg-[#35b368] text-white font-semibold hover:bg-[#2d9a5a] transition text-lg shadow-md mb-2">
-                  Buy this plan
-                </button>
-                <button className="w-full py-2 rounded-lg border border-[#35b368] text-[#35b368] font-semibold hover:bg-[#35b368]/10 transition text-base">
-                  Add to cart
-                </button>
-                <button className="w-full py-2 rounded-lg border border-gray-200 text-gray-500 font-semibold hover:bg-gray-100 transition text-base mt-2">
-                  Share
-                </button>
-                <button className="w-full py-2 rounded-lg border border-blue-200 text-blue-500 font-semibold hover:bg-blue-50 transition text-base mt-2">
-                  Contact Seller
-                </button>
               </div>
             </div>
           </div>
@@ -329,33 +338,37 @@ const TravelPlansMarket = () => {
 
       {/* Comment Modal */}
       {showComment && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
-            <button
-              className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 text-2xl"
-              onClick={() => setShowComment(false)}
-            >
-              ×
-            </button>
-            <div className="text-lg font-bold mb-2">Comments for {activePlan?.title}</div>
-            <div className="space-y-3 max-h-60 overflow-y-auto">
-              <div className="bg-gray-100 rounded p-2">
-                <div className="font-semibold text-sm">User A</div>
-                <div className="text-gray-600 text-sm">Very detailed, great route!</div>
-              </div>
-              <div className="bg-gray-100 rounded p-2">
-                <div className="font-semibold text-sm">User B</div>
-                <div className="text-gray-600 text-sm">Good value, rich content, recommended!</div>
-              </div>
-              {/* ...more static comments */}
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden relative">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+              <div className="text-lg font-bold truncate">Comments for {activePlan?.title}</div>
+              <button
+                className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 text-xl"
+                onClick={() => setShowComment(false)}
+              >
+                ×
+              </button>
             </div>
-            <div className="mt-4 flex gap-2">
-              <input
-                className="flex-1 px-3 py-2 rounded border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#35b368]"
-                placeholder="Write your comment..."
-                disabled
-              />
-              <button className="px-4 py-2 rounded bg-[#35b368] text-white font-semibold opacity-60 cursor-not-allowed">Send</button>
+            <div className="p-4">
+              <div className="space-y-3 max-h-60 overflow-y-auto mb-4">
+                <div className="bg-gray-100 rounded p-3">
+                  <div className="font-semibold text-sm mb-1">User A</div>
+                  <div className="text-gray-600 text-sm">Very detailed, great route!</div>
+                </div>
+                <div className="bg-gray-100 rounded p-3">
+                  <div className="font-semibold text-sm mb-1">User B</div>
+                  <div className="text-gray-600 text-sm">Good value, rich content, recommended!</div>
+                </div>
+                {/* ...more static comments */}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  className="flex-1 px-3 py-3 rounded border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#35b368] text-base"
+                  placeholder="Write your comment..."
+                  disabled
+                />
+                <button className="px-4 py-3 rounded bg-[#35b368] text-white font-semibold opacity-60 cursor-not-allowed">Send</button>
+              </div>
             </div>
           </div>
         </div>

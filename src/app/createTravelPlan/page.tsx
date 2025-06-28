@@ -29,6 +29,7 @@ const TravelPlan = () => {
   const [routeProfile, setRouteProfile] = useState<string>("driving");
   const [currentDayIndex, setCurrentDayIndex] = useState<number>(0);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isMobileView, setIsMobileView] = useState<"tracks" | "map">("map");
 
   useEffect(() => {
     if (isInitialized) return;
@@ -182,6 +183,7 @@ const TravelPlan = () => {
       labelEl.style.padding = "2px 8px";
       labelEl.style.borderRadius = "12px";
       labelEl.style.pointerEvents = "none";
+      labelEl.style.width = "max-content";
       el.appendChild(labelEl);
     }
 
@@ -540,29 +542,69 @@ const TravelPlan = () => {
   }
 
   return (
-    <div className={cn("w-full h-full flex")}>
+    <div className={cn("w-full h-full flex flex-col md:flex-row")}>
       <CreateMarkerDialog
         onOpenChange={onOpenDialogChange}
         open={createMarkerDialogIsOpen}
         setCreateMarkerDialogDisplayStatus={setOpenCreateMarkerDialog}
         onconfirm={addToTracks}
       />
-      <TravelTracks
-        createTracksPath={createTracksPath}
-        createAllTracksPath={createAllTracksPath}
-        tracks={tracks}
-        onTracksChange={handleTracksChange}
-        onDeleteTrack={handleDeleteTrack}
-        currentDayIndex={currentDayIndex}
-        onDaySelect={setCurrentDayIndex}
-      />
-      <MapboxMap
-        className={cn("grow")}
-        onAddOneMarker={onAddOneMarker}
-        onLoadMap={onLoadMap}
-        createMarkerDialogIsOpen={createMarkerDialogIsOpen}
-        openCreateMarkerDialog={openCreateMarkerDialogHandle}
-      />
+      
+      {/* Mobile Toggle Buttons */}
+      <div className="md:hidden flex bg-white border-b border-gray-200 p-2 gap-2">
+        <button
+          onClick={() => setIsMobileView("tracks")}
+          className={cn(
+            "flex-1 py-2 px-4 rounded-lg font-medium transition-colors",
+            isMobileView === "tracks"
+              ? "bg-[#35b368] text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          )}
+        >
+          行程规划
+        </button>
+        <button
+          onClick={() => setIsMobileView("map")}
+          className={cn(
+            "flex-1 py-2 px-4 rounded-lg font-medium transition-colors",
+            isMobileView === "map"
+              ? "bg-[#35b368] text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          )}
+        >
+          地图视图
+        </button>
+      </div>
+
+      {/* Travel Tracks Panel */}
+      <div className={cn(
+        "md:block",
+        isMobileView === "tracks" ? "block" : "hidden"
+      )}>
+        <TravelTracks
+          createTracksPath={createTracksPath}
+          createAllTracksPath={createAllTracksPath}
+          tracks={tracks}
+          onTracksChange={handleTracksChange}
+          onDeleteTrack={handleDeleteTrack}
+          currentDayIndex={currentDayIndex}
+          onDaySelect={setCurrentDayIndex}
+        />
+      </div>
+
+      {/* Map Panel */}
+      <div className={cn(
+        "flex-1 md:grow",
+        isMobileView === "map" ? "block" : "hidden"
+      )}>
+        <MapboxMap
+          className={cn("w-full h-full")}
+          onAddOneMarker={onAddOneMarker}
+          onLoadMap={onLoadMap}
+          createMarkerDialogIsOpen={createMarkerDialogIsOpen}
+          openCreateMarkerDialog={openCreateMarkerDialogHandle}
+        />
+      </div>
     </div>
   );
 };
