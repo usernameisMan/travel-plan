@@ -25,7 +25,7 @@ export async function httpRequest<T>(
     'Accept': 'application/json',
     ...(options.headers as Record<string, string> || {}),
   });
-
+  
   if (requiresAuth) {
     const token = useAuthStore.getState().token;
     if (!token) {

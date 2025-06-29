@@ -13,14 +13,18 @@ import _ from "lodash";
 import { DayTrack } from "@/components/traveTracks/Track";
 import { useAuth0 } from "@auth0/auth0-react";
 import Link from "next/link";
+import { http } from "@/lib/http";
+import { useAuthStore } from "@/store/authStore";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
 });
 
-const TravelPlan = () => {
-  const { isAuthenticated, isLoading, user } = useAuth0();
+const TravelPlanWithSearchParams = () => {
+  const { isAuthenticated, isLoading, user, getAccessTokenSilently } = useAuth0();
   const mapInstance = useMapStore((state) => state.mapboxInstance);
   const currentTrackRef = useRef<any>({});
   const [tracks, setTracks] = useState<DayTrack[]>([]);
@@ -30,48 +34,158 @@ const TravelPlan = () => {
   const [currentDayIndex, setCurrentDayIndex] = useState<number>(0);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isMobileView, setIsMobileView] = useState<"tracks" | "map">("map");
+  const searchParams = useSearchParams();
+  const packetId = searchParams.get('packetId');
+  const [currentPacket, setCurrentPacket] = useState<any>(null);
+  const [packetName, setPacketName] = useState<string>("我的旅行计划");
+  const [packetDescription, setPacketDescription] = useState<string>("精心规划的旅行路线");
+
+    // 当packet更新时，同步更新tracks数据
+  const handlePacketUpdate = (newPacket: any) => {
+    setCurrentPacket(newPacket);
+    
+    // 更新packet的基本信息
+    if (newPacket?.name) {
+      setPacketName(newPacket.name);
+    }
+    if (newPacket?.description) {
+      setPacketDescription(newPacket.description);
+    }
+    
+    // 如果新packet有itineraryDays数据，更新tracks
+    if (newPacket?.itineraryDays && Array.isArray(newPacket.itineraryDays)) {
+      const updatedTracks = newPacket.itineraryDays.map((item: any) => ({
+        ...item,
+        day: item.day || `Day ${item.dayNumber || 1}`,
+        dayText: item.name || item.dayText || `第${item.dayNumber || 1}天`,
+        markers: item.markers?.map((marker: any) => ({
+          ...marker,
+          location: {
+            lng: marker?.lng || marker?.location?.lng || 0,
+            lat: marker?.lat || marker?.location?.lat || 0,
+          },
+        })) || [],
+      }));
+      
+      setTracks(updatedTracks);
+      console.log("Updated tracks from packet:", updatedTracks);
+      
+      // 触发地图重新渲染标记点
+      setTimeout(() => {
+        if (mapInstance) {
+          onLoadMap();
+        }
+      }, 100);
+    }
+  };
+
+  const getMarkers = async (): Promise<any> => {
+    try {
+      // 确保 token 存在于 store 中
+      let token = useAuthStore.getState().token;
+      if (!token) {
+        // 如果 store 中没有 token，直接从 Auth0 获取并设置到 store
+        token = await getAccessTokenSilently();
+        useAuthStore.getState().setToken(token);
+      }
+      
+      // 如果有 packetId 参数，则获取指定的 packet，否则获取默认的 packet
+      const endpoint = packetId ? `/api/packets/${packetId}` : "/api/packets/7";
+      let data: any = {data: {}};
+      if(packetId) {
+        data = await http.get(endpoint) as any;
+      }
+      
+      if(data && data?.data) {
+        data.data.itineraryDays = data.data?.itineraryDays?.map((item: any) => {
+          return {
+            ...item,
+            day: item.day || `Day ${item.dayNumber || 1}`,
+            dayText: item.name || item.dayText || `第${item.dayNumber || 1}天`,
+            markers: item.markers?.map((marker: any) => {
+              return {
+                ...marker,
+                location: {
+                  lng: marker?.lng || 0,
+                  lat: marker?.lat || 0,
+                },
+              };
+            }) || [],
+          };
+        });
+      }
+      return data || '{}';
+    } catch (error) {
+      console.error("Error fetching markers:", error);
+      return '{}';
+    }
+  }
 
   useEffect(() => {
     if (isInitialized) return;
-    const savedTracks = localStorage?.getItem("currentTracks");
-    if (savedTracks) {
+    
+    const initializeTracks = async () => {
       try {
-        const parsedTracks = JSON.parse(savedTracks);
-        if (Array.isArray(parsedTracks) && parsedTracks.length > 0) {
-          setTracks(parsedTracks);
+        // 如果有 packetId，则获取现有数据；否则使用默认数据（创建模式）
+        if (packetId) {
+          const response = await getMarkers();
+          const savedTracks = response?.data?.itineraryDays || [];
+          setCurrentPacket(response?.data || null);
+          
+          // 设置packet的基本信息
+          if (response?.data?.name) {
+            setPacketName(response.data.name);
+          }
+          if (response?.data?.description) {
+            setPacketDescription(response.data.description);
+          }
+          
+          if (Array.isArray(savedTracks) && savedTracks.length > 0) {
+            setTracks(savedTracks);
+          } else {
+            setTracks([
+              {
+                day: "Day 1",
+                dayText: "第1天",
+                description: "",
+                markers: [],
+              },
+            ]);
+          }
         } else {
+          // 创建模式：使用默认数据
           setTracks([
             {
-              day: "one Day",
-              dayText: "first day",
+              day: "Day 1",
+              dayText: "第1天",
               description: "",
               markers: [],
             },
           ]);
+          setCurrentPacket(null);
+          // 重置为默认值
+          setPacketName("我的旅行计划");
+          setPacketDescription("精心规划的旅行路线");
         }
+        setIsInitialized(true);
       } catch (error) {
-        console.error("Error parsing saved tracks:", error);
+        console.error("Error fetching markers:", error);
+        // 如果 API 请求失败，设置默认的 tracks
         setTracks([
           {
-            day: "one Day",
-            dayText: "first day",
+            day: "Day 1",
+            dayText: "第1天",
             description: "",
             markers: [],
           },
         ]);
+        setCurrentPacket(null);
+        setIsInitialized(true);
       }
-    } else {
-      setTracks([
-        {
-          day: "one Day",
-          dayText: "first day",
-          description: "",
-          markers: [],
-        },
-      ]);
-    }
-    setIsInitialized(true);
-  }, [isInitialized]);
+    };
+
+    initializeTracks();
+  }, [isInitialized, packetId]);
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -675,6 +789,12 @@ const TravelPlan = () => {
           onDeleteTrack={handleDeleteTrack}
           currentDayIndex={currentDayIndex}
           onDaySelect={setCurrentDayIndex}
+          currentPacket={currentPacket}
+          onPacketUpdate={handlePacketUpdate}
+          packetName={packetName}
+          packetDescription={packetDescription}
+          onPacketNameChange={setPacketName}
+          onPacketDescriptionChange={setPacketDescription}
         />
       </div>
 
@@ -692,6 +812,23 @@ const TravelPlan = () => {
         />
       </div>
     </div>
+  );
+};
+
+const TravelPlan = () => {
+  return (
+    <Suspense fallback={
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-semibold text-gray-700 mb-4">
+            正在加载旅行计划...
+          </div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto"></div>
+        </div>
+      </div>
+    }>
+      <TravelPlanWithSearchParams />
+    </Suspense>
   );
 };
 
