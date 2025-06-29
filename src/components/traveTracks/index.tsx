@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense, useEffect } from "react";
 import Track, { DayTrack } from "./Track";
 import { cn } from "@/lib/utils";
 import { ScrollArea, Viewport } from "@radix-ui/react-scroll-area";
@@ -17,6 +17,13 @@ import { Plus, Pencil, Trash2, Map, Save } from "lucide-react";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../ui/dialog";
+import {
   DndContext,
   closestCenter,
   useSensor,
@@ -30,7 +37,10 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { SortableTrack } from "./SortableTrack";
-import { httpRequest } from "@/lib/http";
+import { http } from "@/lib/http";
+import { useAuthStore } from "@/store/authStore";
+import { useAuth0 } from "@auth0/auth0-react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface Props {
   className?: string;
@@ -41,9 +51,15 @@ interface Props {
   currentDayIndex: number;
   onDaySelect: (dayIndex: number) => void;
   createAllTracksPath?: (mode: string) => void;
+  currentPacket?: any;
+  onPacketUpdate?: (packet: any) => void;
+  packetName?: string;
+  packetDescription?: string;
+  onPacketNameChange?: (name: string) => void;
+  onPacketDescriptionChange?: (description: string) => void;
 }
 
-const TravelTracks: React.FC<Props> = ({
+const TravelTracksWithSearchParams: React.FC<Props> = ({
   className,
   tracks,
   onTracksChange,
@@ -51,12 +67,30 @@ const TravelTracks: React.FC<Props> = ({
   currentDayIndex,
   onDaySelect,
   createAllTracksPath,
+  currentPacket,
+  onPacketUpdate,
+  packetName = "我的旅行计划",
+  packetDescription = "精心规划的旅行路线",
+  onPacketNameChange,
+  onPacketDescriptionChange,
   ...props
 }) => {
   const [transportMode, setTransportMode] = useState<string>("driving");
   const [editingDay, setEditingDay] = useState<number | null>(null);
   const [dayTitle, setDayTitle] = useState("");
   const [dayDescription, setDayDescription] = useState("");
+  const [isEditingPacket, setIsEditingPacket] = useState(false);
+  const [tempPacketName, setTempPacketName] = useState(packetName);
+  const [tempPacketDescription, setTempPacketDescription] = useState(packetDescription);
+  const { getAccessTokenSilently } = useAuth0();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // 同步临时编辑状态
+  useEffect(() => {
+    setTempPacketName(packetName);
+    setTempPacketDescription(packetDescription);
+  }, [packetName, packetDescription]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -108,6 +142,67 @@ const TravelTracks: React.FC<Props> = ({
     onTracksChange?.([...tracks, newDay]);
   };
 
+  // 数据映射函数：将前端数据结构转换为后端需要的结构
+  const mapToBackendFormat = (tracks: DayTrack[], isUpdate: boolean = false) => {
+    if (isUpdate && currentPacket) {
+      // 更新模式：保留原有结构并更新数据
+      return {
+        ...currentPacket,
+        name: packetName || currentPacket.name || "我的旅行计划",
+        description: packetDescription || currentPacket.description || "精心规划的旅行路线",
+        cost: currentPacket.cost || "0.00",
+        currencyCode: currentPacket.currencyCode || "CNY",
+        updatedAt: new Date().toISOString(),
+        itineraryDays: tracks.map((track, index) => {
+          const existingDay = currentPacket.itineraryDays?.[index];
+          return {
+            ...existingDay,
+            name: track.dayText || track.day,
+            description: track.description || "",
+            dayNumber: String(index + 1),
+            sortOrder: index,
+            markers: track.markers?.map((marker, markerIndex) => {
+              const existingMarker = existingDay?.markers?.[markerIndex];
+              return {
+                ...existingMarker,
+                type: marker.type,
+                location: {
+                  lng: String(marker.location.lng),
+                  lat: String(marker.location.lat)
+                },
+                title: marker.title,
+                description: marker.description || "",
+                sortOrder: markerIndex
+              };
+            }) || []
+          };
+        })
+      };
+    } else {
+      // 创建模式：简洁的数据结构
+      return {
+        name: packetName || "我的旅行计划",
+        description: packetDescription || "精心规划的旅行路线",
+        cost: "0.00",
+        currencyCode: "CNY",
+        itineraryDays: tracks.map((track, index) => ({
+          day: track.day,
+          dayText: track.dayText || track.day,
+          description: track.description || "",
+          markers: track.markers?.map((marker, markerIndex) => ({
+            type: marker.type,
+            location: {
+              lng: String(marker.location.lng),
+              lat: String(marker.location.lat)
+            },
+            title: marker.title,
+            description: marker.description || ""
+          })) || []
+        }))
+      };
+    }
+  };
+
   const saveAllItinerary = async () => {
     try {
       // 验证数据
@@ -126,16 +221,65 @@ const TravelTracks: React.FC<Props> = ({
         return;
       }
 
+      // 确保有token
+      let token = useAuthStore.getState().token;
+      if (!token) {
+        token = await getAccessTokenSilently();
+        useAuthStore.getState().setToken(token);
+      }
+
       console.log("Saving itinerary:", tracks);
       
-      const newTracks = _.cloneDeep(tracks);
-      const response = await httpRequest("/api/itinerary", {
-        method: "POST",
-        body: JSON.stringify(newTracks),
-      });
+      const isUpdate = !!currentPacket?.id;
+      const payload = mapToBackendFormat(tracks, isUpdate);
       
-      console.log("Save response:", response);
-      alert("行程保存成功！");
+      let response;
+      if (isUpdate) {
+        // 更新现有packet
+        response = await http.put(`/api/packets/${currentPacket.id}`, payload);
+        console.log("Update response:", response);
+        alert("行程更新成功！");
+      } else {
+        // 创建新packet
+        response = await http.post("/api/packets", payload);
+        console.log("Create response:", response);
+        
+        if (response && (response as any).data?.id) {
+          const newPacketId = (response as any).data.id;
+          
+          try {
+            // 创建成功后，重新获取完整的packet数据以确保所有ID正确
+            const fullPacketResponse = await http.get(`/api/packets/${newPacketId}`);
+            console.log("Full packet data:", fullPacketResponse);
+            
+            if (fullPacketResponse && (fullPacketResponse as any).data) {
+              // 更新当前packet状态为完整数据
+              onPacketUpdate?.((fullPacketResponse as any).data);
+              
+              // 更新URL，添加packetId参数
+              const newUrl = `${window.location.pathname}?packetId=${newPacketId}`;
+              router.push(newUrl);
+              
+              alert("行程创建成功！");
+            } else {
+              // 如果获取完整数据失败，至少更新基本信息
+              onPacketUpdate?.((response as any).data);
+              const newUrl = `${window.location.pathname}?packetId=${newPacketId}`;
+              router.push(newUrl);
+              alert("行程创建成功！");
+            }
+          } catch (getError) {
+            console.error("Error fetching full packet data:", getError);
+            // 如果获取完整数据失败，至少更新基本信息
+            onPacketUpdate?.((response as any).data);
+            const newUrl = `${window.location.pathname}?packetId=${newPacketId}`;
+            router.push(newUrl);
+            alert("行程创建成功！");
+          }
+        } else {
+          alert("行程创建成功，但未获取到ID");
+        }
+      }
       
     } catch (error) {
       console.error("Error saving itinerary:", error);
@@ -145,6 +289,8 @@ const TravelTracks: React.FC<Props> = ({
           alert("服务器暂时不可用，请稍后重试");
         } else if (error.message.includes('Network error')) {
           alert("网络连接错误，请检查网络后重试");
+        } else if (error.message.includes('401')) {
+          alert("认证失败，请重新登录");
         } else {
           alert(`保存失败: ${error.message}`);
         }
@@ -180,21 +326,54 @@ const TravelTracks: React.FC<Props> = ({
     }
   };
 
+  const handleSavePacketEdit = () => {
+    onPacketNameChange?.(tempPacketName);
+    onPacketDescriptionChange?.(tempPacketDescription);
+    setIsEditingPacket(false);
+  };
+
+  const handleCancelPacketEdit = () => {
+    setTempPacketName(packetName);
+    setTempPacketDescription(packetDescription);
+    setIsEditingPacket(false);
+  };
+
   return (
     <div className="w-full md:w-[400px] h-full flex flex-col bg-white border-r border-gray-200">
       <div className="p-3 md:p-4 border-b border-gray-200">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
-          <h2 className="text-lg font-semibold">行程安排</h2>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={saveAllItinerary}
-            className="flex items-center gap-1 bg-[#35b368] hover:bg-[#2d9a5a] w-full sm:w-auto"
-          >
-            <Save className="h-4 w-4" />
-            <span className="hidden sm:inline">Save All Itinerary</span>
-            <span className="sm:hidden">Save</span>
-          </Button>
+        <div className="flex flex-col gap-3 mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold">{packetName}</h2>
+              <p className="text-sm text-gray-600 truncate">{packetDescription}</p>
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setTempPacketName(packetName);
+                  setTempPacketDescription(packetDescription);
+                  setIsEditingPacket(true);
+                }}
+                className="flex items-center gap-1 flex-1 sm:flex-none"
+              >
+                <Pencil className="h-4 w-4" />
+                <span className="hidden sm:inline">编辑计划</span>
+                <span className="sm:hidden">编辑</span>
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={saveAllItinerary}
+                className="flex items-center gap-1 bg-[#35b368] hover:bg-[#2d9a5a] flex-1 sm:flex-none"
+              >
+                <Save className="h-4 w-4" />
+                <span className="hidden sm:inline">Save</span>
+                <span className="sm:hidden">Save</span>
+              </Button>
+            </div>
+          </div>
         </div>
         
         <div className="flex flex-col gap-3">
@@ -384,7 +563,64 @@ const TravelTracks: React.FC<Props> = ({
           </div>
         )}
       </div>
+
+      {/* Packet Edit Dialog */}
+      <Dialog open={isEditingPacket} onOpenChange={setIsEditingPacket}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>编辑旅行计划</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="packet-name" className="text-sm font-medium">
+                计划名称
+              </label>
+              <Input
+                id="packet-name"
+                value={tempPacketName}
+                onChange={(e) => setTempPacketName(e.target.value)}
+                placeholder="输入旅行计划名称"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="packet-description" className="text-sm font-medium">
+                计划描述
+              </label>
+              <Textarea
+                id="packet-description"
+                value={tempPacketDescription}
+                onChange={(e) => setTempPacketDescription(e.target.value)}
+                placeholder="输入旅行计划描述"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelPacketEdit}>
+              取消
+            </Button>
+            <Button onClick={handleSavePacketEdit}>
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+};
+
+const TravelTracks: React.FC<Props> = (props) => {
+  return (
+    <Suspense fallback={
+      <div className="w-full md:w-[400px] h-full flex items-center justify-center bg-white border-r border-gray-200">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#35b368] mx-auto mb-2"></div>
+          <p className="text-sm text-gray-600">正在加载...</p>
+        </div>
+      </div>
+    }>
+      <TravelTracksWithSearchParams {...props} />
+    </Suspense>
   );
 };
 

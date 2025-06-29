@@ -68,14 +68,14 @@ function NavigationBar() {
               </NavigationMenuItem>
               {isAuthenticated && (
                 <NavigationMenuItem>
-                  <Link href="/createTravelPlan" legacyBehavior passHref>
+                  <Link href="/packets" legacyBehavior passHref>
                     <NavigationMenuLink
                       className={cn(
                         navigationMenuTriggerStyle(),
-                        passName === "/createTravelPlan" && "text-[#35b368]"
+                        passName === "/packets" && "text-[#35b368]"
                       )}
                     >
-                      Create Travel Plan
+                      My Travel Plans
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
@@ -149,16 +149,16 @@ function NavigationBar() {
             </Link>
             {isAuthenticated && (
               <Link
-                href="/createTravelPlan"
+                href="/packets"
                 className={cn(
                   "block px-3 py-2 rounded-md text-base font-medium transition-colors",
-                  passName === "/createTravelPlan"
+                  passName === "/packets"
                     ? "text-[#35b368] bg-[#35b368]/10"
                     : "text-gray-700 hover:text-[#35b368] hover:bg-[#35b368]/5"
                 )}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Create Travel Plan
+                My Travel Plans
               </Link>
             )}
           </div>

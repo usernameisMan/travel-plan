@@ -31,7 +31,7 @@ export default function AuthButton() {
     if (token) {
       const getUserInfo = async () => {
         try {
-          const userInfo = await http.get("/");
+
         } catch (error) {
           console.error("Failed to get user info:", error);
         }
