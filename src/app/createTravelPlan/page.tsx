@@ -34,6 +34,7 @@ const TravelPlanWithSearchParams = () => {
   const [currentDayIndex, setCurrentDayIndex] = useState<number>(0);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isMobileView, setIsMobileView] = useState<"tracks" | "map">("map");
+  const [hasInitializedMap, setHasInitializedMap] = useState(false);
   const searchParams = useSearchParams();
   const packetId = searchParams.get('packetId');
   const [currentPacket, setCurrentPacket] = useState<any>(null);
@@ -126,6 +127,9 @@ const TravelPlanWithSearchParams = () => {
     
     const initializeTracks = async () => {
       try {
+        // Reset map initialization state when changing packets
+        setHasInitializedMap(false);
+        
         // If has packetId, get existing data; otherwise use default data (create mode)
         if (packetId) {
           const response = await getMarkers();
@@ -187,6 +191,12 @@ const TravelPlanWithSearchParams = () => {
     initializeTracks();
   }, [isInitialized, packetId]);
 
+  // Reset initialization state when packetId changes
+  useEffect(() => {
+    setIsInitialized(false);
+    setHasInitializedMap(false);
+  }, [packetId]);
+
   useEffect(() => {
     if (!isInitialized) return;
     if (Array.isArray(tracks) && tracks.length > 0) {
@@ -202,6 +212,92 @@ const TravelPlanWithSearchParams = () => {
     if (!isInitialized || !mapInstance) return;
     onLoadMap();
   }, [tracks, mapInstance, isInitialized]);
+
+  // Get user location
+  const getUserLocation = useCallback(() => {
+    return new Promise<{ lng: number; lat: number }>((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("Geolocation is not supported"));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            lng: position.coords.longitude,
+            lat: position.coords.latitude,
+          });
+        },
+        (error) => {
+          console.warn("Geolocation error:", error);
+          // Default to a central location if geolocation fails
+          resolve({ lng: 116.4074, lat: 39.9042 }); // Beijing coordinates as fallback
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 600000, // 10 minutes
+        }
+      );
+    });
+  }, []);
+
+  // Find first marker in all tracks
+  const findFirstMarker = useCallback(() => {
+    if (!Array.isArray(tracks) || tracks.length === 0) return null;
+    
+    for (const dayTrack of tracks) {
+      if (dayTrack && Array.isArray(dayTrack.markers) && dayTrack.markers.length > 0) {
+        const firstMarker = dayTrack.markers[0];
+        if (firstMarker && firstMarker.location) {
+          return {
+            lng: parseFloat(firstMarker.location.lng),
+            lat: parseFloat(firstMarker.location.lat),
+          };
+        }
+      }
+    }
+    return null;
+  }, [tracks]);
+
+  // Initialize map position
+  const initializeMapPosition = useCallback(async () => {
+    if (!mapInstance || hasInitializedMap) return;
+
+    const firstMarker = findFirstMarker();
+    
+    if (firstMarker) {
+      // If we have existing data, fly to first marker
+      console.log("Flying to first marker:", firstMarker);
+      mapInstance.flyTo({
+        center: [firstMarker.lng, firstMarker.lat],
+        zoom: 13,
+        duration: 2000,
+      });
+    } else if (!packetId) {
+      // If it's a new plan (no packetId), use user location
+      try {
+        console.log("Getting user location for new plan...");
+        const userLocation = await getUserLocation();
+        console.log("Flying to user location:", userLocation);
+        mapInstance.flyTo({
+          center: [userLocation.lng, userLocation.lat],
+          zoom: 13,
+          duration: 2000,
+        });
+      } catch (error) {
+        console.error("Failed to get user location:", error);
+        // Fallback to default location
+        mapInstance.flyTo({
+          center: [116.4074, 39.9042], // Beijing
+          zoom: 10,
+          duration: 2000,
+        });
+      }
+    }
+    
+    setHasInitializedMap(true);
+  }, [mapInstance, hasInitializedMap, findFirstMarker, getUserLocation, packetId]);
 
   const onLoadMap = useCallback(() => {
     if (!mapInstance) return;
@@ -248,7 +344,19 @@ const TravelPlanWithSearchParams = () => {
         }
       });
     }
-  }, [mapInstance, tracks]);
+
+    // Initialize map position after loading markers
+    if (isInitialized) {
+      initializeMapPosition();
+    }
+  }, [mapInstance, tracks, isInitialized, initializeMapPosition]);
+
+  // Trigger map initialization when tracks change (for cases where data loads after map)
+  useEffect(() => {
+    if (mapInstance && isInitialized && !hasInitializedMap) {
+      initializeMapPosition();
+    }
+  }, [mapInstance, isInitialized, hasInitializedMap, initializeMapPosition]);
 
   const openCreateMarkerDialogHandle = () => {
     setOpenCreateMarkerDialog(true);

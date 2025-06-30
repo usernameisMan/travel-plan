@@ -81,7 +81,8 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
   const [dayDescription, setDayDescription] = useState("");
   const [isEditingPacket, setIsEditingPacket] = useState(false);
   const [tempPacketName, setTempPacketName] = useState(packetName);
-  const [tempPacketDescription, setTempPacketDescription] = useState(packetDescription);
+  const [tempPacketDescription, setTempPacketDescription] =
+    useState(packetDescription);
   const { getAccessTokenSilently } = useAuth0();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -111,10 +112,13 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
     const newIndex = over.id as number;
 
     const newTracks = _.cloneDeep(tracks);
-    if (!newTracks[currentDayIndex] || !Array.isArray(newTracks[currentDayIndex].markers)) {
+    if (
+      !newTracks[currentDayIndex] ||
+      !Array.isArray(newTracks[currentDayIndex].markers)
+    ) {
       return;
     }
-    
+
     const currentDayTracks = newTracks[currentDayIndex].markers;
 
     // Use array methods to move element directly
@@ -143,13 +147,19 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
   };
 
   // Data mapping function: Convert frontend data structure to backend required structure
-  const mapToBackendFormat = (tracks: DayTrack[], isUpdate: boolean = false) => {
+  const mapToBackendFormat = (
+    tracks: DayTrack[],
+    isUpdate: boolean = false
+  ) => {
     if (isUpdate && currentPacket) {
       // Update mode: Preserve original structure and update data
       return {
         ...currentPacket,
         name: packetName || currentPacket.name || "My Travel Plan",
-        description: packetDescription || currentPacket.description || "Carefully planned travel route",
+        description:
+          packetDescription ||
+          currentPacket.description ||
+          "Carefully planned travel route",
         cost: currentPacket.cost || "0.00",
         currencyCode: currentPacket.currencyCode || "CNY",
         updatedAt: new Date().toISOString(),
@@ -161,22 +171,23 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
             description: track.description || "",
             dayNumber: String(index + 1),
             sortOrder: index,
-            markers: track.markers?.map((marker, markerIndex) => {
-              const existingMarker = existingDay?.markers?.[markerIndex];
-              return {
-                ...existingMarker,
-                type: marker.type,
-                location: {
-                  lng: String(marker.location.lng),
-                  lat: String(marker.location.lat)
-                },
-                title: marker.title,
-                description: marker.description || "",
-                sortOrder: markerIndex
-              };
-            }) || []
+            markers:
+              track.markers?.map((marker, markerIndex) => {
+                const existingMarker = existingDay?.markers?.[markerIndex];
+                return {
+                  ...existingMarker,
+                  type: marker.type,
+                  location: {
+                    lng: String(marker.location.lng),
+                    lat: String(marker.location.lat),
+                  },
+                  title: marker.title,
+                  description: marker.description || "",
+                  sortOrder: markerIndex,
+                };
+              }) || [],
           };
-        })
+        }),
       };
     } else {
       // Create mode: Clean data structure
@@ -189,16 +200,17 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
           day: track.day,
           dayText: track.dayText || track.day,
           description: track.description || "",
-          markers: track.markers?.map((marker, markerIndex) => ({
-            type: marker.type,
-            location: {
-              lng: String(marker.location.lng),
-              lat: String(marker.location.lat)
-            },
-            title: marker.title,
-            description: marker.description || ""
-          })) || []
-        }))
+          markers:
+            track.markers?.map((marker, markerIndex) => ({
+              type: marker.type,
+              location: {
+                lng: String(marker.location.lng),
+                lat: String(marker.location.lat),
+              },
+              title: marker.title,
+              description: marker.description || "",
+            })) || [],
+        })),
       };
     }
   };
@@ -212,10 +224,11 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
       }
 
       // Check if there are valid markers
-      const hasValidMarkers = tracks.some(track => 
-        track && Array.isArray(track.markers) && track.markers.length > 0
+      const hasValidMarkers = tracks.some(
+        (track) =>
+          track && Array.isArray(track.markers) && track.markers.length > 0
       );
-      
+
       if (!hasValidMarkers) {
         alert("Please add at least some itinerary markers before saving");
         return;
@@ -229,10 +242,10 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
       }
 
       console.log("Saving itinerary:", tracks);
-      
+
       const isUpdate = !!currentPacket?.id;
       const payload = mapToBackendFormat(tracks, isUpdate);
-      
+
       let response;
       if (isUpdate) {
         // Update existing packet
@@ -243,23 +256,25 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
         // Create new packet
         response = await http.post("/api/packets", payload);
         console.log("Create response:", response);
-        
+
         if (response && (response as any).data?.id) {
           const newPacketId = (response as any).data.id;
-          
+
           try {
             // After successful creation, refetch complete packet data to ensure all IDs are correct
-            const fullPacketResponse = await http.get(`/api/packets/${newPacketId}`);
+            const fullPacketResponse = await http.get(
+              `/api/packets/${newPacketId}`
+            );
             console.log("Full packet data:", fullPacketResponse);
-            
+
             if (fullPacketResponse && (fullPacketResponse as any).data) {
               // Update current packet state to complete data
               onPacketUpdate?.((fullPacketResponse as any).data);
-              
+
               // Update URL, add packetId parameter
               const newUrl = `${window.location.pathname}?packetId=${newPacketId}`;
               router.push(newUrl);
-              
+
               alert("Itinerary created successfully!");
             } else {
               // If fetching complete data fails, at least update basic info
@@ -280,22 +295,23 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
           alert("Itinerary created successfully, but ID not retrieved");
         }
       }
-      
     } catch (error) {
       console.error("Error saving itinerary:", error);
-      
+
       if (error instanceof Error) {
-        if (error.message.includes('non-JSON response')) {
+        if (error.message.includes("non-JSON response")) {
           alert("Server temporarily unavailable, please try again later");
-        } else if (error.message.includes('Network error')) {
+        } else if (error.message.includes("Network error")) {
           alert("Network connection error, please check network and try again");
-        } else if (error.message.includes('401')) {
+        } else if (error.message.includes("401")) {
           alert("Authentication failed, please log in again");
         } else {
           alert(`Save failed: ${error.message}`);
         }
       } else {
-        alert("Unknown error occurred while saving itinerary, please try again");
+        alert(
+          "Unknown error occurred while saving itinerary, please try again"
+        );
       }
     }
   };
@@ -345,7 +361,9 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div className="flex-1">
               <h2 className="text-lg font-semibold">{packetName}</h2>
-              <p className="text-sm text-gray-600 truncate">{packetDescription}</p>
+              <p className="text-sm text-gray-600 truncate">
+                {packetDescription}
+              </p>
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
               <Button
@@ -375,8 +393,32 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
             </div>
           </div>
         </div>
-        
         <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Select value={transportMode} onValueChange={setTransportMode}>
+              <SelectTrigger className="w-full sm:w-[120px]">
+                <SelectValue placeholder="Select Transportation" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="driving">Driving</SelectItem>
+                <SelectItem value="walking">Walking</SelectItem>
+                <SelectItem value="cycling">Cycling</SelectItem>
+                <SelectItem value="transit">Transit</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => createAllTracksPath?.(transportMode)}
+              className="flex items-center gap-1 whitespace-nowrap"
+            >
+              <Map className="h-4 w-4" />
+              <span className="hidden lg:inline">Generate Route</span>
+              <span className="lg:hidden">Route</span>
+            </Button>
+          </div>
+        </div>
+        <div className="flex flex-col gap-3 mt-3">
           <div className="flex flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
@@ -385,48 +427,25 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
               className="flex items-center justify-center gap-1 w-full sm:w-auto"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Add Itinerary Day</span>
+              <span className="hidden sm:inline">Add Day</span>
               <span className="sm:hidden">Add Day</span>
             </Button>
-            
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Select value={transportMode} onValueChange={setTransportMode}>
-                <SelectTrigger className="w-full sm:w-[120px]">
-                  <SelectValue placeholder="Select Transportation" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="driving">Driving</SelectItem>
-                  <SelectItem value="walking">Walking</SelectItem>
-                  <SelectItem value="cycling">Cycling</SelectItem>
-                  <SelectItem value="transit">Transit</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => createAllTracksPath?.(transportMode)}
-                className="flex items-center gap-1 whitespace-nowrap"
-              >
-                <Map className="h-4 w-4" />
-                <span className="hidden lg:inline">Generate Route</span>
-                <span className="lg:hidden">Route</span>
-              </Button>
-            </div>
           </div>
         </div>
-        
+
         <div className="flex gap-2 overflow-x-auto pb-2 mt-3 scrollbar-hide">
-          {Array.isArray(tracks) && tracks.map((dayTrack, index) => (
-            <Button
-              key={index}
-              variant={currentDayIndex === index ? "default" : "outline"}
-              size="sm"
-              onClick={() => onDaySelect(index)}
-              className="whitespace-nowrap flex-shrink-0"
-            >
-              {dayTrack.dayText}
-            </Button>
-          ))}
+          {Array.isArray(tracks) &&
+            tracks.map((dayTrack, index) => (
+              <Button
+                key={index}
+                variant={currentDayIndex === index ? "default" : "outline"}
+                size="sm"
+                onClick={() => onDaySelect(index)}
+                className="whitespace-nowrap flex-shrink-0"
+              >
+                {dayTrack.dayText}
+              </Button>
+            ))}
         </div>
       </div>
 
@@ -538,24 +557,32 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={tracks[currentDayIndex] && Array.isArray(tracks[currentDayIndex].markers) 
-                    ? tracks[currentDayIndex].markers.map((_, index) => index)
-                    : []
+                  items={
+                    tracks[currentDayIndex] &&
+                    Array.isArray(tracks[currentDayIndex].markers)
+                      ? tracks[currentDayIndex].markers.map((_, index) => index)
+                      : []
                   }
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="space-y-2">
-                    {tracks[currentDayIndex] && Array.isArray(tracks[currentDayIndex].markers) 
-                      ? tracks[currentDayIndex].markers.map((track, index) => (
-                          <SortableTrack
-                            key={index}
-                            id={index}
-                            track={track}
-                            onDelete={() => onDeleteTrack?.(currentDayIndex, index)}
-                          />
-                        ))
-                      : <div className="text-gray-500 text-sm">No tracks available</div>
-                    }
+                    {tracks[currentDayIndex] &&
+                    Array.isArray(tracks[currentDayIndex].markers) ? (
+                      tracks[currentDayIndex].markers.map((track, index) => (
+                        <SortableTrack
+                          key={index}
+                          id={index}
+                          track={track}
+                          onDelete={() =>
+                            onDeleteTrack?.(currentDayIndex, index)
+                          }
+                        />
+                      ))
+                    ) : (
+                      <div className="text-gray-500 text-sm">
+                        No tracks available
+                      </div>
+                    )}
                   </div>
                 </SortableContext>
               </DndContext>
@@ -583,7 +610,10 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="packet-description" className="text-sm font-medium">
+              <label
+                htmlFor="packet-description"
+                className="text-sm font-medium"
+              >
                 Plan Description
               </label>
               <Textarea
@@ -599,9 +629,7 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
             <Button variant="outline" onClick={handleCancelPacketEdit}>
               Cancel
             </Button>
-            <Button onClick={handleSavePacketEdit}>
-              Save
-            </Button>
+            <Button onClick={handleSavePacketEdit}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -611,14 +639,16 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
 
 const TravelTracks: React.FC<Props> = (props) => {
   return (
-    <Suspense fallback={
-      <div className="w-full md:w-[400px] h-full flex items-center justify-center bg-white border-r border-gray-200">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#35b368] mx-auto mb-2"></div>
-          <p className="text-sm text-gray-600">Loading...</p>
+    <Suspense
+      fallback={
+        <div className="w-full md:w-[400px] h-full flex items-center justify-center bg-white border-r border-gray-200">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#35b368] mx-auto mb-2"></div>
+            <p className="text-sm text-gray-600">Loading...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <TravelTracksWithSearchParams {...props} />
     </Suspense>
   );

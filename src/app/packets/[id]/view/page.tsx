@@ -17,7 +17,7 @@ import { http } from "@/lib/http";
 import { useAuthStore } from "@/store/authStore";
 import { useMapStore } from "@/app/store/mapStore";
 import MapboxMap from "@/components/mapbox";
-import { ArrowLeft, Map, Eye } from "lucide-react";
+import { ArrowLeft, Map, Eye, ChevronDown, ChevronUp, MapPin, Navigation } from "lucide-react";
 import Link from "next/link";
 import mapboxgl from "mapbox-gl";
 
@@ -47,6 +47,7 @@ const PacketViewPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tracks, setTracks] = useState<DayTrack[]>([]);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Fetch packet data
   const fetchPacket = useCallback(async () => {
@@ -178,6 +179,17 @@ const PacketViewPage = () => {
     });
   }, [mapInstance]);
 
+  // Focus on specific marker
+  const focusOnMarker = useCallback((marker: any) => {
+    if (!mapInstance || !marker.location) return;
+    
+    mapInstance.flyTo({
+      center: [marker.location.lng, marker.location.lat],
+      zoom: 16,
+      duration: 1000,
+    });
+  }, [mapInstance]);
+
   // Display selected day's markers and routes
   const displayDay = useCallback(async (dayIndex: number) => {
     if (!mapInstance || !tracks[dayIndex] || !tracks[dayIndex].markers) return;
@@ -295,6 +307,7 @@ const PacketViewPage = () => {
   const handleDayChange = (dayIndex: string) => {
     const index = parseInt(dayIndex);
     setSelectedDay(index);
+    setIsExpanded(false); // Collapse when switching days
     displayDay(index);
   };
 
@@ -362,53 +375,31 @@ const PacketViewPage = () => {
     );
   }
 
+  const currentTrack = tracks[selectedDay];
+  const currentMarkers = currentTrack?.markers || [];
+
   return (
     <div className="w-full h-screen flex flex-col bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-4">
+      <div className="bg-white border-b border-gray-200 px-4 py-3 shadow-sm">
+        <div className="flex items-center gap-3">
           <Link href="/packets">
             <Button variant="ghost" size="sm" className="flex items-center gap-2">
               <ArrowLeft className="h-4 w-4" />
               Back
             </Button>
           </Link>
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">{packet.name}</h1>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg font-semibold text-gray-900 truncate" title={packet.name}>
+              {packet.name}
+            </h1>
             {packet.description && (
-              <p className="text-sm text-gray-600">{packet.description}</p>
+              <p className="text-sm text-gray-600 truncate" title={packet.description}>
+                {packet.description}
+              </p>
             )}
           </div>
         </div>
-
-        {/* Day Selection */}
-        {tracks.length > 0 && (
-          <Card className="bg-white shadow-sm">
-            <CardContent className="p-3">
-              <div className="flex items-center gap-3">
-                <Map className="h-5 w-5 text-[#35b368]" />
-                <Select value={selectedDay.toString()} onValueChange={handleDayChange}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select Day" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tracks.map((track, index) => (
-                      <SelectItem key={index} value={index.toString()}>
-                        {track.dayText} ({track.markers?.length || 0} stops)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {tracks[selectedDay] && (
-                  <div className="text-sm text-gray-600">
-                    <Eye className="h-4 w-4 inline mr-1" />
-                    Viewing: {tracks[selectedDay].dayText}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
 
       {/* Map Container */}
@@ -421,16 +412,118 @@ const PacketViewPage = () => {
           openCreateMarkerDialog={() => {}} // Not needed for view-only
         />
         
-        {/* Day Info Overlay */}
-        {tracks[selectedDay] && (
-          <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-4 max-w-sm">
-            <h3 className="font-semibold text-gray-900 mb-2">{tracks[selectedDay].dayText}</h3>
-            {tracks[selectedDay].description && (
-              <p className="text-sm text-gray-600 mb-3">{tracks[selectedDay].description}</p>
-            )}
-            <div className="text-sm text-gray-500">
-              {tracks[selectedDay].markers?.length || 0} stops planned
+        {/* Unified Navigation Panel */}
+        {tracks.length > 0 && (
+          <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg w-80 max-h-[calc(100vh-120px)] flex flex-col">
+            {/* Day Selection Header */}
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center gap-3 mb-3">
+                <Map className="h-5 w-5 text-[#35b368]" />
+                <div className="flex-1">
+                  <Select value={selectedDay.toString()} onValueChange={handleDayChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select Day" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tracks.map((track, index) => (
+                        <SelectItem key={index} value={index.toString()}>
+                          <div className="flex items-center justify-between w-full">
+                            <span>{track.dayText}</span>
+                            <span className="text-gray-500 ml-2">({track.markers?.length || 0} stops)</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="flex-shrink-0"
+                >
+                  {isExpanded ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              
+              {/* Current Day Summary */}
+              {currentTrack && (
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Eye className="h-4 w-4" />
+                    <span>{currentTrack.dayText}</span>
+                  </div>
+                  <span className="text-gray-500">{currentMarkers.length} stops</span>
+                </div>
+              )}
             </div>
+
+            {/* Expandable Content */}
+            {isExpanded && currentTrack && (
+              <div className="flex-1 overflow-hidden flex flex-col">
+                {/* Day Description */}
+                {currentTrack.description && (
+                  <div className="p-4 border-b border-gray-100">
+                    <p className="text-sm text-gray-600">{currentTrack.description}</p>
+                  </div>
+                )}
+                
+                {/* Markers List */}
+                <div className="flex-1 overflow-y-auto">
+                  <div className="p-3">
+                    {currentMarkers.length > 0 ? (
+                      <div className="space-y-2">
+                        <div className="text-xs font-medium text-gray-500 uppercase tracking-wide px-1 mb-2">
+                          Itinerary Stops
+                        </div>
+                        {currentMarkers.map((marker: any, index: number) => (
+                          <button
+                            key={index}
+                            onClick={() => focusOnMarker(marker)}
+                            className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-[#35b368]/20 group"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#35b368] text-white text-sm font-medium flex items-center justify-center">
+                                {index + 1}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h4 className="font-medium text-gray-900 truncate group-hover:text-[#35b368]">
+                                    {marker.title || `Stop ${index + 1}`}
+                                  </h4>
+                                  <Navigation className="h-3 w-3 text-gray-400 group-hover:text-[#35b368] flex-shrink-0" />
+                                </div>
+                                {marker.description && (
+                                  <p className="text-sm text-gray-600 line-clamp-2 mb-1">
+                                    {marker.description}
+                                  </p>
+                                )}
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="h-3 w-3 text-gray-400" />
+                                  <span className="text-xs text-gray-500">
+                                    Click to focus
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-6 text-center text-gray-500">
+                        <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                        <p className="text-sm font-medium mb-1">No stops planned</p>
+                        <p className="text-xs">This day has no itinerary items</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
