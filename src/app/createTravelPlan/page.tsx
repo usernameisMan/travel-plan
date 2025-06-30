@@ -37,14 +37,14 @@ const TravelPlanWithSearchParams = () => {
   const searchParams = useSearchParams();
   const packetId = searchParams.get('packetId');
   const [currentPacket, setCurrentPacket] = useState<any>(null);
-  const [packetName, setPacketName] = useState<string>("我的旅行计划");
-  const [packetDescription, setPacketDescription] = useState<string>("精心规划的旅行路线");
+  const [packetName, setPacketName] = useState<string>("My Travel Plan");
+  const [packetDescription, setPacketDescription] = useState<string>("Carefully planned travel route");
 
-    // 当packet更新时，同步更新tracks数据
+    // When packet updates, sync tracks data
   const handlePacketUpdate = (newPacket: any) => {
     setCurrentPacket(newPacket);
     
-    // 更新packet的基本信息
+    // Update packet basic info
     if (newPacket?.name) {
       setPacketName(newPacket.name);
     }
@@ -52,12 +52,12 @@ const TravelPlanWithSearchParams = () => {
       setPacketDescription(newPacket.description);
     }
     
-    // 如果新packet有itineraryDays数据，更新tracks
+    // If new packet has itineraryDays data, update tracks
     if (newPacket?.itineraryDays && Array.isArray(newPacket.itineraryDays)) {
       const updatedTracks = newPacket.itineraryDays.map((item: any) => ({
         ...item,
         day: item.day || `Day ${item.dayNumber || 1}`,
-        dayText: item.name || item.dayText || `第${item.dayNumber || 1}天`,
+        dayText: item.name || item.dayText || `Day ${item.dayNumber || 1}`,
         markers: item.markers?.map((marker: any) => ({
           ...marker,
           location: {
@@ -70,7 +70,7 @@ const TravelPlanWithSearchParams = () => {
       setTracks(updatedTracks);
       console.log("Updated tracks from packet:", updatedTracks);
       
-      // 触发地图重新渲染标记点
+      // Trigger map to re-render markers
       setTimeout(() => {
         if (mapInstance) {
           onLoadMap();
@@ -81,15 +81,15 @@ const TravelPlanWithSearchParams = () => {
 
   const getMarkers = async (): Promise<any> => {
     try {
-      // 确保 token 存在于 store 中
+      // Ensure token exists in store
       let token = useAuthStore.getState().token;
       if (!token) {
-        // 如果 store 中没有 token，直接从 Auth0 获取并设置到 store
+        // If no token in store, get from Auth0 and set to store
         token = await getAccessTokenSilently();
         useAuthStore.getState().setToken(token);
       }
       
-      // 如果有 packetId 参数，则获取指定的 packet，否则获取默认的 packet
+      // If there's packetId parameter, get specified packet, otherwise get default packet
       const endpoint = packetId ? `/api/packets/${packetId}` : "/api/packets/7";
       let data: any = {data: {}};
       if(packetId) {
@@ -101,7 +101,7 @@ const TravelPlanWithSearchParams = () => {
           return {
             ...item,
             day: item.day || `Day ${item.dayNumber || 1}`,
-            dayText: item.name || item.dayText || `第${item.dayNumber || 1}天`,
+            dayText: item.name || item.dayText || `Day ${item.dayNumber || 1}`,
             markers: item.markers?.map((marker: any) => {
               return {
                 ...marker,
@@ -126,13 +126,13 @@ const TravelPlanWithSearchParams = () => {
     
     const initializeTracks = async () => {
       try {
-        // 如果有 packetId，则获取现有数据；否则使用默认数据（创建模式）
+        // If has packetId, get existing data; otherwise use default data (create mode)
         if (packetId) {
           const response = await getMarkers();
           const savedTracks = response?.data?.itineraryDays || [];
           setCurrentPacket(response?.data || null);
           
-          // 设置packet的基本信息
+          // Set packet basic info
           if (response?.data?.name) {
             setPacketName(response.data.name);
           }
@@ -146,35 +146,35 @@ const TravelPlanWithSearchParams = () => {
             setTracks([
               {
                 day: "Day 1",
-                dayText: "第1天",
+                dayText: "Day 1",
                 description: "",
                 markers: [],
               },
             ]);
           }
         } else {
-          // 创建模式：使用默认数据
+          // Create mode: use default data
           setTracks([
             {
               day: "Day 1",
-              dayText: "第1天",
+              dayText: "Day 1",
               description: "",
               markers: [],
             },
           ]);
           setCurrentPacket(null);
-          // 重置为默认值
-          setPacketName("我的旅行计划");
-          setPacketDescription("精心规划的旅行路线");
+          // Reset to default values
+          setPacketName("My Travel Plan");
+          setPacketDescription("Carefully planned travel route");
         }
         setIsInitialized(true);
       } catch (error) {
         console.error("Error fetching markers:", error);
-        // 如果 API 请求失败，设置默认的 tracks
+        // If API request fails, set default tracks
         setTracks([
           {
             day: "Day 1",
-            dayText: "第1天",
+            dayText: "Day 1",
             description: "",
             markers: [],
           },
@@ -206,13 +206,13 @@ const TravelPlanWithSearchParams = () => {
   const onLoadMap = useCallback(() => {
     if (!mapInstance) return;
 
-    // 清除所有现有的标记点
+    // Clear all existing markers
     const markers = document.getElementsByClassName("marker");
     while (markers.length > 0) {
       markers[0].remove();
     }
 
-    // 清除所有现有的路径和箭头
+    // Clear all existing paths and arrows
     const layers = mapInstance.getStyle()?.layers || [];
     if (layers.length > 0) {
       layers.forEach((layer: any) => {
@@ -231,7 +231,7 @@ const TravelPlanWithSearchParams = () => {
       }
     });
 
-    // 重新添加所有标记点
+    // Re-add all markers
     if (Array.isArray(tracks) && tracks.length > 0) {
       tracks.forEach((dayTrack: DayTrack, dayIndex: number) => {
         if (dayTrack && Array.isArray(dayTrack.markers)) {
@@ -312,7 +312,7 @@ const TravelPlanWithSearchParams = () => {
     })
       .setLngLat([parseFloat(lng), parseFloat(lat)])
       .addTo(mapInstance);
-    console.log("addTo mapInstance 成功", marker);
+    console.log("addTo mapInstance success", marker);
 
     if (mapInstance.getCanvas()?.style) {
       mapInstance.getCanvas().style.cursor = "grab";
@@ -327,35 +327,35 @@ const TravelPlanWithSearchParams = () => {
       return;
     }
     if (!mapInstance) {
-      alert("地图还没加载好，请稍后再试！");
+      alert("Map is not loaded yet, please try again later!");
       return;
     }
 
     try {
       const newTracks = _.cloneDeep(tracks);
       
-      // 确保tracks数组存在
+      // Ensure tracks array exists
       if (!Array.isArray(newTracks)) {
         console.error("Tracks is not an array:", newTracks);
         return;
       }
 
-      // 如果没有行程日，创建一个
+      // If no itinerary days, create one
       if (newTracks.length === 0) {
         newTracks.push({
           day: "Day 1",
-          dayText: "第1天",
+          dayText: "Day 1",
           description: "",
           markers: [],
         });
-        // 重置currentDayIndex为0
+        // Reset currentDayIndex to 0
         setCurrentDayIndex(0);
       }
 
-      // 确保currentDayIndex在有效范围内
+      // Ensure currentDayIndex is within valid range
       const validDayIndex = Math.min(currentDayIndex, newTracks.length - 1);
       
-      // 确保当前day存在且有markers数组
+      // Ensure current day exists and has markers array
       if (!newTracks[validDayIndex]) {
         console.error("Day not found at index:", validDayIndex);
         return;
@@ -366,7 +366,7 @@ const TravelPlanWithSearchParams = () => {
         newTracks[validDayIndex].markers = [];
       }
 
-      // 安全地添加新标记
+      // Safely add new marker
       newTracks[validDayIndex].markers.push({
         ...currentTrackRef.current,
         title,
@@ -374,7 +374,7 @@ const TravelPlanWithSearchParams = () => {
       });
 
       setTracks(newTracks);
-      // 添加地图标记
+      // Add map marker
       addMarkerToMap(
         currentTrackRef.current.type,
         currentTrackRef.current.location.lng,
@@ -382,12 +382,12 @@ const TravelPlanWithSearchParams = () => {
         `${validDayIndex + 1}-${newTracks[validDayIndex].markers.length}${title}`
       );
 
-      // 清理当前引用
+      // Clean current reference
       currentTrackRef.current = {};
       
     } catch (error) {
       console.error("Error adding track:", error);
-      alert("添加标记点时出现错误，请重试");
+      alert("Error occurred while adding marker, please try again");
     }
   };
 
@@ -407,25 +407,25 @@ const TravelPlanWithSearchParams = () => {
   const createTracksPath = async (mode: string) => {
     let effectiveProfile = mode;
     if (mode === "transit") {
-      alert("公交路线暂不支持，已为你用步行路线代替。");
+      alert("Transit routes not supported yet, using walking route instead.");
       effectiveProfile = "walking";
     }
 
     if (!mapInstance) return;
 
-    // 检查当前day的tracks是否存在
+    // Check if current day's tracks exist
     if (!tracks[currentDayIndex] || !Array.isArray(tracks[currentDayIndex].markers)) {
-      alert("当前行程日没有有效的标记点！");
+      alert("Current itinerary day has no valid markers!");
       return;
     }
 
     const dayTracks = tracks[currentDayIndex].markers;
     if (dayTracks.length < 2) {
-      alert("请至少添加两个标记点来生成路径！");
+      alert("Please add at least two markers to generate a route!");
       return;
     }
 
-    // 清理旧的路径和箭头
+    // Clean old paths and arrows
     const layers = mapInstance.getStyle()?.layers || [];
     if (layers.length > 0) {
       layers.forEach((layer: any) => {
@@ -444,7 +444,7 @@ const TravelPlanWithSearchParams = () => {
       }
     });
 
-    // 颜色数组
+    // Color array
     const colors = [
       "#FF0000",
       "#00FF00",
@@ -458,7 +458,7 @@ const TravelPlanWithSearchParams = () => {
       "#000000",
     ];
 
-    // 依次请求每一段的 directions
+    // Request directions for each segment
     for (let i = 0; i < dayTracks.length - 1; i++) {
       const from = dayTracks[i];
       const to = dayTracks[i + 1];
@@ -479,7 +479,7 @@ const TravelPlanWithSearchParams = () => {
         if (!data.routes || data.routes.length === 0) continue;
         const geometry = data.routes[0].geometry;
         const segmentSourceId = `route-segment-${currentDayIndex}-${i}`;
-        // 添加 source
+        // Add source
         mapInstance.addSource(segmentSourceId, {
           type: "geojson",
           data: {
@@ -488,7 +488,7 @@ const TravelPlanWithSearchParams = () => {
             geometry,
           },
         });
-        // 添加线条 layer
+        // Add line layer
         mapInstance.addLayer({
           id: segmentSourceId,
           type: "line",
@@ -503,7 +503,7 @@ const TravelPlanWithSearchParams = () => {
             "line-opacity": 1,
           },
         });
-        // 添加箭头 layer
+        // Add arrow layer
         mapInstance.addLayer({
           id: `route-arrows-${currentDayIndex}-${i}`,
           type: "symbol",
@@ -530,16 +530,16 @@ const TravelPlanWithSearchParams = () => {
     }
   };
 
-  // 生成所有天的总路线
+  // Generate total route for all days
   const createAllTracksPath = async (mode: string) => {
     let effectiveProfile = mode;
     if (mode === "transit") {
-      alert("公交路线暂不支持，已为你用步行路线代替。");
+      alert("Transit routes not supported yet, using walking route instead.");
       effectiveProfile = "walking";
     }
     if (!mapInstance) return;
 
-    // 清理旧的路径和箭头
+    // Clean old paths and arrows
     const layers = mapInstance.getStyle()?.layers || [];
     if (layers.length > 0) {
       layers.forEach((layer: any) => {
@@ -558,7 +558,7 @@ const TravelPlanWithSearchParams = () => {
       }
     });
 
-    // 颜色数组
+    // Color array
     const colors = [
       "#FF0000",
       "#00FF00",
@@ -591,7 +591,7 @@ const TravelPlanWithSearchParams = () => {
           if (!data.routes || data.routes.length === 0) continue;
           const geometry = data.routes[0].geometry;
           const segmentSourceId = `route-segment-${dayIndex}-${i}`;
-          // 添加 source
+          // Add source
           mapInstance.addSource(segmentSourceId, {
             type: "geojson",
             data: {
@@ -600,7 +600,7 @@ const TravelPlanWithSearchParams = () => {
               geometry,
             },
           });
-          // 添加线条 layer
+          // Add line layer
           mapInstance.addLayer({
             id: segmentSourceId,
             type: "line",
@@ -615,7 +615,7 @@ const TravelPlanWithSearchParams = () => {
               "line-opacity": 1,
             },
           });
-          // 添加箭头 layer
+          // Add arrow layer
           mapInstance.addLayer({
             id: `route-arrows-${dayIndex}-${i}`,
             type: "symbol",
@@ -650,15 +650,15 @@ const TravelPlanWithSearchParams = () => {
     }
     
     setTracks(newTracks);
-    // 强制触发地图标记重新渲染
+    // Force trigger map marker re-rendering
     if (mapInstance) {
-      // 清除所有现有的标记点
+      // Clear all existing markers
       const markers = document.getElementsByClassName("marker");
       while (markers.length > 0) {
         markers[0].remove();
       }
 
-      // 重新添加所有标记点
+      // Re-add all markers
       newTracks.forEach((dayTrack: DayTrack, dayIndex: number) => {
         if (dayTrack && Array.isArray(dayTrack.markers)) {
           dayTrack.markers.forEach((track: any, idx: number) => {
@@ -704,7 +704,7 @@ const TravelPlanWithSearchParams = () => {
       
     } catch (error) {
       console.error("Error deleting track:", error);
-      alert("删除标记点时出现错误");
+      alert("Error occurred while deleting marker");
     }
   };
 
@@ -713,7 +713,7 @@ const TravelPlanWithSearchParams = () => {
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
           <div className="text-2xl font-semibold text-gray-700 mb-4">
-            正在验证登录状态...
+            Verifying login status...
           </div>
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto"></div>
         </div>
@@ -726,14 +726,14 @@ const TravelPlanWithSearchParams = () => {
         <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-4">
           <div className="text-6xl mb-6">🔒</div>
           <h1 className="text-3xl font-bold text-gray-800 mb-4">
-            需要登录
+            Login Required
           </h1>
           <p className="text-gray-600 mb-6">
-            您需要登录才能创建旅行计划。请先登录您的账户。
+            You need to log in to create travel plans. Please log in to your account first.
           </p>
           <Link href="/login">
             <Button className="bg-[#35b368] hover:bg-[#2d9a5a] text-white px-8 py-3 rounded-lg font-semibold transition-colors">
-              前往登录
+              Go to Login
             </Button>
           </Link>
         </div>
@@ -761,7 +761,7 @@ const TravelPlanWithSearchParams = () => {
               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           )}
         >
-          行程规划
+          Itinerary Planning
         </button>
         <button
           onClick={() => setIsMobileView("map")}
@@ -772,7 +772,7 @@ const TravelPlanWithSearchParams = () => {
               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           )}
         >
-          地图视图
+          Map View
         </button>
       </div>
 
@@ -821,7 +821,7 @@ const TravelPlan = () => {
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
           <div className="text-2xl font-semibold text-gray-700 mb-4">
-            正在加载旅行计划...
+            Loading travel plan...
           </div>
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto"></div>
         </div>

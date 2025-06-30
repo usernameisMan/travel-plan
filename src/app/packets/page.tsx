@@ -42,7 +42,7 @@ const PacketsPage = () => {
       setLoading(true);
       setError(null);
 
-      // 确保 token 存在于 store 中
+      // Ensure token exists in store
       let token = useAuthStore.getState().token;
       if (!token) {
         token = await getAccessTokenSilently();
@@ -64,7 +64,7 @@ const PacketsPage = () => {
       }
     } catch (error) {
       console.error("Error fetching packets:", error);
-      setError("获取行程列表失败，请稍后重试");
+      setError("Failed to fetch travel plans, please try again later");
       setPackets([]);
     } finally {
       setLoading(false);
@@ -79,7 +79,7 @@ const PacketsPage = () => {
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "";
-    return new Date(dateString).toLocaleDateString("zh-CN", {
+    return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -104,14 +104,14 @@ const PacketsPage = () => {
 
   const handleDeletePacket = async (packet: Packet) => {
     if (!packet.id) {
-      alert("无效的数据包ID");
+      alert("Invalid packet ID");
       return;
     }
 
     try {
       setDeleteLoading(true);
       
-      // 确保有token
+      // Ensure token exists
       let token = useAuthStore.getState().token;
       if (!token) {
         token = await getAccessTokenSilently();
@@ -121,25 +121,25 @@ const PacketsPage = () => {
       const response = await http.delete(`/api/packets/${packet.id}`);
       console.log("Delete response:", response);
 
-      // 从列表中移除已删除的packet
+      // Remove deleted packet from list
       setPackets(prev => prev.filter(p => p.id !== packet.id));
       
-      alert("旅行计划删除成功！");
+      alert("Travel plan deleted successfully!");
     } catch (error) {
       console.error("Error deleting packet:", error);
       
       if (error instanceof Error) {
         if (error.message.includes('401')) {
-          alert("认证失败，请重新登录");
+          alert("Authentication failed, please log in again");
         } else if (error.message.includes('404')) {
-          alert("旅行计划不存在或已被删除");
-          // 即使404，也从列表中移除（可能已经被其他地方删除了）
+          alert("Travel plan does not exist or has been deleted");
+          // Remove from list even if 404 (might have been deleted elsewhere)
           setPackets(prev => prev.filter(p => p.id !== packet.id));
         } else {
-          alert(`删除失败: ${error.message}`);
+          alert(`Delete failed: ${error.message}`);
         }
       } else {
-        alert("删除旅行计划时出现未知错误");
+        alert("Unknown error occurred while deleting travel plan");
       }
     } finally {
       setDeleteLoading(false);
@@ -152,7 +152,7 @@ const PacketsPage = () => {
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
           <div className="text-2xl font-semibold text-gray-700 mb-4">
-            正在验证登录状态...
+            Verifying login status...
           </div>
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto"></div>
         </div>
@@ -165,11 +165,11 @@ const PacketsPage = () => {
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-4">
           <div className="text-6xl mb-6">🔒</div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">需要登录</h1>
-          <p className="text-gray-600 mb-6">请先登录您的账户以查看您的旅行计划。</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">Login Required</h1>
+          <p className="text-gray-600 mb-6">Please log in to your account to view your travel plans.</p>
           <Link href="/login">
             <Button className="bg-[#35b368] hover:bg-[#2d9a5a] text-white px-8 py-3 rounded-lg font-semibold transition-colors">
-              前往登录
+              Go to Login
             </Button>
           </Link>
         </div>
@@ -184,13 +184,13 @@ const PacketsPage = () => {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">我的旅行计划</h1>
-              <p className="text-gray-600 mt-2">管理和查看您创建的所有旅行计划</p>
+              <h1 className="text-3xl font-bold text-gray-900">My Travel Plans</h1>
+              <p className="text-gray-600 mt-2">Manage and view all your created travel plans</p>
             </div>
             <Link href="/createTravelPlan">
               <Button className="bg-[#35b368] hover:bg-[#2d9a5a] text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2">
                 <Plus className="h-5 w-5" />
-                创建新计划
+                Create New Plan
               </Button>
             </Link>
           </div>
@@ -201,7 +201,7 @@ const PacketsPage = () => {
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto mb-4"></div>
-              <p className="text-gray-600">正在加载您的旅行计划...</p>
+              <p className="text-gray-600">Loading your travel plans...</p>
             </div>
           </div>
         ) : error ? (
@@ -213,19 +213,19 @@ const PacketsPage = () => {
               variant="outline"
               className="hover:bg-[#35b368] hover:text-white transition-colors"
             >
-              重新加载
+              Reload
             </Button>
           </div>
         ) : packets.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-6">✈️</div>
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">还没有旅行计划</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">No travel plans yet</h2>
             <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              开始创建您的第一个旅行计划，记录美好的旅行回忆和规划未来的行程
+              Start creating your first travel plan to record beautiful travel memories and plan future trips
             </p>
             <Link href="/createTravelPlan">
               <Button className="bg-[#35b368] hover:bg-[#2d9a5a] text-white px-8 py-3 rounded-lg font-semibold transition-colors">
-                创建第一个计划
+                Create First Plan
               </Button>
             </Link>
           </div>
@@ -235,7 +235,7 @@ const PacketsPage = () => {
               <Card key={packet.id} className="hover:shadow-lg transition-shadow duration-200 bg-white">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg font-semibold text-gray-900 overflow-hidden">
-                    <div className="line-clamp-2">{packet.title || "未命名计划"}</div>
+                    <div className="line-clamp-2">{packet.title || "Untitled Plan"}</div>
                   </CardTitle>
                   {packet.destination && (
                     <div className="flex items-center text-sm text-gray-600 mt-1">
@@ -260,13 +260,13 @@ const PacketsPage = () => {
                     )}
                     
                     <div className="flex items-center justify-between text-sm text-gray-600">
-                      <span>{getDaysCount(packet)} 天行程</span>
-                      <span>{getMarkersCount(packet)} 个景点</span>
+                      <span>{getDaysCount(packet)} day itinerary</span>
+                      <span>{getMarkersCount(packet)} attractions</span>
                     </div>
                     
                     {packet.createdAt && (
                       <div className="text-xs text-gray-500">
-                        创建于 {formatDate(packet.createdAt)}
+                        Created on {formatDate(packet.createdAt)}
                       </div>
                     )}
                   </div>
@@ -279,17 +279,19 @@ const PacketsPage = () => {
                         className="w-full hover:bg-[#35b368] hover:text-white transition-colors"
                       >
                         <Edit3 className="h-4 w-4 mr-1" />
-                        编辑
+                        Edit
                       </Button>
                     </Link>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="col-span-1 sm:flex-1 hover:bg-blue-500 hover:text-white transition-colors"
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      查看
-                    </Button>
+                    <Link href={`/packets/${packet.id}/view`} className="col-span-1 sm:flex-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full hover:bg-blue-500 hover:text-white transition-colors"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                    </Link>
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -297,7 +299,7 @@ const PacketsPage = () => {
                       className="col-span-2 sm:col-span-auto sm:w-auto hover:bg-red-500 hover:text-white transition-colors"
                     >
                       <Trash2 className="h-4 w-4 sm:mr-0 mr-1" />
-                      <span className="sm:hidden">删除</span>
+                      <span className="sm:hidden">Delete</span>
                     </Button>
                   </div>
                 </CardContent>
@@ -311,14 +313,14 @@ const PacketsPage = () => {
       <Dialog open={!!deletingPacket} onOpenChange={() => setDeletingPacket(null)}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>确认删除</DialogTitle>
+            <DialogTitle>Confirm Delete</DialogTitle>
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-gray-600 mb-2">
-              您确定要删除旅行计划 <span className="font-medium">{deletingPacket?.title || "未命名计划"}</span> 吗？
+              Are you sure you want to delete the travel plan <span className="font-medium">{deletingPacket?.title || "Untitled Plan"}</span>?
             </p>
             <p className="text-sm text-red-600 font-medium">
-              此操作无法撤销，所有相关数据将被永久删除。
+              This action cannot be undone, and all related data will be permanently deleted.
             </p>
           </div>
           <DialogFooter>
@@ -327,7 +329,7 @@ const PacketsPage = () => {
               onClick={() => setDeletingPacket(null)}
               disabled={deleteLoading}
             >
-              取消
+              Cancel
             </Button>
             <Button
               onClick={() => deletingPacket && handleDeletePacket(deletingPacket)}
@@ -337,10 +339,10 @@ const PacketsPage = () => {
               {deleteLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  删除中...
+                  Deleting...
                 </>
               ) : (
-                "确认删除"
+                "Confirm Delete"
               )}
             </Button>
           </DialogFooter>

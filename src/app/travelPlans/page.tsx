@@ -57,7 +57,7 @@ const mockPlans = [
     featured: true,
     verified: true,
   },
-  // ...更多静态数据
+  // ...more static data
 ];
 
 const allTags = Array.from(new Set(mockPlans.flatMap(p => p.tags)));
@@ -73,7 +73,7 @@ const TravelPlansMarket = () => {
   const [showDetail, setShowDetail] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
 
-  // 搜索、筛选、排序
+  // Search, filter, sort
   const filteredPlans = useMemo(() => {
     let plans = mockPlans.filter(plan => {
       const keyword = search.toLowerCase();
@@ -92,7 +92,7 @@ const TravelPlansMarket = () => {
     return plans;
   }, [search, minPrice, maxPrice, sort, selectedTag]);
 
-  // 收藏夹切换
+  // Favorites toggle
   const toggleFavorite = (id: number) => {
     setFavoriteIds(fav => fav.includes(id) ? fav.filter(fid => fid !== id) : [...fav, id]);
   };
