@@ -17,9 +17,10 @@ import { http } from "@/lib/http";
 import { useAuthStore } from "@/store/authStore";
 import { useMapStore } from "@/app/store/mapStore";
 import MapboxMap from "@/components/mapbox";
-import { ArrowLeft, Map, Eye, ChevronDown, ChevronUp, MapPin, Navigation } from "lucide-react";
+import { ArrowLeft, Map, Eye, ChevronDown, ChevronUp, MapPin, Navigation, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import mapboxgl from "mapbox-gl";
+import { getAvailableMapApps, openInMapApp, type MapApp } from "@/lib/mapUtils";
 
 interface DayTrack {
   day: string;
@@ -48,6 +49,9 @@ const PacketViewPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [tracks, setTracks] = useState<DayTrack[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showMapApps, setShowMapApps] = useState(false);
+  const [selectedMarker, setSelectedMarker] = useState<any>(null);
+  const [availableMapApps, setAvailableMapApps] = useState<MapApp[]>([]);
 
   // Fetch packet data
   const fetchPacket = useCallback(async () => {
@@ -100,6 +104,11 @@ const PacketViewPage = () => {
       fetchPacket();
     }
   }, [isAuthenticated, isLoading, fetchPacket]);
+
+  // Initialize available map apps
+  useEffect(() => {
+    setAvailableMapApps(getAvailableMapApps());
+  }, []);
 
   // Add markers to map
   const addMarkerToMap = useCallback((
@@ -189,6 +198,27 @@ const PacketViewPage = () => {
       duration: 1000,
     });
   }, [mapInstance]);
+
+  // Open map app selection
+  const openMapAppSelection = useCallback((marker: any) => {
+    setSelectedMarker(marker);
+    setShowMapApps(true);
+  }, []);
+
+  // Handle map app selection
+  const handleMapAppSelect = useCallback((app: MapApp) => {
+    if (!selectedMarker) return;
+    
+    const location = {
+      lng: selectedMarker.location.lng,
+      lat: selectedMarker.location.lat,
+      title: selectedMarker.title || 'Travel Destination',
+    };
+    
+    openInMapApp(app, location);
+    setShowMapApps(false);
+    setSelectedMarker(null);
+  }, [selectedMarker]);
 
   // Display selected day's markers and routes
   const displayDay = useCallback(async (dayIndex: number) => {
@@ -481,10 +511,9 @@ const PacketViewPage = () => {
                           Itinerary Stops
                         </div>
                         {currentMarkers.map((marker: any, index: number) => (
-                          <button
+                          <div
                             key={index}
-                            onClick={() => focusOnMarker(marker)}
-                            className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-[#35b368]/20 group"
+                            className="p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-[#35b368]/20 group"
                           >
                             <div className="flex items-start gap-3">
                               <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#35b368] text-white text-sm font-medium flex items-center justify-center">
@@ -495,22 +524,31 @@ const PacketViewPage = () => {
                                   <h4 className="font-medium text-gray-900 truncate group-hover:text-[#35b368]">
                                     {marker.title || `Stop ${index + 1}`}
                                   </h4>
-                                  <Navigation className="h-3 w-3 text-gray-400 group-hover:text-[#35b368] flex-shrink-0" />
                                 </div>
                                 {marker.description && (
                                   <p className="text-sm text-gray-600 line-clamp-2 mb-1">
                                     {marker.description}
                                   </p>
                                 )}
-                                <div className="flex items-center gap-1">
-                                  <MapPin className="h-3 w-3 text-gray-400" />
-                                  <span className="text-xs text-gray-500">
-                                    Click to focus
-                                  </span>
+                                <div className="flex items-center justify-between mt-2">
+                                  <button
+                                    onClick={() => focusOnMarker(marker)}
+                                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-[#35b368] transition-colors"
+                                  >
+                                    <Navigation className="h-3 w-3" />
+                                    Focus on map
+                                  </button>
+                                  <button
+                                    onClick={() => openMapAppSelection(marker)}
+                                    className="flex items-center gap-1 px-2 py-1 text-xs text-[#35b368] hover:bg-[#35b368]/10 rounded transition-colors"
+                                  >
+                                    <ExternalLink className="h-3 w-3" />
+                                    Use Local App
+                                  </button>
                                 </div>
                               </div>
                             </div>
-                          </button>
+                          </div>
                         ))}
                       </div>
                     ) : (
@@ -525,10 +563,74 @@ const PacketViewPage = () => {
               </div>
             )}
           </div>
+                  )}
+        </div>
+
+        {/* Map Apps Selection Modal */}
+        {showMapApps && (
+          <div className="fixed inset-0 z-50 flex items-end justify-center">
+            {/* Backdrop with blur */}
+            <div 
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setShowMapApps(false)}
+            />
+            
+            {/* Bottom Sheet */}
+            <div className="relative w-full max-w-md mx-4 mb-4 bg-white rounded-t-2xl shadow-2xl transform transition-all duration-300 ease-out">
+              {/* Handle */}
+              <div className="flex justify-center pt-3 pb-2">
+                <div className="w-10 h-1 bg-gray-300 rounded-full" />
+              </div>
+              
+              {/* Header */}
+              <div className="px-6 pb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  Open in Map App
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Navigate to: {selectedMarker?.title || 'Location'}
+                </p>
+              </div>
+              
+              {/* App List */}
+              <div className="px-6 pb-6">
+                <div className="space-y-2">
+                  {availableMapApps.map((app, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleMapAppSelect(app)}
+                      className="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100"
+                    >
+                      <div 
+                        className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                        style={{ backgroundColor: `${app.color}15` }}
+                      >
+                        {app.icon}
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="font-medium text-gray-900">{app.name}</div>
+                        <div className="text-sm text-gray-500">
+                          Open navigation in {app.name}
+                        </div>
+                      </div>
+                      <ExternalLink className="h-5 w-5 text-gray-400" />
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Cancel Button */}
+                <button
+                  onClick={() => setShowMapApps(false)}
+                  className="w-full mt-4 py-3 px-4 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium text-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
-    </div>
-  );
-};
+    );
+  };
 
 export default PacketViewPage; 
