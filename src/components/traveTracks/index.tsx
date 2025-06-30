@@ -69,8 +69,8 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
   createAllTracksPath,
   currentPacket,
   onPacketUpdate,
-  packetName = "我的旅行计划",
-  packetDescription = "精心规划的旅行路线",
+  packetName = "My Travel Plan",
+  packetDescription = "Carefully planned travel route",
   onPacketNameChange,
   onPacketDescriptionChange,
   ...props
@@ -86,7 +86,7 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // 同步临时编辑状态
+  // Sync temporary edit state
   useEffect(() => {
     setTempPacketName(packetName);
     setTempPacketDescription(packetDescription);
@@ -117,14 +117,14 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
     
     const currentDayTracks = newTracks[currentDayIndex].markers;
 
-    // 使用数组方法直接移动元素
+    // Use array methods to move element directly
     const [movedItem] = currentDayTracks.splice(oldIndex, 1);
     currentDayTracks.splice(newIndex, 0, movedItem);
 
-    // 确保触发父组件的更新
+    // Ensure parent component update triggers
     onTracksChange?.(newTracks);
 
-    // 打印日志以便调试
+    // Log for debugging
     console.log("Track moved:", { oldIndex, newIndex, currentDayIndex });
     console.log(
       "New tracks order:",
@@ -135,21 +135,21 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
   const addNewDay = () => {
     const newDay: DayTrack = {
       day: `Day ${tracks.length + 1}`,
-      dayText: `第${tracks.length + 1}天`,
+      dayText: `Day ${tracks.length + 1}`,
       description: "",
       markers: [],
     };
     onTracksChange?.([...tracks, newDay]);
   };
 
-  // 数据映射函数：将前端数据结构转换为后端需要的结构
+  // Data mapping function: Convert frontend data structure to backend required structure
   const mapToBackendFormat = (tracks: DayTrack[], isUpdate: boolean = false) => {
     if (isUpdate && currentPacket) {
-      // 更新模式：保留原有结构并更新数据
+      // Update mode: Preserve original structure and update data
       return {
         ...currentPacket,
-        name: packetName || currentPacket.name || "我的旅行计划",
-        description: packetDescription || currentPacket.description || "精心规划的旅行路线",
+        name: packetName || currentPacket.name || "My Travel Plan",
+        description: packetDescription || currentPacket.description || "Carefully planned travel route",
         cost: currentPacket.cost || "0.00",
         currencyCode: currentPacket.currencyCode || "CNY",
         updatedAt: new Date().toISOString(),
@@ -179,10 +179,10 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
         })
       };
     } else {
-      // 创建模式：简洁的数据结构
+      // Create mode: Clean data structure
       return {
-        name: packetName || "我的旅行计划",
-        description: packetDescription || "精心规划的旅行路线",
+        name: packetName || "My Travel Plan",
+        description: packetDescription || "Carefully planned travel route",
         cost: "0.00",
         currencyCode: "CNY",
         itineraryDays: tracks.map((track, index) => ({
@@ -205,23 +205,23 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
 
   const saveAllItinerary = async () => {
     try {
-      // 验证数据
+      // Validate data
       if (!Array.isArray(tracks) || tracks.length === 0) {
-        alert("没有行程数据可保存");
+        alert("No itinerary data to save");
         return;
       }
 
-      // 检查是否有有效的标记点
+      // Check if there are valid markers
       const hasValidMarkers = tracks.some(track => 
         track && Array.isArray(track.markers) && track.markers.length > 0
       );
       
       if (!hasValidMarkers) {
-        alert("请至少添加一些行程标记点后再保存");
+        alert("Please add at least some itinerary markers before saving");
         return;
       }
 
-      // 确保有token
+      // Ensure token exists
       let token = useAuthStore.getState().token;
       if (!token) {
         token = await getAccessTokenSilently();
@@ -235,12 +235,12 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
       
       let response;
       if (isUpdate) {
-        // 更新现有packet
+        // Update existing packet
         response = await http.put(`/api/packets/${currentPacket.id}`, payload);
         console.log("Update response:", response);
-        alert("行程更新成功！");
+        alert("Itinerary updated successfully!");
       } else {
-        // 创建新packet
+        // Create new packet
         response = await http.post("/api/packets", payload);
         console.log("Create response:", response);
         
@@ -248,36 +248,36 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
           const newPacketId = (response as any).data.id;
           
           try {
-            // 创建成功后，重新获取完整的packet数据以确保所有ID正确
+            // After successful creation, refetch complete packet data to ensure all IDs are correct
             const fullPacketResponse = await http.get(`/api/packets/${newPacketId}`);
             console.log("Full packet data:", fullPacketResponse);
             
             if (fullPacketResponse && (fullPacketResponse as any).data) {
-              // 更新当前packet状态为完整数据
+              // Update current packet state to complete data
               onPacketUpdate?.((fullPacketResponse as any).data);
               
-              // 更新URL，添加packetId参数
+              // Update URL, add packetId parameter
               const newUrl = `${window.location.pathname}?packetId=${newPacketId}`;
               router.push(newUrl);
               
-              alert("行程创建成功！");
+              alert("Itinerary created successfully!");
             } else {
-              // 如果获取完整数据失败，至少更新基本信息
+              // If fetching complete data fails, at least update basic info
               onPacketUpdate?.((response as any).data);
               const newUrl = `${window.location.pathname}?packetId=${newPacketId}`;
               router.push(newUrl);
-              alert("行程创建成功！");
+              alert("Itinerary created successfully!");
             }
           } catch (getError) {
             console.error("Error fetching full packet data:", getError);
-            // 如果获取完整数据失败，至少更新基本信息
+            // If fetching complete data fails, at least update basic info
             onPacketUpdate?.((response as any).data);
             const newUrl = `${window.location.pathname}?packetId=${newPacketId}`;
             router.push(newUrl);
-            alert("行程创建成功！");
+            alert("Itinerary created successfully!");
           }
         } else {
-          alert("行程创建成功，但未获取到ID");
+          alert("Itinerary created successfully, but ID not retrieved");
         }
       }
       
@@ -286,16 +286,16 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
       
       if (error instanceof Error) {
         if (error.message.includes('non-JSON response')) {
-          alert("服务器暂时不可用，请稍后重试");
+          alert("Server temporarily unavailable, please try again later");
         } else if (error.message.includes('Network error')) {
-          alert("网络连接错误，请检查网络后重试");
+          alert("Network connection error, please check network and try again");
         } else if (error.message.includes('401')) {
-          alert("认证失败，请重新登录");
+          alert("Authentication failed, please log in again");
         } else {
-          alert(`保存失败: ${error.message}`);
+          alert(`Save failed: ${error.message}`);
         }
       } else {
-        alert("保存行程时出现未知错误，请重试");
+        alert("Unknown error occurred while saving itinerary, please try again");
       }
     }
   };
@@ -359,8 +359,8 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
                 className="flex items-center gap-1 flex-1 sm:flex-none"
               >
                 <Pencil className="h-4 w-4" />
-                <span className="hidden sm:inline">编辑计划</span>
-                <span className="sm:hidden">编辑</span>
+                <span className="hidden sm:inline">Edit Plan</span>
+                <span className="sm:hidden">Edit</span>
               </Button>
               <Button
                 variant="default"
@@ -385,20 +385,20 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
               className="flex items-center justify-center gap-1 w-full sm:w-auto"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">添加行程日</span>
-              <span className="sm:hidden">添加日程</span>
+              <span className="hidden sm:inline">Add Itinerary Day</span>
+              <span className="sm:hidden">Add Day</span>
             </Button>
             
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <Select value={transportMode} onValueChange={setTransportMode}>
                 <SelectTrigger className="w-full sm:w-[120px]">
-                  <SelectValue placeholder="选择交通方式" />
+                  <SelectValue placeholder="Select Transportation" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="driving">驾车</SelectItem>
-                  <SelectItem value="walking">步行</SelectItem>
-                  <SelectItem value="cycling">骑行</SelectItem>
-                  <SelectItem value="transit">公交</SelectItem>
+                  <SelectItem value="driving">Driving</SelectItem>
+                  <SelectItem value="walking">Walking</SelectItem>
+                  <SelectItem value="cycling">Cycling</SelectItem>
+                  <SelectItem value="transit">Transit</SelectItem>
                 </SelectContent>
               </Select>
               <Button
@@ -408,8 +408,8 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
                 className="flex items-center gap-1 whitespace-nowrap"
               >
                 <Map className="h-4 w-4" />
-                <span className="hidden lg:inline">生成总路线</span>
-                <span className="lg:hidden">路线</span>
+                <span className="hidden lg:inline">Generate Route</span>
+                <span className="lg:hidden">Route</span>
               </Button>
             </div>
           </div>
@@ -443,26 +443,26 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
                         setDayTitle(e.target.value)
                       }
                       className="mb-2"
-                      placeholder="输入行程日标题"
+                      placeholder="Enter itinerary day title"
                     />
                     <Textarea
                       value={dayDescription}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                         setDayDescription(e.target.value)
                       }
-                      placeholder="输入行程日描述"
+                      placeholder="Enter itinerary day description"
                       className="mb-2"
                     />
                     <div className="flex gap-2">
                       <Button size="sm" onClick={() => saveDayEdit()}>
-                        保存
+                        Save
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => setEditingDay(null)}
                       >
-                        取消
+                        Cancel
                       </Button>
                     </div>
                   </div>
@@ -503,20 +503,20 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
 
             <div className="p-3 md:p-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
-                <h4 className="font-medium">行程点</h4>
+                <h4 className="font-medium">Itinerary Points</h4>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <Select
                     value={transportMode}
                     onValueChange={setTransportMode}
                   >
                     <SelectTrigger className="w-full sm:w-[120px]">
-                      <SelectValue placeholder="选择交通方式" />
+                      <SelectValue placeholder="Select Transportation" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="driving">驾车</SelectItem>
-                      <SelectItem value="walking">步行</SelectItem>
-                      <SelectItem value="cycling">骑行</SelectItem>
-                      <SelectItem value="transit">公交</SelectItem>
+                      <SelectItem value="driving">Driving</SelectItem>
+                      <SelectItem value="walking">Walking</SelectItem>
+                      <SelectItem value="cycling">Cycling</SelectItem>
+                      <SelectItem value="transit">Transit</SelectItem>
                     </SelectContent>
                   </Select>
                   <Button
@@ -526,8 +526,8 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
                     className="flex items-center gap-1 whitespace-nowrap"
                   >
                     <Map className="h-4 w-4" />
-                    <span className="hidden lg:inline">生成路径</span>
-                    <span className="lg:hidden">路径</span>
+                    <span className="hidden lg:inline">Generate Route</span>
+                    <span className="lg:hidden">Route</span>
                   </Button>
                 </div>
               </div>
@@ -568,39 +568,39 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
       <Dialog open={isEditingPacket} onOpenChange={setIsEditingPacket}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>编辑旅行计划</DialogTitle>
+            <DialogTitle>Edit Travel Plan</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <label htmlFor="packet-name" className="text-sm font-medium">
-                计划名称
+                Plan Name
               </label>
               <Input
                 id="packet-name"
                 value={tempPacketName}
                 onChange={(e) => setTempPacketName(e.target.value)}
-                placeholder="输入旅行计划名称"
+                placeholder="Enter travel plan name"
               />
             </div>
             <div className="space-y-2">
               <label htmlFor="packet-description" className="text-sm font-medium">
-                计划描述
+                Plan Description
               </label>
               <Textarea
                 id="packet-description"
                 value={tempPacketDescription}
                 onChange={(e) => setTempPacketDescription(e.target.value)}
-                placeholder="输入旅行计划描述"
+                placeholder="Enter travel plan description"
                 rows={3}
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={handleCancelPacketEdit}>
-              取消
+              Cancel
             </Button>
             <Button onClick={handleSavePacketEdit}>
-              保存
+              Save
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -615,7 +615,7 @@ const TravelTracks: React.FC<Props> = (props) => {
       <div className="w-full md:w-[400px] h-full flex items-center justify-center bg-white border-r border-gray-200">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#35b368] mx-auto mb-2"></div>
-          <p className="text-sm text-gray-600">正在加载...</p>
+          <p className="text-sm text-gray-600">Loading...</p>
         </div>
       </div>
     }>
