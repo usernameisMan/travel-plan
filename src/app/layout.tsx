@@ -34,8 +34,8 @@ function NavigationBar() {
     >
       <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-4">
         <div className="text-lg md:text-2xl font-bold text-[#35b368] tracking-tight select-none">
-          <span className="hidden sm:inline">Travel Plan Creator</span>
-          <span className="sm:hidden">TPC</span>
+          <span className="hidden sm:inline">PlanPinGo</span>
+          <span className="sm:hidden">PPG</span>
         </div>
         
         {/* Desktop Navigation */}
@@ -54,7 +54,7 @@ function NavigationBar() {
                   </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
-              <NavigationMenuItem>
+              {/* <NavigationMenuItem>
                 <Link href="/travelPlans" legacyBehavior passHref>
                   <NavigationMenuLink
                     className={cn(
@@ -65,7 +65,7 @@ function NavigationBar() {
                     Travel Plan Repository
                   </NavigationMenuLink>
                 </Link>
-              </NavigationMenuItem>
+              </NavigationMenuItem> */}
               {isAuthenticated && (
                 <NavigationMenuItem>
                   <Link href="/packets" legacyBehavior passHref>

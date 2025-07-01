@@ -11,8 +11,8 @@ const fontSans = FontSans({
 });
 
 export const metadata: Metadata = {
-  title: "Travel Plan Creator",
-  description: "Based on the map , Create/Design your own travel plan",
+  title: "Plan pin go - Free Travel Plan Editor",
+  description: "A completely free travel plan editor based on interactive maps. Create, design and share your own travel plans effortlessly.",
 };
 
 export default function Home() {
@@ -32,14 +32,17 @@ export default function Home() {
 
           <div className="relative">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-gray-900 mb-4">
-              Travel Plan Creator
+            PlanPinGo
             </h1>
+            <div className="inline-flex items-center px-4 py-2 bg-[#35b368] text-white text-sm font-semibold rounded-full mb-4">
+              🎉 100% FREE
+            </div>
             <div className="w-24 h-1 bg-[#35b368] mx-auto rounded-full"></div>
           </div>
           
           <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed px-4">
-            Design your perfect journey with our interactive map-based travel planner.
-            Create, customize, and share your travel plans effortlessly.
+            <strong className="text-[#35b368]">Completely Free</strong> travel plan editor with interactive maps.
+            Design your perfect journey, create custom routes, and share your travel plans with friends.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
@@ -48,7 +51,7 @@ export default function Home() {
                 size="lg" 
                 className="w-full bg-[#35b368] hover:bg-[#2d9a5a] text-white px-8 py-6 text-lg transition-all duration-300 hover:scale-105 hover:shadow-lg"
               >
-                Start Planning
+                Start Planning - FREE
               </Button>
             </Link>
             <Button 
@@ -58,6 +61,29 @@ export default function Home() {
             >
               Learn More
             </Button>
+          </div>
+
+          {/* Free Features Highlight */}
+          <div className="mt-8 p-6 bg-white/50 backdrop-blur-sm rounded-2xl border border-[#35b368]/20 max-w-2xl mx-auto">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">✨ Why Choose Our Free Editor?</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <span className="text-[#35b368]">✓</span>
+                Interactive map editor
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#35b368]">✓</span>
+                Unlimited travel plans
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#35b368]">✓</span>
+                Custom route planning
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#35b368]">✓</span>
+                Share with anyone
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-12 px-4">
