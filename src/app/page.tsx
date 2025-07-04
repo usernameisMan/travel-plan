@@ -12,7 +12,8 @@ const fontSans = FontSans({
 
 export const metadata: Metadata = {
   title: "Plan pin go - Free Travel Plan Editor",
-  description: "A completely free travel plan editor based on interactive maps. Create, design and share your own travel plans effortlessly.",
+  description:
+    "A completely free travel plan editor based on interactive maps. Create, design and share your own travel plans effortlessly.",
 };
 
 export default function Home() {
@@ -32,40 +33,50 @@ export default function Home() {
 
           <div className="relative">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-gray-900 mb-4">
-            PlanPinGo
+              PlanPinGo
             </h1>
             <div className="inline-flex items-center px-4 py-2 bg-[#35b368] text-white text-sm font-semibold rounded-full mb-4">
               🎉 100% FREE
             </div>
             <div className="w-24 h-1 bg-[#35b368] mx-auto rounded-full"></div>
           </div>
-          
+
           <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed px-4">
-            <strong className="text-[#35b368]">Completely Free</strong> travel plan editor with interactive maps.
-            Design your perfect journey, create custom routes, and share your travel plans with friends.
+            <strong className="text-[#35b368]">Completely Free</strong> travel
+            plan editor with interactive maps. Design your perfect journey,
+            create custom routes, and share your travel plans with friends.
           </p>
-          
+
+          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed px-4">
+            <strong className="text-[#05785e]">
+              Basic functions are available and still under development 💪💪💪{" "}
+            </strong>
+            you can tall me your question use email
+          </p>
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
             <Link href="/createTravelPlan" className="w-full sm:w-auto">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="w-full bg-[#35b368] hover:bg-[#2d9a5a] text-white px-8 py-6 text-lg transition-all duration-300 hover:scale-105 hover:shadow-lg"
               >
                 Start Planning - FREE
               </Button>
             </Link>
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               variant="outline"
               className="w-full sm:w-auto border-[#35b368] text-[#35b368] hover:bg-[#35b368] hover:text-white px-8 py-6 text-lg transition-all duration-300"
             >
-              Learn More
+              Coming song more powers
             </Button>
           </div>
 
           {/* Free Features Highlight */}
           <div className="mt-8 p-6 bg-white/50 backdrop-blur-sm rounded-2xl border border-[#35b368]/20 max-w-2xl mx-auto">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">✨ Why Choose Our Free Editor?</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              ✨ Why Choose Our Free Editor?
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600">
               <div className="flex items-center gap-2">
                 <span className="text-[#35b368]">✓</span>
@@ -125,19 +136,20 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-16 relative w-full h-[300px] md:h-[400px] rounded-2xl overflow-hidden shadow-2xl transform hover:scale-[1.02] transition-transform duration-300">
-            <div className="absolute inset-0">
-              <Image
-                src="https://images.unsplash.com/photo-1526772662000-3f88f10405ff"
-                alt="World map"
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-br from-[#35b368]/20 to-[#35b368]/10 backdrop-blur-sm flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-gray-800 text-lg mb-2 font-medium">Interactive Map Coming Soon</p>
-                <div className="w-16 h-16 border-4 border-[#35b368] border-t-transparent rounded-full animate-spin mx-auto"></div>
+          {/* Contact Information */}
+          <div className="mt-12 p-6 bg-white/50 backdrop-blur-sm rounded-2xl border border-[#35b368]/20 max-w-2xl mx-auto">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Contact this web site Indie developer
+            </h3>
+            <div className="space-y-3 text-sm text-gray-600">
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-[#35b368]">✉️</span>
+                <a
+                  href="mailto:l2025y@foxmail.com"
+                  className="hover:text-[#35b368] transition-colors"
+                >
+                  LenLi l2025y@foxmail.com
+                </a>
               </div>
             </div>
           </div>
