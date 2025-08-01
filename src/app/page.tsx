@@ -1,13 +1,14 @@
 import Image from "next/image";
 import type { Metadata } from "next";
-import { Inter as FontSans } from "next/font/google";
+import { Poppins } from "next/font/google";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-const fontSans = FontSans({
+const poppins = Poppins({
   subsets: ["latin"],
-  variable: "--font-sans",
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-poppins",
 });
 
 export const metadata: Metadata = {
@@ -20,8 +21,8 @@ export default function Home() {
   return (
     <main
       className={cn(
-        "min-h-screen w-full overflow-x-hidden bg-gradient-to-br from-white via-[#f0f9f4] to-[#e6f5ed]",
-        fontSans.variable
+        "min-h-screen w-full overflow-x-hidden bg-gradient-to-br from-white via-[#f0f9f4] to-[#e6f5ed] font-poppins",
+        poppins.variable
       )}
     >
             {/* Hero Section */}
@@ -42,27 +43,32 @@ export default function Home() {
               {/* Hero Title */}
               <div className="space-y-6">
                 <h1 className="text-6xl md:text-8xl font-bold tracking-tight text-gray-900 leading-tight">
-                  Plan<span className="text-[#35b368]">Pin</span>Go
+                  <span className="font-poppins font-black">Plan</span><span className="text-[#35b368] font-poppins font-black">Pin</span><span className="font-poppins font-black">Go</span>
                 </h1>
-                <div className="inline-flex items-center px-6 py-3 bg-[#35b368] text-white text-lg font-semibold rounded-full shadow-lg">
+                <div className="inline-flex items-center px-6 py-3 bg-[#35b368] text-white text-lg font-bold rounded-full shadow-lg">
                   🎉 100% FREE
                 </div>
               </div>
 
               {/* Hero Description */}
-              <div className="space-y-6">
-                <p className="text-xl md:text-2xl text-gray-600 leading-relaxed">
-                  <strong className="text-[#35b368]">Completely Free</strong> travel
+              <div className="space-y-8">
+                <p className="text-xl md:text-2xl text-gray-700 leading-relaxed font-medium tracking-wide">
+                  <span className="text-[#35b368] font-bold">Completely Free</span> travel
                   plan editor with interactive maps. Design your perfect journey,
                   create custom routes, and share your travel plans with friends.
                 </p>
 
-                <p className="text-lg text-gray-600 leading-relaxed">
-                  <strong className="text-[#05785e]">
-                    Basic functions are available and still under development 💪💪💪{" "}
-                  </strong>
-                  you can tell me your question use email
-                </p>
+                <div className="bg-gradient-to-r from-[#35b368]/10 to-[#05785e]/10 rounded-2xl p-6 border-l-4 border-[#35b368]">
+                  <p className="text-lg text-gray-700 leading-relaxed font-medium">
+                    <span className="text-[#05785e] font-bold text-xl">
+                      Basic functions are available and still under development 💪💪💪
+                    </span>
+                    <br />
+                    <span className="text-gray-600 font-normal">
+                      Have questions? Feel free to contact me via email
+                    </span>
+                  </p>
+                </div>
               </div>
 
               {/* CTA Buttons */}
@@ -291,7 +297,7 @@ export default function Home() {
               Contact this website Indie developer
             </h3>
             <p className="text-lg text-gray-600 mb-8">
-              Have questions or suggestions? I'd love to hear from you!
+              Have questions or suggestions? I&apos;d love to hear from you!
             </p>
             <div className="inline-flex items-center gap-4 p-6 bg-[#35b368]/10 rounded-2xl">
               <div className="w-12 h-12 bg-[#35b368] rounded-full flex items-center justify-center">
