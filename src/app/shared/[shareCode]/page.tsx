@@ -717,7 +717,7 @@ const SharedPacketPage = () => {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Login to Save</h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    You need to login to add this travel plan to your collection. You'll be able to view and edit your own copy.
+                    You need to login to add this travel plan to your collection. You&apos;ll be able to view and edit your own copy.
                   </p>
                   <div className="bg-gray-50 rounded-lg p-3 space-y-2">
                     <div className="flex items-center justify-between text-sm">
@@ -739,7 +739,7 @@ const SharedPacketPage = () => {
               ) : (
                 <>
                   <p className="text-sm text-gray-600">
-                    Add "{packet?.name}" to your travel plans? You'll be able to view and edit your own copy.
+                    Add &quot;{packet?.name}&quot; to your travel plans? You&apos;ll be able to view and edit your own copy.
                   </p>
                   
                   <div className="bg-gray-50 rounded-lg p-3 space-y-2">
