@@ -17,10 +17,19 @@ import { http } from "@/lib/http";
 import { useAuthStore } from "@/store/authStore";
 import { useMapStore } from "@/app/store/mapStore";
 import MapboxMap from "@/components/mapbox";
-import { ArrowLeft, Map, Eye, ChevronDown, ChevronUp, MapPin, Navigation, ExternalLink } from "lucide-react";
+import { ArrowLeft, Map, Eye, ChevronDown, ChevronUp, MapPin, Navigation, ExternalLink, Share2, Copy, Check } from "lucide-react";
 import Link from "next/link";
 import mapboxgl from "mapbox-gl";
 import { getAvailableMapApps, openInMapApp, type MapApp } from "@/lib/mapUtils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface DayTrack {
   day: string;
@@ -34,6 +43,9 @@ interface Packet {
   name: string;
   description?: string;
   itineraryDays?: DayTrack[];
+  shareCode?: string;
+  shareType?: string;
+  shareViews?: number;
 }
 
 const PacketViewPage = () => {
@@ -52,6 +64,15 @@ const PacketViewPage = () => {
   const [showMapApps, setShowMapApps] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState<any>(null);
   const [availableMapApps, setAvailableMapApps] = useState<MapApp[]>([]);
+  
+  // Share-related state
+  const [showShareConfirmDialog, setShowShareConfirmDialog] = useState(false);
+  const [showShareLinkDialog, setShowShareLinkDialog] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string>("");
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [selectedShareType, setSelectedShareType] = useState<'free' | 'paid'>('free');
 
   // Fetch packet data
   const fetchPacket = useCallback(async () => {
@@ -109,6 +130,109 @@ const PacketViewPage = () => {
   useEffect(() => {
     setAvailableMapApps(getAvailableMapApps());
   }, []);
+
+  // Share functionality
+  const handleShare = useCallback(() => {
+    if (!packet) return;
+    
+    // If already sharing, show the link dialog directly
+    if (packet.shareCode) {
+      const baseUrl = window.location.origin;
+      setShareUrl(`${baseUrl}/shared/${packet.shareCode}`);
+      setIsSharing(true);
+      setShowShareLinkDialog(true);
+      return;
+    }
+
+    // Show confirmation dialog for new sharing
+    setShowShareConfirmDialog(true);
+  }, [packet]);
+
+  const handleConfirmShare = useCallback(async () => {
+    if (!packet) return;
+    
+    try {
+      setShareLoading(true);
+      
+      let token = useAuthStore.getState().token;
+      if (!token) {
+        token = await getAccessTokenSilently();
+        useAuthStore.getState().setToken(token);
+      }
+
+      const response = await http.post(`/api/packets/${packetId}/share`, {
+        shareType: selectedShareType
+      }) as any;
+
+      if (response && response.data) {
+        const shareCode = response.data.shareCode;
+        const shareUrl = response.data.shareUrl; // Use URL from backend
+        setShareUrl(shareUrl);
+        setIsSharing(true);
+        
+        // Update packet state
+        setPacket(prev => prev ? {
+          ...prev,
+          shareCode: shareCode,
+          shareType: selectedShareType,
+          shareViews: 0
+        } : null);
+        
+        // Close confirmation dialog and show link dialog
+        setShowShareConfirmDialog(false);
+        setShowShareLinkDialog(true);
+      }
+    } catch (error) {
+      console.error('Error enabling sharing:', error);
+      // TODO: Show error toast
+    } finally {
+      setShareLoading(false);
+    }
+  }, [packet, packetId, selectedShareType, getAccessTokenSilently]);
+
+  const handleCopyLink = useCallback(async () => {
+    if (!shareUrl) return;
+    
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+    }
+  }, [shareUrl]);
+
+  const handleDisableShare = useCallback(async () => {
+    if (!packet?.shareCode) return;
+    
+    try {
+      setShareLoading(true);
+      
+      let token = useAuthStore.getState().token;
+      if (!token) {
+        token = await getAccessTokenSilently();
+        useAuthStore.getState().setToken(token);
+      }
+
+      await http.delete(`/api/packets/${packetId}/share`);
+      
+      // Update packet state
+      setPacket(prev => prev ? {
+        ...prev,
+        shareCode: undefined,
+        shareType: 'private',
+      } : null);
+      
+      setIsSharing(false);
+      setShowShareLinkDialog(false);
+      setShareUrl('');
+    } catch (error) {
+      console.error('Error disabling sharing:', error);
+      // TODO: Show error toast
+    } finally {
+      setShareLoading(false);
+    }
+  }, [packet, packetId, getAccessTokenSilently]);
 
   // Add markers to map
   const addMarkerToMap = useCallback((
@@ -429,6 +553,21 @@ const PacketViewPage = () => {
               </p>
             )}
           </div>
+          <Button
+            variant={packet.shareCode ? "outline" : "default"}
+            size="sm"
+            onClick={handleShare}
+            disabled={shareLoading}
+            className={cn(
+              "flex items-center gap-2 font-medium shadow-sm",
+              packet.shareCode 
+                ? "text-[#35b368] border-[#35b368] hover:bg-[#35b368]/10" 
+                : "bg-[#35b368] hover:bg-[#35b368]/90 text-white"
+            )}
+          >
+            <Share2 className="h-4 w-4" />
+            {shareLoading ? "Sharing..." : packet.shareCode ? "Shared" : "Share"}
+          </Button>
         </div>
       </div>
 
@@ -629,6 +768,137 @@ const PacketViewPage = () => {
             </div>
           </div>
         )}
+
+        {/* Share Confirmation Dialog */}
+        <Dialog open={showShareConfirmDialog} onOpenChange={setShowShareConfirmDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Share2 className="h-5 w-5" />
+                Share Travel Plan
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Share your travel plan with others. Choose how you want to share:
+              </p>
+              
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="free-share"
+                    name="shareType"
+                    value="free"
+                    checked={selectedShareType === 'free'}
+                    onChange={(e) => setSelectedShareType(e.target.value as 'free')}
+                    className="w-4 h-4"
+                  />
+                  <label htmlFor="free-share" className="flex-1 cursor-pointer">
+                    <div className="font-medium text-gray-900">Free Sharing</div>
+                    <div className="text-sm text-gray-500">
+                      Anyone with the link can view your travel plan for free
+                    </div>
+                  </label>
+                </div>
+                
+                <div className="flex items-center space-x-2 opacity-50">
+                  <input
+                    type="radio"
+                    id="paid-share"
+                    name="shareType"
+                    value="paid"
+                    disabled
+                    className="w-4 h-4"
+                  />
+                  <label htmlFor="paid-share" className="flex-1">
+                    <div className="font-medium text-gray-400">Premium Sharing</div>
+                    <div className="text-sm text-gray-400">
+                      Charge for access to your travel plan (Coming Soon)
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <DialogFooter className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowShareConfirmDialog(false)}
+                disabled={shareLoading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleConfirmShare}
+                disabled={shareLoading}
+                className="bg-[#35b368] hover:bg-[#35b368]/90"
+              >
+                {shareLoading ? "Creating..." : "Create Share Link"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Share Link Dialog */}
+        <Dialog open={showShareLinkDialog} onOpenChange={setShowShareLinkDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Share2 className="h-5 w-5" />
+                Share Link Created
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="share-link" className="text-sm font-medium">
+                  Share Link
+                </Label>
+                <div className="flex mt-2">
+                  <Input
+                    id="share-link"
+                    value={shareUrl}
+                    readOnly
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="ml-2"
+                    onClick={handleCopyLink}
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Anyone with this link can view your travel plan
+                </p>
+              </div>
+
+              {packet?.shareViews !== undefined && packet.shareViews > 0 && (
+                <div className="text-sm text-gray-600">
+                  <Eye className="h-4 w-4 inline mr-1" />
+                  {packet.shareViews} view{packet.shareViews !== 1 ? 's' : ''}
+                </div>
+              )}
+            </div>
+            <DialogFooter className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleDisableShare}
+                disabled={shareLoading}
+              >
+                Stop Sharing
+              </Button>
+              <Button onClick={() => setShowShareLinkDialog(false)}>
+                Done
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   };
