@@ -135,7 +135,7 @@ function NavigationBar() {
             >
               Home
             </Link>
-            <Link
+            {/* <Link
               href="/travelPlans"
               className={cn(
                 "block px-3 py-2 rounded-md text-base font-medium transition-colors",
@@ -146,7 +146,7 @@ function NavigationBar() {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Travel Plans
-            </Link>
+            </Link> */}
             {isAuthenticated && (
               <Link
                 href="/packets"
