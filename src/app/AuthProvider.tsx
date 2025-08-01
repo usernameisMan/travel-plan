@@ -1,5 +1,6 @@
 "use client";
 import { Auth0Provider } from "@auth0/auth0-react";
+import TokenGuard from "@/components/TokenGuard";
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const domain = process.env.NEXT_PUBLIC_AUTH0_DOMAIN || "dev-jm3p0fl7ukqun2o5.us.auth0.com";
@@ -28,7 +29,9 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       cacheLocation="localstorage"
       useRefreshTokens={true}
     >
-      {children}
+      <TokenGuard>
+        {children}
+      </TokenGuard>
     </Auth0Provider>
   );
 } 

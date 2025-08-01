@@ -41,6 +41,15 @@ export async function httpRequest<T>(
     });
 
     if (!response.ok) {
+      // Handle 401 Unauthorized errors (token expired)
+      if (response.status === 401) {
+        // Dispatch custom event to trigger logout
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth-unauthorized'));
+        }
+        throw new HttpError(401, 'Authentication token has expired. Please log in again.');
+      }
+      
       throw new HttpError(
         response.status,
         `HTTP error! status: ${response.status}`

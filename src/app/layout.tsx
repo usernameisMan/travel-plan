@@ -1,5 +1,5 @@
 "use client";
-import { Inter } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
 import { usePathname } from "next/navigation";
@@ -19,7 +19,11 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useState } from "react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
-const inter = Inter({ subsets: ["latin"] });
+const poppins = Poppins({ 
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-poppins",
+});
 
 function NavigationBar() {
   const passName = usePathname();
@@ -135,7 +139,7 @@ function NavigationBar() {
             >
               Home
             </Link>
-            <Link
+            {/* <Link
               href="/travelPlans"
               className={cn(
                 "block px-3 py-2 rounded-md text-base font-medium transition-colors",
@@ -146,7 +150,7 @@ function NavigationBar() {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Travel Plans
-            </Link>
+            </Link> */}
             {isAuthenticated && (
               <Link
                 href="/packets"
@@ -174,8 +178,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn(" w-full h-full")}>
-      <body className={cn(inter.className, "flex flex-col w-full h-full")}>
+    <html lang="en" className={cn("w-full h-full", poppins.variable)}>
+      <body className={cn(poppins.className, "flex flex-col w-full h-full font-poppins")}>
         <ErrorBoundary>
           <AuthProvider>
             <NavigationBar />
