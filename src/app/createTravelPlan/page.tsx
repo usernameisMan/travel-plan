@@ -860,7 +860,7 @@ const TravelPlanWithSearchParams = () => {
   }
 
   return (
-    <div className={cn("w-full h-full flex flex-col md:flex-row")}>
+    <div className={cn("w-full h-full flex flex-col overflow-hidden")}>
       <CreateMarkerDialog
         onOpenChange={onOpenDialogChange}
         open={createMarkerDialogIsOpen}
@@ -869,7 +869,7 @@ const TravelPlanWithSearchParams = () => {
       />
       
       {/* Mobile Toggle Buttons */}
-      <div className="md:hidden flex bg-white border-b border-gray-200 p-2 gap-2">
+      <div className="md:hidden flex bg-white border-b border-gray-200 p-2 gap-2 flex-shrink-0">
         <button
           onClick={() => setIsMobileView("tracks")}
           className={cn(
@@ -894,40 +894,43 @@ const TravelPlanWithSearchParams = () => {
         </button>
       </div>
 
-      {/* Travel Tracks Panel */}
-      <div className={cn(
-        "md:block",
-        isMobileView === "tracks" ? "block" : "hidden"
-      )}>
-        <TravelTracks
-          createTracksPath={createTracksPath}
-          createAllTracksPath={createAllTracksPath}
-          tracks={tracks}
-          onTracksChange={handleTracksChange}
-          onDeleteTrack={handleDeleteTrack}
-          currentDayIndex={currentDayIndex}
-          onDaySelect={setCurrentDayIndex}
-          currentPacket={currentPacket}
-          onPacketUpdate={handlePacketUpdate}
-          packetName={packetName}
-          packetDescription={packetDescription}
-          onPacketNameChange={setPacketName}
-          onPacketDescriptionChange={setPacketDescription}
-        />
-      </div>
+      {/* Content Area */}
+      <div className="flex-1 flex md:flex-row overflow-hidden">
+        {/* Travel Tracks Panel */}
+        <div className={cn(
+          "md:block md:flex-shrink-0 overflow-hidden",
+          isMobileView === "tracks" ? "flex-1" : "hidden"
+        )}>
+          <TravelTracks
+            createTracksPath={createTracksPath}
+            createAllTracksPath={createAllTracksPath}
+            tracks={tracks}
+            onTracksChange={handleTracksChange}
+            onDeleteTrack={handleDeleteTrack}
+            currentDayIndex={currentDayIndex}
+            onDaySelect={setCurrentDayIndex}
+            currentPacket={currentPacket}
+            onPacketUpdate={handlePacketUpdate}
+            packetName={packetName}
+            packetDescription={packetDescription}
+            onPacketNameChange={setPacketName}
+            onPacketDescriptionChange={setPacketDescription}
+          />
+        </div>
 
-      {/* Map Panel */}
-      <div className={cn(
-        "flex-1 md:grow",
-        isMobileView === "map" ? "block" : "hidden"
-      )}>
-        <MapboxMap
-          className={cn("w-full h-full")}
-          onAddOneMarker={onAddOneMarker}
-          onLoadMap={onLoadMap}
-          createMarkerDialogIsOpen={createMarkerDialogIsOpen}
-          openCreateMarkerDialog={openCreateMarkerDialogHandle}
-        />
+        {/* Map Panel */}
+        <div className={cn(
+          "md:flex-1 overflow-hidden",
+          isMobileView === "map" ? "flex-1" : "hidden"
+        )}>
+          <MapboxMap
+            className={cn("w-full h-full")}
+            onAddOneMarker={onAddOneMarker}
+            onLoadMap={onLoadMap}
+            createMarkerDialogIsOpen={createMarkerDialogIsOpen}
+            openCreateMarkerDialog={openCreateMarkerDialogHandle}
+          />
+        </div>
       </div>
     </div>
   );

@@ -360,45 +360,45 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
     <div className="w-full md:w-[400px] h-full flex flex-col bg-white border-r border-gray-200">
       <div className="p-3 md:p-4 border-b border-gray-200">
         <div className="flex flex-col gap-3 mb-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold">{packetName}</h2>
-              <p className="text-sm text-gray-600 truncate">
-                {packetDescription}
-              </p>
-            </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setTempPacketName(packetName);
-                  setTempPacketDescription(packetDescription);
-                  setIsEditingPacket(true);
-                }}
-                className="flex items-center gap-1 flex-1 sm:flex-none"
-              >
-                <Pencil className="h-4 w-4" />
-                <span className="hidden sm:inline">{t.editPlanName}</span>
-                <span className="sm:hidden">{t.edit}</span>
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={saveAllItinerary}
-                className="flex items-center gap-1 bg-[#35b368] hover:bg-[#2d9a5a] flex-1 sm:flex-none"
-              >
-                <Save className="h-4 w-4" />
-                <span className="hidden sm:inline">{t.save}</span>
-                <span className="sm:hidden">{t.save}</span>
-              </Button>
-            </div>
+          {/* Title Section */}
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-semibold truncate">{packetName}</h2>
+            <p className="text-sm text-gray-600 truncate">
+              {packetDescription}
+            </p>
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex gap-2 w-full">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setTempPacketName(packetName);
+                setTempPacketDescription(packetDescription);
+                setIsEditingPacket(true);
+              }}
+              className="flex items-center gap-1 flex-1 min-w-0"
+            >
+              <Pencil className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden lg:inline truncate">{t.editPlanName}</span>
+              <span className="lg:hidden truncate">{t.edit}</span>
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={saveAllItinerary}
+              className="flex items-center gap-1 bg-[#35b368] hover:bg-[#2d9a5a] flex-1 min-w-0"
+            >
+              <Save className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate">{t.save}</span>
+            </Button>
           </div>
         </div>
         <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full">
             <Select value={transportMode} onValueChange={setTransportMode}>
-              <SelectTrigger className="w-full sm:w-[120px]">
+              <SelectTrigger className="flex-1 min-w-[100px]">
                 <SelectValue placeholder={t.transportMode} />
               </SelectTrigger>
               <SelectContent>
@@ -412,25 +412,24 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
               variant="outline"
               size="sm"
               onClick={() => createAllTracksPath?.(transportMode)}
-              className="flex items-center gap-1 whitespace-nowrap"
+              className="flex items-center gap-1 flex-shrink-0 min-w-0"
             >
-              <Map className="h-4 w-4" />
-              <span className="hidden lg:inline">{t.generateRoute}</span>
-              <span className="lg:hidden">{t.generateRoute}</span>
+              <Map className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden xl:inline truncate">{t.generateRoute}</span>
+              <span className="xl:hidden truncate">{t.generateRoute}</span>
             </Button>
           </div>
         </div>
         <div className="flex flex-col gap-3 mt-3">
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={addNewDay}
-              className="flex items-center justify-center gap-1 w-full sm:w-auto"
+              className="flex items-center justify-center gap-1 w-full min-w-0"
             >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">{t.addNewDay}</span>
-              <span className="sm:hidden">{t.addNewDay}</span>
+              <Plus className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate">{t.addNewDay}</span>
             </Button>
           </div>
         </div>
@@ -523,14 +522,14 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
             </div>
 
             <div className="p-3 md:p-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
+              <div className="flex flex-col gap-3 mb-4">
                 <h4 className="font-medium">{t.itineraryPoints}</h4>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex items-center gap-2 w-full">
                   <Select
                     value={transportMode}
                     onValueChange={setTransportMode}
                   >
-                    <SelectTrigger className="w-full sm:w-[120px]">
+                    <SelectTrigger className="flex-1 min-w-[100px]">
                       <SelectValue placeholder={t.selectTransportation} />
                     </SelectTrigger>
                     <SelectContent>
@@ -544,11 +543,11 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
                     variant="outline"
                     size="sm"
                     onClick={() => props.createTracksPath?.(transportMode)}
-                    className="flex items-center gap-1 whitespace-nowrap"
+                    className="flex items-center gap-1 flex-shrink-0 min-w-0"
                   >
-                    <Map className="h-4 w-4" />
-                    <span className="hidden lg:inline">{t.generateRoute}</span>
-                    <span className="lg:hidden">{t.generateRoute}</span>
+                    <Map className="h-4 w-4 flex-shrink-0" />
+                    <span className="hidden xl:inline truncate">{t.generateRoute}</span>
+                    <span className="xl:hidden truncate">{t.generateRoute}</span>
                   </Button>
                 </div>
               </div>

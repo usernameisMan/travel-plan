@@ -142,14 +142,16 @@ export const translations = {
     enterTravelPlanName: 'Enter travel plan name',
     enterTravelPlanDescription: 'Enter travel plan description',
     selectTransportation: 'Select Transportation',
+    addMarker: 'Add Marker',
+    quickMarkers: 'Quick Markers',
+    longPressToAddMarker: 'Long press or right-click on map to add markers',
+    tapToAddMarker: 'Tap to add marker',
     
     // Common
     save: 'Save',
     close: 'Close',
     yes: 'Yes',
     no: 'No',
-    login: 'Login',
-    logout: 'Logout',
   },
   zh: {
     // Navigation
@@ -292,6 +294,10 @@ export const translations = {
     enterTravelPlanName: '输入旅行计划名称',
     enterTravelPlanDescription: '输入旅行计划描述',
     selectTransportation: '选择交通方式',
+    addMarker: '添加标记',
+    quickMarkers: '快速标记',
+    longPressToAddMarker: '长按或右键点击地图来添加标记',
+    tapToAddMarker: '点击地图添加标记',
     
     // Common
     save: '保存',
