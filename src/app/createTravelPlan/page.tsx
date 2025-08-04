@@ -17,6 +17,8 @@ import { http } from "@/lib/http";
 import { useAuthStore } from "@/store/authStore";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { useLanguageStore } from "@/store/languageStore";
+import { useTranslation } from "@/lib/i18n";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -25,6 +27,8 @@ const fontSans = FontSans({
 
 const TravelPlanWithSearchParams = () => {
   const { isAuthenticated, isLoading, user, getAccessTokenSilently } = useAuth0();
+  const { language } = useLanguageStore();
+  const t = useTranslation(language);
   const mapInstance = useMapStore((state) => state.mapboxInstance);
   const currentTrackRef = useRef<any>({});
   const [tracks, setTracks] = useState<DayTrack[]>([]);
@@ -38,8 +42,8 @@ const TravelPlanWithSearchParams = () => {
   const searchParams = useSearchParams();
   const packetId = searchParams.get('packetId');
   const [currentPacket, setCurrentPacket] = useState<any>(null);
-  const [packetName, setPacketName] = useState<string>("My Travel Plan");
-  const [packetDescription, setPacketDescription] = useState<string>("Carefully planned travel route");
+  const [packetName, setPacketName] = useState<string>(t.myTravelPlan);
+  const [packetDescription, setPacketDescription] = useState<string>(t.carefullyPlannedRoute);
 
     // When packet updates, sync tracks data
   const handlePacketUpdate = (newPacket: any) => {
@@ -168,8 +172,8 @@ const TravelPlanWithSearchParams = () => {
           ]);
           setCurrentPacket(null);
           // Reset to default values
-          setPacketName("My Travel Plan");
-          setPacketDescription("Carefully planned travel route");
+          setPacketName(t.myTravelPlan);
+          setPacketDescription(t.carefullyPlannedRoute);
         }
         setIsInitialized(true);
       } catch (error) {
@@ -431,11 +435,11 @@ const TravelPlanWithSearchParams = () => {
 
   const addToTracks = (title: string, description: string) => {
     if (!currentTrackRef.current?.location?.lng) {
-      console.error("No location data available");
+      console.error(t.noLocationData);
       return;
     }
     if (!mapInstance) {
-      alert("Map is not loaded yet, please try again later!");
+      alert(t.mapNotLoaded);
       return;
     }
 
@@ -495,7 +499,7 @@ const TravelPlanWithSearchParams = () => {
       
     } catch (error) {
       console.error("Error adding track:", error);
-      alert("Error occurred while adding marker, please try again");
+      alert(t.errorOccurred);
     }
   };
 
@@ -515,7 +519,7 @@ const TravelPlanWithSearchParams = () => {
   const createTracksPath = async (mode: string) => {
     let effectiveProfile = mode;
     if (mode === "transit") {
-      alert("Transit routes not supported yet, using walking route instead.");
+      alert(t.transitNotSupported);
       effectiveProfile = "walking";
     }
 
@@ -523,13 +527,13 @@ const TravelPlanWithSearchParams = () => {
 
     // Check if current day's tracks exist
     if (!tracks[currentDayIndex] || !Array.isArray(tracks[currentDayIndex].markers)) {
-      alert("Current itinerary day has no valid markers!");
+      alert(t.currentItineraryNoMarkers);
       return;
     }
 
     const dayTracks = tracks[currentDayIndex].markers;
     if (dayTracks.length < 2) {
-      alert("Please add at least two markers to generate a route!");
+      alert(t.needTwoMarkers);
       return;
     }
 
@@ -642,7 +646,7 @@ const TravelPlanWithSearchParams = () => {
   const createAllTracksPath = async (mode: string) => {
     let effectiveProfile = mode;
     if (mode === "transit") {
-      alert("Transit routes not supported yet, using walking route instead.");
+      alert(t.transitNotSupported);
       effectiveProfile = "walking";
     }
     if (!mapInstance) return;
@@ -688,6 +692,12 @@ const TravelPlanWithSearchParams = () => {
       for (let i = 0; i < dayTracks.length - 1; i++) {
         const from = dayTracks[i];
         const to = dayTracks[i + 1];
+        
+        if (!from || !to || !from.location || !to.location) {
+          console.error("Invalid track data:", { from, to });
+          continue;
+        }
+
         const waypoints = `${parseFloat(from.location.lng)},${parseFloat(
           from.location.lat
         )};${parseFloat(to.location.lng)},${parseFloat(to.location.lat)}`;
@@ -812,7 +822,7 @@ const TravelPlanWithSearchParams = () => {
       
     } catch (error) {
       console.error("Error deleting track:", error);
-      alert("Error occurred while deleting marker");
+      alert(t.errorDeletingMarker);
     }
   };
 
@@ -821,7 +831,7 @@ const TravelPlanWithSearchParams = () => {
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
           <div className="text-2xl font-semibold text-gray-700 mb-4">
-            Verifying login status...
+            {t.verifyingLoginStatus}
           </div>
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto"></div>
         </div>
@@ -834,14 +844,14 @@ const TravelPlanWithSearchParams = () => {
         <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-4">
           <div className="text-6xl mb-6">🔒</div>
           <h1 className="text-3xl font-bold text-gray-800 mb-4">
-            Login Required
+            {t.loginRequired}
           </h1>
           <p className="text-gray-600 mb-6">
-            You need to log in to create travel plans. Please log in to your account first.
+            {t.needToLogin}
           </p>
           <Link href="/login">
             <Button className="bg-[#35b368] hover:bg-[#2d9a5a] text-white px-8 py-3 rounded-lg font-semibold transition-colors">
-              Go to Login
+              {t.goToLogin}
             </Button>
           </Link>
         </div>
@@ -869,7 +879,7 @@ const TravelPlanWithSearchParams = () => {
               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           )}
         >
-          Itinerary Planning
+          {t.itineraryPlanning}
         </button>
         <button
           onClick={() => setIsMobileView("map")}
@@ -880,7 +890,7 @@ const TravelPlanWithSearchParams = () => {
               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           )}
         >
-          Map View
+          {t.mapView}
         </button>
       </div>
 
@@ -923,18 +933,25 @@ const TravelPlanWithSearchParams = () => {
   );
 };
 
+const LoadingFallback = () => {
+  const { language } = useLanguageStore();
+  const t = useTranslation(language);
+  
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      <div className="text-center">
+        <div className="text-2xl font-semibold text-gray-700 mb-4">
+          {t.loadingTravelPlan}
+        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto"></div>
+      </div>
+    </div>
+  );
+};
+
 const TravelPlan = () => {
   return (
-    <Suspense fallback={
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-2xl font-semibold text-gray-700 mb-4">
-            Loading travel plan...
-          </div>
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto"></div>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<LoadingFallback />}>
       <TravelPlanWithSearchParams />
     </Suspense>
   );

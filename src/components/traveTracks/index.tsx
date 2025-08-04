@@ -41,6 +41,8 @@ import { http } from "@/lib/http";
 import { useAuthStore } from "@/store/authStore";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useLanguageStore } from "@/store/languageStore";
+import { useTranslation } from "@/lib/i18n";
 
 interface Props {
   className?: string;
@@ -75,6 +77,8 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
   onPacketDescriptionChange,
   ...props
 }) => {
+  const { language } = useLanguageStore();
+  const t = useTranslation(language);
   const [transportMode, setTransportMode] = useState<string>("driving");
   const [editingDay, setEditingDay] = useState<number | null>(null);
   const [dayTitle, setDayTitle] = useState("");
@@ -219,7 +223,7 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
     try {
       // Validate data
       if (!Array.isArray(tracks) || tracks.length === 0) {
-        alert("No itinerary data to save");
+        alert(t.errorSaving);
         return;
       }
 
@@ -230,7 +234,7 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
       );
 
       if (!hasValidMarkers) {
-        alert("Please add at least some itinerary markers before saving");
+        alert(t.errorSaving);
         return;
       }
 
@@ -251,7 +255,7 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
         // Update existing packet
         response = await http.put(`/api/packets/${currentPacket.id}`, payload);
         console.log("Update response:", response);
-        alert("Itinerary updated successfully!");
+        alert(t.updateSuccess);
       } else {
         // Create new packet
         response = await http.post("/api/packets", payload);
@@ -275,13 +279,13 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
               const newUrl = `${window.location.pathname}?packetId=${newPacketId}`;
               router.push(newUrl);
 
-              alert("Itinerary created successfully!");
+              alert(t.createSuccess);
             } else {
               // If fetching complete data fails, at least update basic info
               onPacketUpdate?.((response as any).data);
               const newUrl = `${window.location.pathname}?packetId=${newPacketId}`;
               router.push(newUrl);
-              alert("Itinerary created successfully!");
+              alert(t.createSuccess);
             }
           } catch (getError) {
             console.error("Error fetching full packet data:", getError);
@@ -289,10 +293,10 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
             onPacketUpdate?.((response as any).data);
             const newUrl = `${window.location.pathname}?packetId=${newPacketId}`;
             router.push(newUrl);
-            alert("Itinerary created successfully!");
+            alert(t.createSuccess);
           }
         } else {
-          alert("Itinerary created successfully, but ID not retrieved");
+          alert(t.createSuccess);
         }
       }
     } catch (error) {
@@ -300,18 +304,16 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
 
       if (error instanceof Error) {
         if (error.message.includes("non-JSON response")) {
-          alert("Server temporarily unavailable, please try again later");
+          alert(t.errorSaving);
         } else if (error.message.includes("Network error")) {
-          alert("Network connection error, please check network and try again");
+          alert(t.networkError);
         } else if (error.message.includes("401")) {
-          alert("Authentication failed, please log in again");
+          alert(t.authenticationFailed);
         } else {
-          alert(`Save failed: ${error.message}`);
+          alert(t.errorSaving);
         }
       } else {
-        alert(
-          "Unknown error occurred while saving itinerary, please try again"
-        );
+        alert(t.errorSaving);
       }
     }
   };
@@ -377,8 +379,8 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
                 className="flex items-center gap-1 flex-1 sm:flex-none"
               >
                 <Pencil className="h-4 w-4" />
-                <span className="hidden sm:inline">Edit Plan</span>
-                <span className="sm:hidden">Edit</span>
+                <span className="hidden sm:inline">{t.editPlanName}</span>
+                <span className="sm:hidden">{t.edit}</span>
               </Button>
               <Button
                 variant="default"
@@ -387,8 +389,8 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
                 className="flex items-center gap-1 bg-[#35b368] hover:bg-[#2d9a5a] flex-1 sm:flex-none"
               >
                 <Save className="h-4 w-4" />
-                <span className="hidden sm:inline">Save</span>
-                <span className="sm:hidden">Save</span>
+                <span className="hidden sm:inline">{t.save}</span>
+                <span className="sm:hidden">{t.save}</span>
               </Button>
             </div>
           </div>
@@ -397,13 +399,13 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Select value={transportMode} onValueChange={setTransportMode}>
               <SelectTrigger className="w-full sm:w-[120px]">
-                <SelectValue placeholder="Select Transportation" />
+                <SelectValue placeholder={t.transportMode} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="driving">Driving</SelectItem>
-                <SelectItem value="walking">Walking</SelectItem>
-                <SelectItem value="cycling">Cycling</SelectItem>
-                <SelectItem value="transit">Transit</SelectItem>
+                <SelectItem value="driving">{t.driving}</SelectItem>
+                <SelectItem value="walking">{t.walking}</SelectItem>
+                <SelectItem value="cycling">{t.cycling}</SelectItem>
+                <SelectItem value="transit">{t.transit}</SelectItem>
               </SelectContent>
             </Select>
             <Button
@@ -413,8 +415,8 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
               className="flex items-center gap-1 whitespace-nowrap"
             >
               <Map className="h-4 w-4" />
-              <span className="hidden lg:inline">Generate Route</span>
-              <span className="lg:hidden">Route</span>
+              <span className="hidden lg:inline">{t.generateRoute}</span>
+              <span className="lg:hidden">{t.generateRoute}</span>
             </Button>
           </div>
         </div>
@@ -427,8 +429,8 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
               className="flex items-center justify-center gap-1 w-full sm:w-auto"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Add Day</span>
-              <span className="sm:hidden">Add Day</span>
+              <span className="hidden sm:inline">{t.addNewDay}</span>
+              <span className="sm:hidden">{t.addNewDay}</span>
             </Button>
           </div>
         </div>
@@ -462,26 +464,26 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
                         setDayTitle(e.target.value)
                       }
                       className="mb-2"
-                      placeholder="Enter itinerary day title"
+                      placeholder={t.planName}
                     />
                     <Textarea
                       value={dayDescription}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                         setDayDescription(e.target.value)
                       }
-                      placeholder="Enter itinerary day description"
+                      placeholder={t.planDescription}
                       className="mb-2"
                     />
                     <div className="flex gap-2">
                       <Button size="sm" onClick={() => saveDayEdit()}>
-                        Save
+                        {t.save}
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => setEditingDay(null)}
                       >
-                        Cancel
+                        {t.cancel}
                       </Button>
                     </div>
                   </div>
@@ -522,20 +524,20 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
 
             <div className="p-3 md:p-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
-                <h4 className="font-medium">Itinerary Points</h4>
+                <h4 className="font-medium">{t.itineraryPoints}</h4>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <Select
                     value={transportMode}
                     onValueChange={setTransportMode}
                   >
                     <SelectTrigger className="w-full sm:w-[120px]">
-                      <SelectValue placeholder="Select Transportation" />
+                      <SelectValue placeholder={t.selectTransportation} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="driving">Driving</SelectItem>
-                      <SelectItem value="walking">Walking</SelectItem>
-                      <SelectItem value="cycling">Cycling</SelectItem>
-                      <SelectItem value="transit">Transit</SelectItem>
+                      <SelectItem value="driving">{t.driving}</SelectItem>
+                      <SelectItem value="walking">{t.walking}</SelectItem>
+                      <SelectItem value="cycling">{t.cycling}</SelectItem>
+                      <SelectItem value="transit">{t.transit}</SelectItem>
                     </SelectContent>
                   </Select>
                   <Button
@@ -545,8 +547,8 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
                     className="flex items-center gap-1 whitespace-nowrap"
                   >
                     <Map className="h-4 w-4" />
-                    <span className="hidden lg:inline">Generate Route</span>
-                    <span className="lg:hidden">Route</span>
+                    <span className="hidden lg:inline">{t.generateRoute}</span>
+                    <span className="lg:hidden">{t.generateRoute}</span>
                   </Button>
                 </div>
               </div>
@@ -580,7 +582,7 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
                       ))
                     ) : (
                       <div className="text-gray-500 text-sm">
-                        No tracks available
+                        {t.noTracksAvailable}
                       </div>
                     )}
                   </div>
@@ -595,18 +597,18 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
       <Dialog open={isEditingPacket} onOpenChange={setIsEditingPacket}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Edit Travel Plan</DialogTitle>
+            <DialogTitle>{t.editTravelPlan}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <label htmlFor="packet-name" className="text-sm font-medium">
-                Plan Name
+                {t.planName}
               </label>
               <Input
                 id="packet-name"
                 value={tempPacketName}
                 onChange={(e) => setTempPacketName(e.target.value)}
-                placeholder="Enter travel plan name"
+                placeholder={t.enterTravelPlanName}
               />
             </div>
             <div className="space-y-2">
@@ -614,22 +616,22 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
                 htmlFor="packet-description"
                 className="text-sm font-medium"
               >
-                Plan Description
+                {t.planDescription}
               </label>
               <Textarea
                 id="packet-description"
                 value={tempPacketDescription}
                 onChange={(e) => setTempPacketDescription(e.target.value)}
-                placeholder="Enter travel plan description"
+                placeholder={t.enterTravelPlanDescription}
                 rows={3}
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={handleCancelPacketEdit}>
-              Cancel
+              {t.cancel}
             </Button>
-            <Button onClick={handleSavePacketEdit}>Save</Button>
+            <Button onClick={handleSavePacketEdit}>{t.save}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -637,18 +639,23 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
   );
 };
 
+const TravelTracksLoading: React.FC = () => {
+  const { language } = useLanguageStore();
+  const t = useTranslation(language);
+  
+  return (
+    <div className="w-full md:w-[400px] h-full flex items-center justify-center bg-white border-r border-gray-200">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#35b368] mx-auto mb-2"></div>
+        <p className="text-sm text-gray-600">{t.loading}</p>
+      </div>
+    </div>
+  );
+};
+
 const TravelTracks: React.FC<Props> = (props) => {
   return (
-    <Suspense
-      fallback={
-        <div className="w-full md:w-[400px] h-full flex items-center justify-center bg-white border-r border-gray-200">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#35b368] mx-auto mb-2"></div>
-            <p className="text-sm text-gray-600">Loading...</p>
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<TravelTracksLoading />}>
       <TravelTracksWithSearchParams {...props} />
     </Suspense>
   );

@@ -1,6 +1,8 @@
 "use client";
 import { http } from "@/lib/http";
 import { useAuthStore } from "@/store/authStore";
+import { useLanguageStore } from "@/store/languageStore";
+import { useTranslation } from "@/lib/i18n";
 
 import { useAuth0 } from "@auth0/auth0-react";
 import Link from "next/link";
@@ -10,6 +12,8 @@ import { useEffect, useState } from "react";
 export default function AuthButton() {
   const setToken = useAuthStore((state) => state.setToken);
   const token = useAuthStore().token;
+  const { language } = useLanguageStore();
+  const t = useTranslation(language);
   const { isAuthenticated, logout, isLoading, user, getAccessTokenSilently } =
     useAuth0();
   const [imageError, setImageError] = useState(false);
@@ -43,7 +47,7 @@ export default function AuthButton() {
   if (isLoading)
     return (
       <div className="px-3 md:px-5 py-2 rounded-lg bg-[#35b368] text-white font-semibold shadow hover:bg-[#2d9a5a] transition text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#35b368]">
-        Loading...
+        {t.loading}
       </div>
     );
 
@@ -80,7 +84,7 @@ export default function AuthButton() {
             })
           }
         >
-          Logout
+          {t.logout}
         </button>
       </div>
     );
@@ -88,7 +92,7 @@ export default function AuthButton() {
   return (
     <Link href="/login">
       <button className="px-3 md:px-5 py-2 rounded-lg bg-[#35b368] text-white font-semibold shadow hover:bg-[#2d9a5a] transition text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#35b368]">
-        Login
+        {t.login}
       </button>
     </Link>
   );

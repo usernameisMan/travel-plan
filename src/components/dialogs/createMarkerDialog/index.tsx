@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,6 +13,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { useLanguageStore } from "@/store/languageStore";
+import { useTranslation } from "@/lib/i18n";
 
 interface Props {
   className?: string;
@@ -20,6 +24,8 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 const CreateMarkerDialog: React.FC<Props> = (props) => {
+  const { language } = useLanguageStore();
+  const t = useTranslation(language);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
@@ -38,14 +44,14 @@ const CreateMarkerDialog: React.FC<Props> = (props) => {
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create a Marker</DialogTitle>
+          <DialogTitle>{t.createMarker}</DialogTitle>
           <DialogDescription>
-            You can set the marker name, time, and any text information
+            {t.markerDescription}
           </DialogDescription>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
-                Title
+                {t.title}
               </Label>
               <Input
                 id="name"
@@ -56,7 +62,7 @@ const CreateMarkerDialog: React.FC<Props> = (props) => {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="username" className="text-right">
-                Description
+                {t.description}
               </Label>
               <Input
                 id="username"
@@ -69,7 +75,7 @@ const CreateMarkerDialog: React.FC<Props> = (props) => {
         </DialogHeader>
         <DialogFooter>
           <Button type="submit" onClick={onconfirm}>
-            Confirm
+            {t.confirm}
           </Button>
         </DialogFooter>
       </DialogContent>
