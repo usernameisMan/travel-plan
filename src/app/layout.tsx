@@ -188,12 +188,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn("w-full h-full", poppins.variable)}>
-      <body className={cn(poppins.className, "flex flex-col w-full h-screen font-poppins overflow-hidden")}>
+      <body className={cn(poppins.className, "flex flex-col w-full min-h-screen font-poppins")}>
         <ErrorBoundary>
           <AuthProvider>
             <LanguageInitializer />
             <NavigationBar />
-            <main className="w-full flex-1 overflow-hidden">{children}</main>
+            <main className="w-full flex-1 min-h-0">{children}</main>
             <LanguageDetectionStatus />
           </AuthProvider>
         </ErrorBoundary>
