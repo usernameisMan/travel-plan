@@ -18,6 +18,11 @@ import AuthButton from "@/components/AuthButton";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useState } from "react";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { LanguageInitializer } from "@/components/language-initializer";
+import { LanguageDetectionStatus } from "@/components/language-detection-status";
+import { useLanguageStore } from "@/store/languageStore";
+import { useTranslation } from "@/lib/i18n";
 
 const poppins = Poppins({ 
   subsets: ["latin"],
@@ -29,6 +34,8 @@ function NavigationBar() {
   const passName = usePathname();
   const { isAuthenticated, isLoading } = useAuth0();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { language } = useLanguageStore();
+  const t = useTranslation(language);
   
   return (
     <section
@@ -54,7 +61,7 @@ function NavigationBar() {
                       passName === "/" && "text-[#35b368]"
                     )}
                   >
-                    Home
+                    {t.home}
                   </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
@@ -79,18 +86,20 @@ function NavigationBar() {
                         passName === "/packets" && "text-[#35b368]"
                       )}
                     >
-                      My Travel Plans
+                      {t.myTravelPlans}
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
               )}
             </NavigationMenuList>
           </NavigationMenu>
+          <LanguageSwitcher />
           <AuthButton />
         </div>
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center gap-2">
+          <LanguageSwitcher />
           <AuthButton />
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -137,7 +146,7 @@ function NavigationBar() {
               )}
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Home
+              {t.home}
             </Link>
             {/* <Link
               href="/travelPlans"
@@ -162,7 +171,7 @@ function NavigationBar() {
                 )}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                My Travel Plans
+                {t.myTravelPlans}
               </Link>
             )}
           </div>
@@ -179,11 +188,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn("w-full h-full", poppins.variable)}>
-      <body className={cn(poppins.className, "flex flex-col w-full h-full font-poppins")}>
+      <body className={cn(poppins.className, "flex flex-col w-full h-screen font-poppins overflow-hidden")}>
         <ErrorBoundary>
           <AuthProvider>
+            <LanguageInitializer />
             <NavigationBar />
-            <section className="w-full h-full">{children}</section>
+            <main className="w-full flex-1 overflow-hidden">{children}</main>
+            <LanguageDetectionStatus />
           </AuthProvider>
         </ErrorBoundary>
       </body>

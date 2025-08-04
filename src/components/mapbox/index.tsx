@@ -6,6 +6,10 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import ToolsMenu from "./toolsMenu";
 import { cn } from "@/lib/utils";
 import { useMapStore } from "@/app/store/mapStore";
+import { useLanguageStore } from "@/store/languageStore";
+import { useTranslation } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 // import { MapboxSearchBox } from '@mapbox/search-js-web';
 
 interface Props {
@@ -22,11 +26,18 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, ...props }) => {
   const currentSelectMarkerType = useRef("");
   const addMapboxMap = useMapStore((state) => state.addMapboxMap);
   const mapInstance = useMapStore((state) => state.mapboxInstance);
+  const { language } = useLanguageStore();
+  const t = useTranslation(language);
+  
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; lngLat: mapboxgl.LngLat | null }>({
     x: 0,
     y: 0,
     lngLat: null
   });
+  
+  const [showFloatingMenu, setShowFloatingMenu] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -94,9 +105,76 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, ...props }) => {
     // Close context menu on map click
     map.current.on("click", () => {
       setContextMenu({ x: 0, y: 0, lngLat: null });
+      setShowFloatingMenu(false);
     });
 
+    // Add touch event listeners for long press detection
+    const canvas = map.current.getCanvas();
+    
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        setTouchStartPos({ x: touch.clientX - rect.left, y: touch.clientY - rect.top });
+        
+        const timer = setTimeout(() => {
+          // Long press detected
+          const point = [touch.clientX - rect.left, touch.clientY - rect.top] as [number, number];
+          const lngLat = map.current?.unproject(point);
+          if (lngLat) {
+            setContextMenu({
+              x: rect.left + point[0],
+              y: rect.top + point[1],
+              lngLat: lngLat
+            });
+          }
+        }, 500); // 500ms for long press
+        
+        setLongPressTimer(timer);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        setLongPressTimer(null);
+      }
+      setTouchStartPos(null);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (touchStartPos && e.touches.length === 1) {
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        const currentPos = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+        
+        // If user moves finger too much, cancel long press
+        const distance = Math.sqrt(
+          Math.pow(currentPos.x - touchStartPos.x, 2) + 
+          Math.pow(currentPos.y - touchStartPos.y, 2)
+        );
+        
+        if (distance > 10 && longPressTimer) { // 10px threshold
+          clearTimeout(longPressTimer);
+          setLongPressTimer(null);
+        }
+      }
+    };
+
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+
     return () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+      }
+      
+      // Remove touch event listeners
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchend', handleTouchEnd);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+      
       if (map.current) {
         map.current.remove();
       }
@@ -151,11 +229,36 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, ...props }) => {
 
   return (
     <div className={cn("relative", className)}>
-      {/* <ToolsMenu
-        className={cn("z-10 absolute top-3 right-5")}
-        onClickMenu={selectMenu}
-      /> */}
       <div ref={mapContainer} style={{ width: "100%", height: "100%" }} />
+      
+      {/* Floating Add Marker Button */}
+      <Button
+        className="absolute bottom-20 right-4 z-40 w-12 h-12 rounded-full bg-[#35b368] hover:bg-[#2d9a5a] shadow-lg"
+        onClick={() => setShowFloatingMenu(!showFloatingMenu)}
+        title={t.addMarker}
+      >
+        <Plus className="h-6 w-6" />
+      </Button>
+      
+      {/* Instruction text for mobile users */}
+      <div className="absolute bottom-4 left-4 z-30 bg-black/60 text-white text-xs px-2 py-1 rounded">
+        {t.longPressToAddMarker}
+      </div>
+      
+      {/* Floating Tools Menu */}
+      {showFloatingMenu && (
+        <div className="absolute bottom-36 right-4 z-50">
+          <ToolsMenu
+            className="w-[180px]"
+            onClickMenu={(fileName) => {
+              setShowFloatingMenu(false);
+              selectMenu(fileName);
+            }}
+          />
+        </div>
+      )}
+      
+      {/* Context Menu (Right-click or Long-press) */}
       {contextMenu.lngLat && (
         <div
           className="fixed z-50 bg-white rounded-lg shadow-lg border border-gray-200"

@@ -1,9 +1,12 @@
+"use client";
+
 import Image from "next/image";
-import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useLanguageStore } from "@/store/languageStore";
+import { useTranslation } from "@/lib/i18n";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -11,13 +14,9 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
-export const metadata: Metadata = {
-  title: "Plan pin go - Free Travel Plan Editor",
-  description:
-    "A completely free travel plan editor based on interactive maps. Create, design and share your travel plans effortlessly.",
-};
-
 export default function Home() {
+  const { language } = useLanguageStore();
+  const t = useTranslation(language);
   return (
     <main
       className={cn(
@@ -46,26 +45,27 @@ export default function Home() {
                   <span className="font-poppins font-black">Plan</span><span className="text-[#35b368] font-poppins font-black">Pin</span><span className="font-poppins font-black">Go</span>
                 </h1>
                 <div className="inline-flex items-center px-6 py-3 bg-[#35b368] text-white text-lg font-bold rounded-full shadow-lg">
-                  🎉 100% FREE
+                  {t.freeBadge}
                 </div>
               </div>
 
               {/* Hero Description */}
               <div className="space-y-8">
                 <p className="text-xl md:text-2xl text-gray-700 leading-relaxed font-medium tracking-wide">
-                  <span className="text-[#35b368] font-bold">Completely Free</span> travel
-                  plan editor with interactive maps. Design your perfect journey,
-                  create custom routes, and share your travel plans with friends.
+                  <span className="text-[#35b368] font-bold">
+                    {language === 'zh' ? '完全免费' : 'Completely Free'}
+                  </span>{' '}
+                  {t.heroSubtitle.replace('Completely Free ', '')}
                 </p>
 
                 <div className="bg-gradient-to-r from-[#35b368]/10 to-[#05785e]/10 rounded-2xl p-6 border-l-4 border-[#35b368]">
                   <p className="text-lg text-gray-700 leading-relaxed font-medium">
                     <span className="text-[#05785e] font-bold text-xl">
-                      Basic functions are available and still under development 💪💪💪
+                      {t.developmentMessage}
                     </span>
                     <br />
                     <span className="text-gray-600 font-normal">
-                      Have questions? Feel free to contact me via email
+                      {t.contactMessage}
                     </span>
                   </p>
                 </div>
@@ -78,7 +78,7 @@ export default function Home() {
                     size="lg"
                     className="w-full bg-[#35b368] hover:bg-[#2d9a5a] text-white px-8 py-6 text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl rounded-2xl"
                   >
-                    Start Planning - FREE
+                    {t.startPlanningFree}
                   </Button>
                 </Link>
                 <Button
@@ -86,7 +86,7 @@ export default function Home() {
                   variant="outline"
                   className="w-full sm:w-auto border-2 border-[#35b368] text-[#35b368] hover:bg-[#35b368] hover:text-white px-8 py-6 text-lg font-semibold transition-all duration-300 rounded-2xl"
                 >
-                  Coming soon more powers
+                  {t.comingSoonPowers}
                 </Button>
               </div>
             </div>
@@ -111,7 +111,7 @@ export default function Home() {
                     <div className="w-8 h-8 bg-[#35b368] rounded-full flex items-center justify-center">
                       <span className="text-white text-sm font-bold">✓</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-800">Interactive Maps</span>
+                    <span className="text-sm font-medium text-gray-800">{t.interactiveMaps}</span>
                   </div>
                 </div>
                 
@@ -120,7 +120,7 @@ export default function Home() {
                     <div className="w-8 h-8 bg-[#35b368] rounded-full flex items-center justify-center">
                       <span className="text-white text-sm font-bold">✓</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-800">Free Forever</span>
+                    <span className="text-sm font-medium text-gray-800">{t.freeForever}</span>
                   </div>
                 </div>
               </div>
@@ -134,10 +134,10 @@ export default function Home() {
           {/* Features Header */}
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Powerful Features
+              {t.powerfulFeatures}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Discover what makes PlanPinGo the perfect travel planning companion
+              {t.featuresSubtitle}
             </p>
           </div>
 
@@ -147,28 +147,27 @@ export default function Home() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div className="space-y-6">
                   <h3 className="text-3xl font-bold text-gray-900">
-                    Interactive Map Planning
+                    {t.interactiveMapPlanning}
                   </h3>
                   <p className="text-lg text-gray-600">
-                    Create detailed itineraries with our intuitive drag-and-drop interface. 
-                    Add locations, customize routes, and visualize your entire journey.
+                    {t.mapPlanningDesc}
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex items-center gap-2">
                       <span className="text-[#35b368] text-xl">✓</span>
-                      <span className="text-gray-700">Interactive map editor</span>
+                      <span className="text-gray-700">{t.interactiveMapEditor}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[#35b368] text-xl">✓</span>
-                      <span className="text-gray-700">Unlimited travel plans</span>
+                      <span className="text-gray-700">{t.unlimitedPlans}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[#35b368] text-xl">✓</span>
-                      <span className="text-gray-700">Custom route planning</span>
+                      <span className="text-gray-700">{t.customRoutePlanning}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[#35b368] text-xl">✓</span>
-                      <span className="text-gray-700">Share with anyone</span>
+                      <span className="text-gray-700">{t.shareWithAnyone}</span>
                     </div>
                   </div>
                 </div>
@@ -201,11 +200,10 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                Plan Your Route
+                {t.planYourRoute}
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Design your perfect travel route with our intuitive map interface. 
-                Add waypoints, customize paths, and optimize your journey.
+                {t.planRouteDesc}
               </p>
             </div>
 
@@ -221,11 +219,10 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                Discover Places
+                {t.discoverPlaces}
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Explore amazing destinations and hidden gems. Get detailed information 
-                about attractions, restaurants, and local experiences.
+                {t.discoverDesc}
               </p>
             </div>
 
@@ -241,11 +238,10 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                Share Experiences
+                {t.shareExperiences}
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Share your travel plans with friends and family. Export itineraries 
-                and collaborate on planning your next adventure together.
+                {t.shareDesc}
               </p>
             </div>
           </div>
@@ -257,32 +253,32 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <div className="bg-white/50 backdrop-blur-sm rounded-3xl p-12 border border-[#35b368]/20 shadow-xl">
             <h3 className="text-3xl font-bold text-gray-900 mb-8 text-center">
-              ✨ Why Choose Our Free Editor?
+              {t.whyChoose}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/50">
                 <div className="w-12 h-12 bg-[#35b368] rounded-full flex items-center justify-center">
                   <span className="text-white text-xl font-bold">✓</span>
                 </div>
-                <span className="text-lg font-medium text-gray-800">Interactive map editor</span>
+                <span className="text-lg font-medium text-gray-800">{t.interactiveMapEditor}</span>
               </div>
               <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/50">
                 <div className="w-12 h-12 bg-[#35b368] rounded-full flex items-center justify-center">
                   <span className="text-white text-xl font-bold">✓</span>
                 </div>
-                <span className="text-lg font-medium text-gray-800">Unlimited travel plans</span>
+                <span className="text-lg font-medium text-gray-800">{t.unlimitedPlans}</span>
               </div>
               <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/50">
                 <div className="w-12 h-12 bg-[#35b368] rounded-full flex items-center justify-center">
                   <span className="text-white text-xl font-bold">✓</span>
                 </div>
-                <span className="text-lg font-medium text-gray-800">Custom route planning</span>
+                <span className="text-lg font-medium text-gray-800">{t.customRoutePlanning}</span>
               </div>
               <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/50">
                 <div className="w-12 h-12 bg-[#35b368] rounded-full flex items-center justify-center">
                   <span className="text-white text-xl font-bold">✓</span>
                 </div>
-                <span className="text-lg font-medium text-gray-800">Share with anyone</span>
+                <span className="text-lg font-medium text-gray-800">{t.shareWithAnyone}</span>
               </div>
             </div>
           </div>
@@ -294,10 +290,10 @@ export default function Home() {
         <div className="max-w-2xl mx-auto">
           <div className="bg-white/50 backdrop-blur-sm rounded-3xl p-12 border border-[#35b368]/20 shadow-xl text-center">
             <h3 className="text-3xl font-bold text-gray-900 mb-6">
-              Contact this website Indie developer
+              {t.contactDeveloper}
             </h3>
             <p className="text-lg text-gray-600 mb-8">
-              Have questions or suggestions? I&apos;d love to hear from you!
+              {t.contactSubtitle}
             </p>
             <div className="inline-flex items-center gap-4 p-6 bg-[#35b368]/10 rounded-2xl">
               <div className="w-12 h-12 bg-[#35b368] rounded-full flex items-center justify-center">

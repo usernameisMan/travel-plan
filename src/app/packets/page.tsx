@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { http } from "@/lib/http";
 import { useAuthStore } from "@/store/authStore";
+import { useLanguageStore } from "@/store/languageStore";
+import { useTranslation } from "@/lib/i18n";
 import { Plus, MapPin, Calendar, Eye, Edit3, Trash2 } from "lucide-react";
 import {
   Dialog,
@@ -31,6 +33,8 @@ interface Packet {
 
 const PacketsPage = () => {
   const { isAuthenticated, isLoading, getAccessTokenSilently } = useAuth0();
+  const { language } = useLanguageStore();
+  const t = useTranslation(language);
   const [packets, setPackets] = useState<Packet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,12 +68,12 @@ const PacketsPage = () => {
       }
     } catch (error) {
       console.error("Error fetching packets:", error);
-      setError("Failed to fetch travel plans, please try again later");
+      setError(t.failedToFetch);
       setPackets([]);
     } finally {
       setLoading(false);
     }
-  }, [getAccessTokenSilently]);
+  }, [getAccessTokenSilently, t]);
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
@@ -152,7 +156,7 @@ const PacketsPage = () => {
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
           <div className="text-2xl font-semibold text-gray-700 mb-4">
-            Verifying login status...
+            {t.verifyingLogin}
           </div>
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto"></div>
         </div>
@@ -165,11 +169,11 @@ const PacketsPage = () => {
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-4">
           <div className="text-6xl mb-6">🔒</div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">Login Required</h1>
-          <p className="text-gray-600 mb-6">Please log in to your account to view your travel plans.</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">{t.loginRequired}</h1>
+          <p className="text-gray-600 mb-6">{t.loginRequiredMessage}</p>
           <Link href="/login">
             <Button className="bg-[#35b368] hover:bg-[#2d9a5a] text-white px-8 py-3 rounded-lg font-semibold transition-colors">
-              Go to Login
+              {t.goToLogin}
             </Button>
           </Link>
         </div>
@@ -184,13 +188,13 @@ const PacketsPage = () => {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">My Travel Plans</h1>
-              <p className="text-gray-600 mt-2">Manage and view all your created travel plans</p>
+              <h1 className="text-3xl font-bold text-gray-900">{t.myTravelPlans}</h1>
+              <p className="text-gray-600 mt-2">{t.managePlansSubtitle}</p>
             </div>
             <Link href="/createTravelPlan">
               <Button className="bg-[#35b368] hover:bg-[#2d9a5a] text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2">
                 <Plus className="h-5 w-5" />
-                Create New Plan
+                {t.createNewPlan}
               </Button>
             </Link>
           </div>
@@ -201,7 +205,7 @@ const PacketsPage = () => {
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading your travel plans...</p>
+              <p className="text-gray-600">{t.loadingPlans}</p>
             </div>
           </div>
         ) : error ? (
@@ -213,19 +217,19 @@ const PacketsPage = () => {
               variant="outline"
               className="hover:bg-[#35b368] hover:text-white transition-colors"
             >
-              Reload
+              {t.reload}
             </Button>
           </div>
         ) : packets.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-6">✈️</div>
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">No travel plans yet</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">{t.noPlansYet}</h2>
             <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              Start creating your first travel plan to record beautiful travel memories and plan future trips
+              {t.noPlansMessage}
             </p>
             <Link href="/createTravelPlan">
               <Button className="bg-[#35b368] hover:bg-[#2d9a5a] text-white px-8 py-3 rounded-lg font-semibold transition-colors">
-                Create First Plan
+                {t.createFirstPlan}
               </Button>
             </Link>
           </div>
@@ -235,7 +239,7 @@ const PacketsPage = () => {
               <Card key={packet.id} className="hover:shadow-lg transition-shadow duration-200 bg-white">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg font-semibold text-gray-900 overflow-hidden">
-                    <div className="line-clamp-2">{packet.title || "Untitled Plan"}</div>
+                    <div className="line-clamp-2">{packet.title || t.untitledPlan}</div>
                   </CardTitle>
                   {packet.destination && (
                     <div className="flex items-center text-sm text-gray-600 mt-1">
@@ -260,13 +264,13 @@ const PacketsPage = () => {
                     )}
                     
                     <div className="flex items-center justify-between text-sm text-gray-600">
-                      <span>{getDaysCount(packet)} day itinerary</span>
-                      <span>{getMarkersCount(packet)} attractions</span>
+                      <span>{getDaysCount(packet)} {t.dayItinerary}</span>
+                      <span>{getMarkersCount(packet)} {t.attractions}</span>
                     </div>
                     
                     {packet.createdAt && (
                       <div className="text-xs text-gray-500">
-                        Created on {formatDate(packet.createdAt)}
+                        {t.createdOn} {formatDate(packet.createdAt)}
                       </div>
                     )}
                   </div>
@@ -279,7 +283,7 @@ const PacketsPage = () => {
                         className="w-full hover:bg-[#35b368] hover:text-white transition-colors"
                       >
                         <Edit3 className="h-4 w-4 mr-1" />
-                        Edit
+                        {t.edit}
                       </Button>
                     </Link>
                     <Link href={`/packets/${packet.id}/view`} className="col-span-1 sm:flex-1">
@@ -289,7 +293,7 @@ const PacketsPage = () => {
                         className="w-full hover:bg-blue-500 hover:text-white transition-colors"
                       >
                         <Eye className="h-4 w-4 mr-1" />
-                        View
+                        {t.view}
                       </Button>
                     </Link>
                     <Button 
@@ -299,7 +303,7 @@ const PacketsPage = () => {
                       className="col-span-2 sm:col-span-auto sm:w-auto hover:bg-red-500 hover:text-white transition-colors"
                     >
                       <Trash2 className="h-4 w-4 sm:mr-0 mr-1" />
-                      <span className="sm:hidden">Delete</span>
+                      <span className="sm:hidden">{t.delete}</span>
                     </Button>
                   </div>
                 </CardContent>
@@ -313,14 +317,14 @@ const PacketsPage = () => {
       <Dialog open={!!deletingPacket} onOpenChange={() => setDeletingPacket(null)}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Confirm Delete</DialogTitle>
+            <DialogTitle>{t.confirmDeleteTitle}</DialogTitle>
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-gray-600 mb-2">
-              Are you sure you want to delete the travel plan <span className="font-medium">{deletingPacket?.title || "Untitled Plan"}</span>?
+              {t.confirmDeleteMessage} <span className="font-medium">{deletingPacket?.title || t.untitledPlan}</span>?
             </p>
             <p className="text-sm text-red-600 font-medium">
-              This action cannot be undone, and all related data will be permanently deleted.
+              {t.confirmDeleteWarning}
             </p>
           </div>
           <DialogFooter>
@@ -329,7 +333,7 @@ const PacketsPage = () => {
               onClick={() => setDeletingPacket(null)}
               disabled={deleteLoading}
             >
-              Cancel
+              {t.cancel}
             </Button>
             <Button
               onClick={() => deletingPacket && handleDeletePacket(deletingPacket)}
@@ -339,10 +343,10 @@ const PacketsPage = () => {
               {deleteLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Deleting...
+                  {t.deleting}
                 </>
               ) : (
-                "Confirm Delete"
+                t.confirmDeleteBtn
               )}
             </Button>
           </DialogFooter>
