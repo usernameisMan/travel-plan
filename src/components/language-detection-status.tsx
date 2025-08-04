@@ -44,8 +44,8 @@ export const LanguageDetectionStatus: React.FC = () => {
             </p>
             <p className="text-xs opacity-90">
               {language === 'zh' 
-                ? `当前语言: ${language === 'zh' ? '中文' : 'English'}`
-                : `Current: ${language === 'zh' ? 'Chinese' : 'English'}`
+                ? '当前语言: 中文'
+                : 'Current: English'
               }
             </p>
           </div>
