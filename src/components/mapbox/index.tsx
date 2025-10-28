@@ -233,7 +233,7 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, ...props }) => {
       
       {/* Floating Add Marker Button */}
       <Button
-        className="absolute bottom-20 right-4 z-40 w-12 h-12 rounded-full bg-[#35b368] hover:bg-[#2d9a5a] shadow-lg"
+        className="absolute bottom-20 right-4 z-40 w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg"
         onClick={() => setShowFloatingMenu(!showFloatingMenu)}
         title={t.addMarker}
       >

@@ -1,7 +1,7 @@
 "use client";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useAuthStore } from "@/store/authStore";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface TokenGuardProps {
   children: React.ReactNode;
@@ -11,28 +11,32 @@ export default function TokenGuard({ children }: TokenGuardProps) {
   const { isAuthenticated, isLoading, logout, getAccessTokenSilently } = useAuth0();
   const { token, setToken, clearAuth } = useAuthStore();
   const tokenCheckInterval = useRef<NodeJS.Timeout | null>(null);
+  const [tokenInitialized, setTokenInitialized] = useState(false);
 
   // Function to validate and refresh token
   const validateToken = async () => {
     if (!isAuthenticated) {
       clearAuth();
+      setTokenInitialized(false);
       return;
     }
 
     try {
-      // Try to get a fresh token silently
+      // Try to get token silently, use cache to avoid unnecessary requests
       const freshToken = await getAccessTokenSilently({
-        cacheMode: 'off' // Force fresh token validation
+        cacheMode: 'on'  // Prefer cached token to reduce delay
       });
       
       if (freshToken !== token) {
         setToken(freshToken);
       }
+      setTokenInitialized(true);
     } catch (error) {
       console.error('Token validation failed:', error);
       
       // If token validation fails, logout the user
       clearAuth();
+      setTokenInitialized(false);
       logout({
         logoutParams: { returnTo: window.location.origin },
       });
@@ -44,7 +48,7 @@ export default function TokenGuard({ children }: TokenGuardProps) {
     if (isLoading) return;
 
     if (isAuthenticated) {
-      // Initial token validation
+      // Initial token validation - make it blocking to ensure token is set
       validateToken();
 
       // Set up periodic token validation (every 5 minutes)
@@ -52,6 +56,7 @@ export default function TokenGuard({ children }: TokenGuardProps) {
     } else {
       // Clear token if not authenticated
       clearAuth();
+      setTokenInitialized(false);
     }
 
     return () => {
