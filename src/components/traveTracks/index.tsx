@@ -388,7 +388,7 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
               variant="default"
               size="sm"
               onClick={saveAllItinerary}
-              className="flex items-center gap-1 bg-[#35b368] hover:bg-[#2d9a5a] flex-1 min-w-0"
+              className="flex items-center gap-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 flex-1 min-w-0"
             >
               <Save className="h-4 w-4 flex-shrink-0" />
               <span className="truncate">{t.save}</span>
@@ -645,7 +645,10 @@ const TravelTracksLoading: React.FC = () => {
   return (
     <div className="w-full md:w-[400px] h-full flex items-center justify-center bg-white border-r border-gray-200">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#35b368] mx-auto mb-2"></div>
+        <div className="relative inline-flex mx-auto mb-2">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-lg opacity-50 animate-pulse"></div>
+          <div className="relative animate-spin rounded-full h-8 w-8 border-4 border-purple-200 border-t-purple-600"></div>
+        </div>
         <p className="text-sm text-gray-600">{t.loading}</p>
       </div>
     </div>

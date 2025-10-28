@@ -44,7 +44,7 @@ function NavigationBar() {
       )}
     >
       <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-4">
-        <div className="text-lg md:text-2xl font-bold text-[#35b368] tracking-tight select-none">
+        <div className="text-lg md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent tracking-tight select-none">
           <span className="hidden sm:inline">PlanPinGo</span>
           <span className="sm:hidden">PPG</span>
         </div>
@@ -58,7 +58,7 @@ function NavigationBar() {
                   <NavigationMenuLink
                     className={cn(
                       navigationMenuTriggerStyle(),
-                      passName === "/" && "text-[#35b368]"
+                      passName === "/" && "text-purple-600"
                     )}
                   >
                     {t.home}
@@ -70,7 +70,7 @@ function NavigationBar() {
                   <NavigationMenuLink
                     className={cn(
                       navigationMenuTriggerStyle(),
-                      passName === "/travelPlans" && "text-[#35b368]"
+                      passName === "/travelPlans" && "text-purple-600"
                     )}
                   >
                     Travel Plan Repository
@@ -83,7 +83,7 @@ function NavigationBar() {
                     <NavigationMenuLink
                       className={cn(
                         navigationMenuTriggerStyle(),
-                        passName === "/packets" && "text-[#35b368]"
+                        passName === "/packets" && "text-purple-600"
                       )}
                     >
                       {t.myTravelPlans}
@@ -103,7 +103,7 @@ function NavigationBar() {
           <AuthButton />
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-md text-[#35b368] hover:bg-[#35b368]/10 transition-colors"
+            className="p-2 rounded-md text-purple-600 hover:bg-purple-100 transition-colors"
             aria-label="Toggle mobile menu"
           >
             <svg
@@ -141,8 +141,8 @@ function NavigationBar() {
               className={cn(
                 "block px-3 py-2 rounded-md text-base font-medium transition-colors",
                 passName === "/"
-                  ? "text-[#35b368] bg-[#35b368]/10"
-                  : "text-gray-700 hover:text-[#35b368] hover:bg-[#35b368]/5"
+                  ? "text-purple-600 bg-purple-100"
+                  : "text-gray-700 hover:text-purple-600 hover:bg-purple-50"
               )}
               onClick={() => setIsMobileMenuOpen(false)}
             >
@@ -153,8 +153,8 @@ function NavigationBar() {
               className={cn(
                 "block px-3 py-2 rounded-md text-base font-medium transition-colors",
                 passName === "/travelPlans"
-                  ? "text-[#35b368] bg-[#35b368]/10"
-                  : "text-gray-700 hover:text-[#35b368] hover:bg-[#35b368]/5"
+                  ? "text-purple-600 bg-purple-100"
+                  : "text-gray-700 hover:text-purple-600 hover:bg-purple-50"
               )}
               onClick={() => setIsMobileMenuOpen(false)}
             >
@@ -166,8 +166,8 @@ function NavigationBar() {
                 className={cn(
                   "block px-3 py-2 rounded-md text-base font-medium transition-colors",
                   passName === "/packets"
-                    ? "text-[#35b368] bg-[#35b368]/10"
-                    : "text-gray-700 hover:text-[#35b368] hover:bg-[#35b368]/5"
+                    ? "text-purple-600 bg-purple-100"
+                    : "text-gray-700 hover:text-purple-600 hover:bg-purple-50"
                 )}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -188,12 +188,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn("w-full h-full", poppins.variable)}>
-      <body className={cn(poppins.className, "flex flex-col w-full min-h-screen font-poppins")}>
+      <body className={cn(poppins.className, "flex flex-col w-full min-h-screen font-poppins relative")}>
+        {/* Decorative floating elements */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+          <div className="absolute top-20 left-10 w-32 h-32 bg-purple-300/20 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute top-40 right-20 w-40 h-40 bg-pink-300/20 rounded-full blur-3xl animate-float-slow animation-delay-2000"></div>
+          <div className="absolute bottom-32 left-1/4 w-36 h-36 bg-blue-300/20 rounded-full blur-3xl animate-pulse-glow"></div>
+          <div className="absolute bottom-20 right-1/3 w-28 h-28 bg-purple-400/20 rounded-full blur-2xl animate-float animation-delay-4000"></div>
+          <div className="absolute top-1/2 right-10 w-24 h-24 bg-pink-400/20 rounded-full blur-2xl animate-float-slow"></div>
+          <div className="absolute top-1/3 left-1/3 w-20 h-20 bg-blue-400/20 rounded-full blur-xl animate-pulse-glow animation-delay-2000"></div>
+        </div>
+
         <ErrorBoundary>
           <AuthProvider>
             <LanguageInitializer />
             <NavigationBar />
-            <main className="w-full flex-1 min-h-0">{children}</main>
+            <main className="w-full flex-1 min-h-0 relative z-10">{children}</main>
             <LanguageDetectionStatus />
           </AuthProvider>
         </ErrorBoundary>

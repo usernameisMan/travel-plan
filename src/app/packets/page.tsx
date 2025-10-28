@@ -10,7 +10,7 @@ import { http } from "@/lib/http";
 import { useAuthStore } from "@/store/authStore";
 import { useLanguageStore } from "@/store/languageStore";
 import { useTranslation } from "@/lib/i18n";
-import { Plus, MapPin, Calendar, Eye, Edit3, Trash2 } from "lucide-react";
+import { Plus, MapPin, Calendar, Eye, Edit3, Trash2, Share2, Copy, Check, Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Packet {
   id: string;
@@ -29,6 +31,9 @@ interface Packet {
   itineraryDays?: any[];
   createdAt?: string;
   updatedAt?: string;
+  shareCode?: string;
+  shareType?: string;
+  shareViews?: number;
 }
 
 const PacketsPage = () => {
@@ -40,17 +45,33 @@ const PacketsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [deletingPacket, setDeletingPacket] = useState<Packet | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  
+  // Share states
+  const [sharingPacket, setSharingPacket] = useState<Packet | null>(null);
+  const [showShareConfirmDialog, setShowShareConfirmDialog] = useState(false);
+  const [showShareLinkDialog, setShowShareLinkDialog] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string>("");
+  const [shareLoading, setShareLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [selectedShareType, setSelectedShareType] = useState<'free' | 'paid'>('free');
 
   const fetchPackets = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Ensure token exists in store
+      // Ensure token exists in store with retry logic
       let token = useAuthStore.getState().token;
       if (!token) {
-        token = await getAccessTokenSilently();
-        useAuthStore.getState().setToken(token);
+        try {
+          token = await getAccessTokenSilently({
+            cacheMode: 'on'  // Use cached token if available
+          });
+          useAuthStore.getState().setToken(token);
+        } catch (tokenError) {
+          console.error("Failed to get access token:", tokenError);
+          throw new Error("Authentication failed. Please log in again.");
+        }
       }
 
       const response = await http.get("/api/packets") as any;
@@ -77,7 +98,14 @@ const PacketsPage = () => {
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      fetchPackets();
+      // Add a delay to ensure token is set by TokenGuard
+      // This fixes the race condition on first login
+      // Increased delay to give more time for token initialization
+      const timer = setTimeout(() => {
+        fetchPackets();
+      }, 300);
+      
+      return () => clearTimeout(timer);
     }
   }, [isAuthenticated, isLoading, fetchPackets]);
 
@@ -115,11 +143,19 @@ const PacketsPage = () => {
     try {
       setDeleteLoading(true);
       
-      // Ensure token exists
+      // Ensure token exists with better error handling
       let token = useAuthStore.getState().token;
       if (!token) {
-        token = await getAccessTokenSilently();
-        useAuthStore.getState().setToken(token);
+        try {
+          token = await getAccessTokenSilently({
+            cacheMode: 'on'
+          });
+          useAuthStore.getState().setToken(token);
+        } catch (tokenError) {
+          console.error("Failed to get access token:", tokenError);
+          alert("Authentication failed, please log in again");
+          return;
+        }
       }
 
       const response = await http.delete(`/api/packets/${packet.id}`);
@@ -151,6 +187,131 @@ const PacketsPage = () => {
     }
   };
 
+  // Share functionality
+  const handleShare = useCallback((packet: Packet) => {
+    setSharingPacket(packet);
+    
+    // If already sharing, show the link dialog directly
+    if (packet.shareCode) {
+      const baseUrl = window.location.origin;
+      setShareUrl(`${baseUrl}/shared/${packet.shareCode}`);
+      setShowShareLinkDialog(true);
+      return;
+    }
+
+    // Show confirmation dialog for new sharing
+    setShowShareConfirmDialog(true);
+  }, []);
+
+  const handleConfirmShare = useCallback(async () => {
+    if (!sharingPacket) return;
+    
+    try {
+      setShareLoading(true);
+      
+      let token = useAuthStore.getState().token;
+      if (!token) {
+        try {
+          token = await getAccessTokenSilently({
+            cacheMode: 'on'
+          });
+          useAuthStore.getState().setToken(token);
+        } catch (tokenError) {
+          console.error("Failed to get access token:", tokenError);
+          alert("Authentication failed, please log in again");
+          return;
+        }
+      }
+
+      const response = await http.post(`/api/packets/${sharingPacket.id}/share`, {
+        shareType: selectedShareType
+      }) as any;
+
+      if (response && response.data) {
+        const shareCode = response.data.shareCode;
+        const shareUrl = response.data.shareUrl;
+        setShareUrl(shareUrl);
+        
+        // Update packets list
+        setPackets(prev => prev.map(p => 
+          p.id === sharingPacket.id 
+            ? { ...p, shareCode, shareType: selectedShareType, shareViews: 0 }
+            : p
+        ));
+        
+        // Update sharing packet
+        setSharingPacket(prev => prev ? {
+          ...prev,
+          shareCode,
+          shareType: selectedShareType,
+          shareViews: 0
+        } : null);
+        
+        // Close confirmation dialog and show link dialog
+        setShowShareConfirmDialog(false);
+        setShowShareLinkDialog(true);
+      }
+    } catch (error) {
+      console.error('Error enabling sharing:', error);
+      alert("Failed to create share link. Please try again.");
+    } finally {
+      setShareLoading(false);
+    }
+  }, [sharingPacket, selectedShareType, getAccessTokenSilently]);
+
+  const handleCopyLink = useCallback(async () => {
+    if (!shareUrl) return;
+    
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+      alert("Failed to copy link");
+    }
+  }, [shareUrl]);
+
+  const handleDisableShare = useCallback(async () => {
+    if (!sharingPacket?.shareCode) return;
+    
+    try {
+      setShareLoading(true);
+      
+      let token = useAuthStore.getState().token;
+      if (!token) {
+        try {
+          token = await getAccessTokenSilently({
+            cacheMode: 'on'
+          });
+          useAuthStore.getState().setToken(token);
+        } catch (tokenError) {
+          console.error("Failed to get access token:", tokenError);
+          alert("Authentication failed, please log in again");
+          return;
+        }
+      }
+
+      await http.delete(`/api/packets/${sharingPacket.id}/share`);
+      
+      // Update packets list
+      setPackets(prev => prev.map(p => 
+        p.id === sharingPacket.id 
+          ? { ...p, shareCode: undefined, shareType: 'private' }
+          : p
+      ));
+      
+      setShowShareLinkDialog(false);
+      setShareUrl('');
+      setSharingPacket(null);
+    } catch (error) {
+      console.error('Error disabling sharing:', error);
+      alert("Failed to stop sharing. Please try again.");
+    } finally {
+      setShareLoading(false);
+    }
+  }, [sharingPacket, getAccessTokenSilently]);
+
   if (isLoading) {
     return (
       <div className="w-full h-full flex items-center justify-center">
@@ -158,7 +319,10 @@ const PacketsPage = () => {
           <div className="text-2xl font-semibold text-gray-700 mb-4">
             {t.verifyingLogin}
           </div>
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto"></div>
+          <div className="relative inline-flex">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 animate-pulse"></div>
+            <div className="relative animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
+          </div>
         </div>
       </div>
     );
@@ -167,12 +331,12 @@ const PacketsPage = () => {
   if (!isAuthenticated) {
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-4">
+        <div className="text-center p-8 bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl max-w-md mx-4 border border-purple-100">
           <div className="text-6xl mb-6">🔒</div>
           <h1 className="text-3xl font-bold text-gray-800 mb-4">{t.loginRequired}</h1>
           <p className="text-gray-600 mb-6">{t.loginRequiredMessage}</p>
           <Link href="/login">
-            <Button className="bg-[#35b368] hover:bg-[#2d9a5a] text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+            <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 border-0 shadow-lg">
               {t.goToLogin}
             </Button>
           </Link>
@@ -182,7 +346,7 @@ const PacketsPage = () => {
   }
 
   return (
-    <div className="w-full min-h-full bg-gray-50">
+    <div className="w-full min-h-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="mb-8">
@@ -192,7 +356,7 @@ const PacketsPage = () => {
               <p className="text-gray-600 mt-2">{t.managePlansSubtitle}</p>
             </div>
             <Link href="/createTravelPlan">
-              <Button className="bg-[#35b368] hover:bg-[#2d9a5a] text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2">
+              <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 border-0 shadow-lg hover:shadow-xl">
                 <Plus className="h-5 w-5" />
                 {t.createNewPlan}
               </Button>
@@ -204,7 +368,10 @@ const PacketsPage = () => {
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto mb-4"></div>
+              <div className="relative inline-flex mb-4">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 animate-pulse"></div>
+                <div className="relative animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
+              </div>
               <p className="text-gray-600">{t.loadingPlans}</p>
             </div>
           </div>
@@ -215,7 +382,7 @@ const PacketsPage = () => {
             <Button
               onClick={fetchPackets}
               variant="outline"
-              className="hover:bg-[#35b368] hover:text-white transition-colors"
+              className="border-purple-300 text-purple-600 hover:bg-purple-500 hover:text-white transition-all duration-300"
             >
               {t.reload}
             </Button>
@@ -228,7 +395,7 @@ const PacketsPage = () => {
               {t.noPlansMessage}
             </p>
             <Link href="/createTravelPlan">
-              <Button className="bg-[#35b368] hover:bg-[#2d9a5a] text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+              <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 border-0 shadow-lg">
                 {t.createFirstPlan}
               </Button>
             </Link>
@@ -236,75 +403,155 @@ const PacketsPage = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {packets.map((packet) => (
-              <Card key={packet.id} className="hover:shadow-lg transition-shadow duration-200 bg-white">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-semibold text-gray-900 overflow-hidden">
-                    <div className="line-clamp-2">{packet.title || t.untitledPlan}</div>
-                  </CardTitle>
-                  {packet.destination && (
-                    <div className="flex items-center text-sm text-gray-600 mt-1">
-                      <MapPin className="h-4 w-4 mr-1" />
-                      {packet.destination}
+              <Card 
+                key={packet.id} 
+                className="group relative overflow-hidden bg-gradient-to-br from-white to-purple-50/30 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] border-2 border-transparent hover:border-purple-200"
+              >
+                {/* Decorative gradient overlay */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-bl-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                {/* Status badge */}
+                {packet.shareCode && (
+                  <div className="absolute top-3 right-3 z-10">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-md opacity-50 animate-pulse"></div>
+                      <div className="relative px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full flex items-center gap-1">
+                        <Sparkles className="h-3 w-3" />
+                        Public
+                      </div>
                     </div>
-                  )}
+                  </div>
+                )}
+                
+                <CardHeader className="pb-3 relative z-10">
+                  <div className="flex items-start gap-3 mb-2">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <MapPin className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-lg font-bold text-gray-900 overflow-hidden mb-1">
+                        <div className="line-clamp-2 group-hover:text-purple-600 transition-colors duration-300">
+                          {packet.title || t.untitledPlan}
+                        </div>
+                      </CardTitle>
+                      {packet.destination && (
+                        <div className="flex items-center text-sm font-medium text-purple-600 bg-purple-50 rounded-full px-2 py-1 w-fit">
+                          <span className="truncate">{packet.destination}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent className="pt-0">
+                
+                <CardContent className="pt-0 relative z-10 space-y-4">
                   {packet.description && (
-                    <div className="text-sm text-gray-600 mb-4 overflow-hidden">
+                    <div className="text-sm text-gray-600 bg-white/50 rounded-lg p-3 border border-purple-100">
                       <p className="line-clamp-2">{packet.description}</p>
                     </div>
                   )}
                   
-                  <div className="space-y-2 mb-4">
+                  {/* Stats section with enhanced design */}
+                  <div className="grid grid-cols-2 gap-2">
                     {(packet.startDate || packet.endDate) && (
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        {formatDate(packet.startDate)} - {formatDate(packet.endDate)}
+                      <div className="col-span-2 flex items-center gap-2 text-sm bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-2 border border-blue-100">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                          <Calendar className="h-4 w-4 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs text-gray-500 font-medium">Travel Dates</div>
+                          <div className="text-xs font-semibold text-gray-700 truncate">
+                            {formatDate(packet.startDate)} - {formatDate(packet.endDate)}
+                          </div>
+                        </div>
                       </div>
                     )}
                     
-                    <div className="flex items-center justify-between text-sm text-gray-600">
-                      <span>{getDaysCount(packet)} {t.dayItinerary}</span>
-                      <span>{getMarkersCount(packet)} {t.attractions}</span>
+                    <div className="flex items-center gap-2 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-2 border border-purple-100">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                        <Calendar className="h-4 w-4 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs text-gray-500 font-medium">Days</div>
+                        <div className="text-sm font-bold text-purple-600">{getDaysCount(packet)}</div>
+                      </div>
                     </div>
                     
-                    {packet.createdAt && (
-                      <div className="text-xs text-gray-500">
-                        {t.createdOn} {formatDate(packet.createdAt)}
+                    <div className="flex items-center gap-2 bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg p-2 border border-orange-100">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-yellow-500 flex items-center justify-center">
+                        <MapPin className="h-4 w-4 text-white" />
                       </div>
-                    )}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs text-gray-500 font-medium">Places</div>
+                        <div className="text-sm font-bold text-orange-600">{getMarkersCount(packet)}</div>
+                      </div>
+                    </div>
                   </div>
+                  
+                  {packet.createdAt && (
+                    <div className="text-xs text-gray-400 flex items-center gap-1 pt-1">
+                      <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                      {t.createdOn} {formatDate(packet.createdAt)}
+                    </div>
+                  )}
 
-                  <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
-                    <Link href={`/createTravelPlan?packetId=${packet.id}`} className="col-span-1">
+                  {/* Action buttons with enhanced design */}
+                  <div className="flex flex-col gap-2 pt-2 border-t border-purple-100">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link href={`/createTravelPlan?packetId=${packet.id}`} className="col-span-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full hover:bg-purple-500 hover:text-white transition-all duration-300 hover:shadow-lg hover:scale-105 border-purple-200"
+                        >
+                          <Edit3 className="h-4 w-4 mr-1" />
+                          {t.edit}
+                        </Button>
+                      </Link>
+                      <Link href={`/packets/${packet.id}/view`} className="col-span-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full hover:bg-blue-500 hover:text-white transition-all duration-300 hover:shadow-lg hover:scale-105 border-blue-200"
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          {t.view}
+                        </Button>
+                      </Link>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="w-full hover:bg-[#35b368] hover:text-white transition-colors"
+                        onClick={() => handleShare(packet)}
+                        className={cn(
+                          "w-full transition-all duration-300 hover:scale-105",
+                          packet.shareCode 
+                            ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl" 
+                            : "hover:bg-purple-500 hover:text-white border-purple-200 hover:shadow-lg"
+                        )}
                       >
-                        <Edit3 className="h-4 w-4 mr-1" />
-                        {t.edit}
+                        {packet.shareCode ? (
+                          <>
+                            <Sparkles className="h-4 w-4 mr-1 animate-pulse" />
+                            Shared
+                          </>
+                        ) : (
+                          <>
+                            <Share2 className="h-4 w-4 mr-1" />
+                            Share
+                          </>
+                        )}
                       </Button>
-                    </Link>
-                    <Link href={`/packets/${packet.id}/view`} className="col-span-1 sm:flex-1">
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="w-full hover:bg-blue-500 hover:text-white transition-colors"
+                        onClick={() => setDeletingPacket(packet)}
+                        className="w-full hover:bg-red-500 hover:text-white transition-all duration-300 hover:shadow-lg hover:scale-105 border-red-200"
                       >
-                        <Eye className="h-4 w-4 mr-1" />
-                        {t.view}
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        {t.delete}
                       </Button>
-                    </Link>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setDeletingPacket(packet)}
-                      className="col-span-2 sm:col-span-auto sm:w-auto hover:bg-red-500 hover:text-white transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4 sm:mr-0 mr-1" />
-                      <span className="sm:hidden">{t.delete}</span>
-                    </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -348,6 +595,237 @@ const PacketsPage = () => {
               ) : (
                 t.confirmDeleteBtn
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Confirmation Dialog */}
+      <Dialog open={showShareConfirmDialog} onOpenChange={setShowShareConfirmDialog}>
+        <DialogContent className="sm:max-w-md bg-gradient-to-br from-purple-50 to-pink-50">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-2xl">
+              <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
+                <Share2 className="h-6 w-6 text-white" />
+              </div>
+              Share Your Travel Plan
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-700">
+              Share your amazing travel plan with friends and the world! Choose how you want to share:
+            </p>
+            
+            <div className="space-y-3">
+              <div 
+                className={cn(
+                  "flex items-start space-x-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200",
+                  selectedShareType === 'free'
+                    ? "border-purple-500 bg-white shadow-lg scale-105"
+                    : "border-gray-200 bg-white/50 hover:border-purple-300"
+                )}
+                onClick={() => setSelectedShareType('free')}
+              >
+                <input
+                  type="radio"
+                  id="free-share"
+                  name="shareType"
+                  value="free"
+                  checked={selectedShareType === 'free'}
+                  onChange={(e) => setSelectedShareType(e.target.value as 'free')}
+                  className="mt-1 w-4 h-4 text-purple-600"
+                />
+                <label htmlFor="free-share" className="flex-1 cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-gray-900">Free Sharing</span>
+                    <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                      Recommended
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1">
+                    Anyone with the link can view your travel plan for free
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                    <Sparkles className="h-3 w-3" />
+                    <span>Perfect for sharing with friends and family</span>
+                  </div>
+                </label>
+              </div>
+              
+              <div 
+                className="flex items-start space-x-3 p-4 rounded-xl border-2 border-gray-200 bg-gray-50/50 opacity-60"
+              >
+                <input
+                  type="radio"
+                  id="paid-share"
+                  name="shareType"
+                  value="paid"
+                  disabled
+                  className="mt-1 w-4 h-4"
+                />
+                <label htmlFor="paid-share" className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-gray-500">Premium Sharing</span>
+                    <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full font-medium">
+                      Coming Soon
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    Charge for access to your travel plan
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+              <div className="flex items-start gap-2">
+                <Share2 className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-purple-800">
+                  <strong>Tip:</strong> Your shared travel plan will be visible to anyone with the link. 
+                  You can stop sharing anytime.
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowShareConfirmDialog(false)}
+              disabled={shareLoading}
+              className="hover:bg-gray-100"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmShare}
+              disabled={shareLoading}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 shadow-lg"
+            >
+              {shareLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Create Share Link
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Link Dialog */}
+      <Dialog open={showShareLinkDialog} onOpenChange={setShowShareLinkDialog}>
+        <DialogContent className="sm:max-w-lg bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-2xl">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg blur-md opacity-50"></div>
+                <div className="relative p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
+                  <Check className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              Share Link Created! 🎉
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl p-4 shadow-md border border-purple-100">
+              <Label htmlFor="share-link" className="text-sm font-semibold text-gray-700 mb-2 block">
+                Your Share Link
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="share-link"
+                  value={shareUrl}
+                  readOnly
+                  className="flex-1 bg-gray-50 border-gray-200 font-mono text-sm"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleCopyLink}
+                  className={cn(
+                    "transition-all duration-300",
+                    copied 
+                      ? "bg-green-500 hover:bg-green-600" 
+                      : "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                  )}
+                >
+                  {copied ? (
+                    <>
+                      <Check className="h-4 w-4 mr-1" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4 mr-1" />
+                      Copy
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                <Eye className="h-3 w-3" />
+                Anyone with this link can view your travel plan
+              </p>
+            </div>
+
+            {sharingPacket?.shareViews !== undefined && sharingPacket.shareViews > 0 && (
+              <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Eye className="h-5 w-5 text-purple-600" />
+                    <span className="text-sm font-medium text-gray-700">Total Views</span>
+                  </div>
+                  <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    {sharingPacket.shareViews}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-3 gap-3 pt-2">
+              <div className="bg-white rounded-lg p-3 text-center border border-purple-100">
+                <Share2 className="h-5 w-5 text-purple-500 mx-auto mb-1" />
+                <div className="text-xs text-gray-600">Shareable</div>
+              </div>
+              <div className="bg-white rounded-lg p-3 text-center border border-pink-100">
+                <Eye className="h-5 w-5 text-pink-500 mx-auto mb-1" />
+                <div className="text-xs text-gray-600">View Only</div>
+              </div>
+              <div className="bg-white rounded-lg p-3 text-center border border-blue-100">
+                <Sparkles className="h-5 w-5 text-blue-500 mx-auto mb-1" />
+                <div className="text-xs text-gray-600">Free</div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleDisableShare}
+              disabled={shareLoading}
+              className="hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+            >
+              {shareLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                  Stopping...
+                </>
+              ) : (
+                "Stop Sharing"
+              )}
+            </Button>
+            <Button 
+              onClick={() => {
+                setShowShareLinkDialog(false);
+                setSharingPacket(null);
+              }}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0"
+            >
+              Done
             </Button>
           </DialogFooter>
         </DialogContent>

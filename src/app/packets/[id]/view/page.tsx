@@ -479,7 +479,10 @@ const PacketViewPage = () => {
           <div className="text-2xl font-semibold text-gray-700 mb-4">
             Verifying login status...
           </div>
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto"></div>
+          <div className="relative inline-flex">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 animate-pulse"></div>
+            <div className="relative animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
+          </div>
         </div>
       </div>
     );
@@ -488,12 +491,12 @@ const PacketViewPage = () => {
   if (!isAuthenticated) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
-        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-4">
+        <div className="text-center p-8 bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl max-w-md mx-4 border border-purple-100">
           <div className="text-6xl mb-6">🔒</div>
           <h1 className="text-3xl font-bold text-gray-800 mb-4">Login Required</h1>
           <p className="text-gray-600 mb-6">Please log in to view this travel plan.</p>
           <Link href="/login">
-            <Button className="bg-[#35b368] hover:bg-[#2d9a5a] text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+            <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 border-0 shadow-lg">
               Go to Login
             </Button>
           </Link>
@@ -506,7 +509,10 @@ const PacketViewPage = () => {
     return (
       <div className="w-full h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto mb-4"></div>
+          <div className="relative inline-flex mb-4">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 animate-pulse"></div>
+            <div className="relative animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
+          </div>
           <p className="text-gray-600">Loading travel plan...</p>
         </div>
       </div>
@@ -516,11 +522,11 @@ const PacketViewPage = () => {
   if (error || !packet) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center p-8 bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl max-w-md mx-4 border border-purple-100">
           <div className="text-red-500 text-xl mb-4">❌</div>
           <p className="text-red-600 mb-4">{error || "Travel plan not found"}</p>
           <Link href="/packets">
-            <Button variant="outline" className="hover:bg-[#35b368] hover:text-white transition-colors">
+            <Button variant="outline" className="border-purple-300 text-purple-600 hover:bg-purple-500 hover:text-white transition-all duration-300">
               Back to Travel Plans
             </Button>
           </Link>
@@ -561,8 +567,8 @@ const PacketViewPage = () => {
             className={cn(
               "flex items-center gap-2 font-medium shadow-sm",
               packet.shareCode 
-                ? "text-[#35b368] border-[#35b368] hover:bg-[#35b368]/10" 
-                : "bg-[#35b368] hover:bg-[#35b368]/90 text-white"
+                ? "text-purple-600 border-purple-500 hover:bg-purple-50" 
+                : "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0"
             )}
           >
             <Share2 className="h-4 w-4" />
@@ -587,7 +593,7 @@ const PacketViewPage = () => {
             {/* Day Selection Header */}
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center gap-3 mb-3">
-                <Map className="h-5 w-5 text-[#35b368]" />
+                <Map className="h-5 w-5 text-purple-600" />
                 <div className="flex-1">
                   <Select value={selectedDay.toString()} onValueChange={handleDayChange}>
                     <SelectTrigger className="w-full">
@@ -652,15 +658,15 @@ const PacketViewPage = () => {
                         {currentMarkers.map((marker: any, index: number) => (
                           <div
                             key={index}
-                            className="p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-[#35b368]/20 group"
+                            className="p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-purple-200 group"
                           >
                             <div className="flex items-start gap-3">
-                              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#35b368] text-white text-sm font-medium flex items-center justify-center">
+                              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-medium flex items-center justify-center">
                                 {index + 1}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <h4 className="font-medium text-gray-900 truncate group-hover:text-[#35b368]">
+                                  <h4 className="font-medium text-gray-900 truncate group-hover:text-purple-600">
                                     {marker.title || `Stop ${index + 1}`}
                                   </h4>
                                 </div>
@@ -672,14 +678,14 @@ const PacketViewPage = () => {
                                 <div className="flex items-center justify-between mt-2">
                                   <button
                                     onClick={() => focusOnMarker(marker)}
-                                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-[#35b368] transition-colors"
+                                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-purple-600 transition-colors"
                                   >
                                     <Navigation className="h-3 w-3" />
                                     Focus on map
                                   </button>
                                   <button
                                     onClick={() => openMapAppSelection(marker)}
-                                    className="flex items-center gap-1 px-2 py-1 text-xs text-[#35b368] hover:bg-[#35b368]/10 rounded transition-colors"
+                                    className="flex items-center gap-1 px-2 py-1 text-xs text-purple-600 hover:bg-purple-50 rounded transition-colors"
                                   >
                                     <ExternalLink className="h-3 w-3" />
                                     Use Local App
@@ -831,7 +837,7 @@ const PacketViewPage = () => {
               <Button 
                 onClick={handleConfirmShare}
                 disabled={shareLoading}
-                className="bg-[#35b368] hover:bg-[#35b368]/90"
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
               >
                 {shareLoading ? "Creating..." : "Create Share Link"}
               </Button>

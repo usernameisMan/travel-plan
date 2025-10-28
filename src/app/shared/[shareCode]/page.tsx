@@ -429,7 +429,10 @@ const SharedPacketPage = () => {
     return (
       <div className="w-full h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35b368] mx-auto mb-4"></div>
+          <div className="relative inline-flex mb-4">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 animate-pulse"></div>
+            <div className="relative animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
+          </div>
           <p className="text-gray-600">Loading shared travel plan...</p>
         </div>
       </div>
@@ -444,7 +447,7 @@ const SharedPacketPage = () => {
           <p className="text-red-600 mb-4">{error || "Shared travel plan not found"}</p>
           <Button 
             variant="outline" 
-            className="hover:bg-[#35b368] hover:text-white transition-colors"
+            className="border-purple-300 text-purple-600 hover:bg-purple-500 hover:text-white transition-colors"
             onClick={() => router.back()}
           >
             Go Back
@@ -510,7 +513,7 @@ const SharedPacketPage = () => {
               "flex items-center gap-2 font-medium shadow-sm",
               !isAuthenticated 
                 ? "bg-blue-600 hover:bg-blue-700 text-white" 
-                : "bg-[#35b368] hover:bg-[#35b368]/90 text-white"
+                : "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0"
             )}
           >
             <BookmarkPlus className="h-4 w-4" />
@@ -535,7 +538,7 @@ const SharedPacketPage = () => {
             {/* Day Selection Header */}
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center gap-3 mb-3">
-                <Map className="h-5 w-5 text-[#35b368]" />
+                <Map className="h-5 w-5 text-purple-600" />
                 <div className="flex-1">
                   <Select value={selectedDay.toString()} onValueChange={handleDayChange}>
                     <SelectTrigger className="w-full">
@@ -780,7 +783,7 @@ const SharedPacketPage = () => {
                   <Button 
                     onClick={handleConfirmImport}
                     disabled={importLoading}
-                    className="bg-[#35b368] hover:bg-[#35b368]/90"
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                   >
                     {importLoading ? "Adding..." : "Add to My Plans"}
                   </Button>

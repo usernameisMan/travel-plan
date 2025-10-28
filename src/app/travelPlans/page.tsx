@@ -104,9 +104,9 @@ const TravelPlansMarket = () => {
       )}
     >
       {/* Decorative blobs */}
-      <div className="absolute -top-20 -left-20 w-40 h-40 bg-[#35b368] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob hidden md:block"></div>
-      <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-[#35b368] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000 hidden md:block"></div>
-      <div className="absolute top-1/2 -right-20 w-40 h-40 bg-[#35b368] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000 hidden md:block"></div>
+      <div className="absolute -top-20 -left-20 w-40 h-40 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob hidden md:block"></div>
+      <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000 hidden md:block"></div>
+      <div className="absolute top-1/2 -right-20 w-40 h-40 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000 hidden md:block"></div>
 
       <div className="container mx-auto px-4 py-12 md:py-20 relative z-10">
         {/* Title & subtitle */}
@@ -114,7 +114,7 @@ const TravelPlansMarket = () => {
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-4">
             Travel Plan C2C Marketplace
           </h1>
-          <div className="w-24 h-1 bg-[#35b368] mx-auto rounded-full mb-4"></div>
+          <div className="w-24 h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto rounded-full mb-4"></div>
           <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
             Buy and sell unique travel plans directly between users. <br />
             Created by real travelers, for real travelers. Empower your journey and earn by sharing your own!
@@ -125,7 +125,7 @@ const TravelPlansMarket = () => {
         <div className="flex flex-col gap-4 mb-8 bg-white/80 rounded-xl shadow p-4">
           <div className="flex flex-col md:flex-row gap-3 w-full">
             <input
-              className="flex-1 px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#35b368] bg-white text-base"
+              className="flex-1 px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white text-base"
               placeholder="Search by title, author, or description..."
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -134,7 +134,7 @@ const TravelPlansMarket = () => {
               <input
                 type="number"
                 min={0}
-                className="w-full md:w-24 px-3 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#35b368] bg-white text-base"
+                className="w-full md:w-24 px-3 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white text-base"
                 placeholder="Min $"
                 value={minPrice}
                 onChange={e => setMinPrice(e.target.value)}
@@ -142,7 +142,7 @@ const TravelPlansMarket = () => {
               <input
                 type="number"
                 min={0}
-                className="w-full md:w-24 px-3 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#35b368] bg-white text-base"
+                className="w-full md:w-24 px-3 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white text-base"
                 placeholder="Max $"
                 value={maxPrice}
                 onChange={e => setMaxPrice(e.target.value)}
@@ -151,7 +151,7 @@ const TravelPlansMarket = () => {
           </div>
           <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
             <select
-              className="px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#35b368] bg-white text-base"
+              className="px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white text-base"
               value={sort}
               onChange={e => setSort(e.target.value)}
             >
@@ -160,7 +160,7 @@ const TravelPlansMarket = () => {
               <option value="price-desc">Price ↓</option>
               <option value="likes">Most Liked</option>
             </select>
-            <button className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-[#35b368]/10 text-[#35b368] font-semibold hover:bg-[#35b368]/20 transition">
+            <button className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-purple-100 text-purple-600 font-semibold hover:bg-purple-200 transition">
               <i className="icon-[mdi--star-outline] text-lg" />
               <span className="hidden sm:inline">My Favorites</span>
               <span className="sm:hidden">Favorites</span>
@@ -173,7 +173,7 @@ const TravelPlansMarket = () => {
           <button
             className={cn(
               "px-4 py-1 rounded-full border text-sm font-medium transition",
-              !selectedTag ? "bg-[#35b368] text-white border-[#35b368]" : "bg-white text-[#35b368] border-[#35b368] hover:bg-[#35b368]/10"
+              !selectedTag ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0" : "bg-white text-purple-600 border-purple-500 hover:bg-purple-50"
             )}
             onClick={() => setSelectedTag(null)}
           >
@@ -184,7 +184,7 @@ const TravelPlansMarket = () => {
               key={tag}
               className={cn(
                 "px-4 py-1 rounded-full border text-sm font-medium transition",
-                selectedTag === tag ? "bg-[#35b368] text-white border-[#35b368]" : "bg-white text-[#35b368] border-[#35b368] hover:bg-[#35b368]/10"
+                selectedTag === tag ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0" : "bg-white text-purple-600 border-purple-500 hover:bg-purple-50"
               )}
               onClick={() => setSelectedTag(tag)}
             >
@@ -205,7 +205,7 @@ const TravelPlansMarket = () => {
               onClick={() => { setActivePlan(plan); setShowDetail(true); }}
             >
               {plan.featured && (
-                <div className="absolute top-3 right-3 bg-[#35b368] text-white text-xs font-bold px-3 py-1 rounded-full shadow">Featured</div>
+                <div className="absolute top-3 right-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">Featured</div>
               )}
               <div className="relative h-48 w-full">
                 <Image
@@ -216,7 +216,7 @@ const TravelPlansMarket = () => {
                   sizes="(max-width: 768px) 100vw, 33vw"
                   priority
                 />
-                <div className="absolute top-3 left-3 bg-white/80 rounded-full px-3 py-1 text-[#35b368] font-bold text-sm shadow">
+                <div className="absolute top-3 left-3 bg-white/80 rounded-full px-3 py-1 text-purple-600 font-bold text-sm shadow">
                   ${plan.price}
                 </div>
               </div>
@@ -231,7 +231,7 @@ const TravelPlansMarket = () => {
                   />
                   <span className="text-gray-700 font-medium text-base truncate flex items-center gap-1">
                     Sold by {plan.author}
-                    {plan.verified && <i className="icon-[mdi--check-decagram] text-[#35b368] text-lg" title="Verified" />}
+                    {plan.verified && <i className="icon-[mdi--check-decagram] text-purple-600 text-lg" title="Verified" />}
                   </span>
                 </div>
                 <div className="text-xl font-semibold text-gray-900 mb-1 truncate">{plan.title}</div>
@@ -259,7 +259,7 @@ const TravelPlansMarket = () => {
                   </span>
                 </div>
                 <button
-                  className="w-full py-2 rounded-lg bg-[#35b368] text-white font-semibold hover:bg-[#2d9a5a] transition mt-auto text-lg shadow-md"
+                  className="w-full py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold transition mt-auto text-lg shadow-md border-0"
                   onClick={e => e.stopPropagation()}
                 >
                   Buy this plan
@@ -293,16 +293,16 @@ const TravelPlansMarket = () => {
                       {activePlan.verified && <i className="icon-[mdi--check-decagram] text-[#35b368] text-lg" title="Verified" />}
                     </span>
                   </div>
-                  <button className="mb-3 px-4 py-2 rounded-full border border-[#35b368] text-[#35b368] text-sm font-semibold hover:bg-[#35b368]/10 transition w-fit">View Seller Profile</button>
+                  <button className="mb-3 px-4 py-2 rounded-full border border-purple-500 text-purple-600 text-sm font-semibold hover:bg-purple-50 transition w-fit">View Seller Profile</button>
                   <div className="text-xl lg:text-2xl font-bold text-gray-900 mb-3">{activePlan.title}</div>
                   <div className="flex flex-wrap gap-2 mb-3">
                     {activePlan.tags.map((tag: string) => (
-                      <span key={tag} className="px-3 py-1 rounded-full bg-[#f0f9f4] text-[#35b368] text-xs font-semibold border border-[#e6f5ed]">{tag}</span>
+                      <span key={tag} className="px-3 py-1 rounded-full bg-purple-50 text-purple-600 text-xs font-semibold border border-purple-200">{tag}</span>
                     ))}
                   </div>
                   <div className="text-gray-600 text-base mb-4">{activePlan.desc}</div>
                   <div className="flex flex-wrap items-center gap-4 mb-4">
-                    <span className="text-[#35b368] font-bold text-xl">${activePlan.price}</span>
+                    <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent font-bold text-xl">${activePlan.price}</span>
                     <span className="flex items-center gap-1 text-gray-400 text-sm">
                       <i className="icon-[mdi--heart-outline]" /> {activePlan.likes}
                     </span>
@@ -314,10 +314,10 @@ const TravelPlansMarket = () => {
                     </span>
                   </div>
                   <div className="space-y-3">
-                    <button className="w-full py-3 rounded-lg bg-[#35b368] text-white font-semibold hover:bg-[#2d9a5a] transition text-lg shadow-md">
+                    <button className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold transition text-lg shadow-md border-0">
                       Buy this plan
                     </button>
-                    <button className="w-full py-3 rounded-lg border border-[#35b368] text-[#35b368] font-semibold hover:bg-[#35b368]/10 transition text-base">
+                    <button className="w-full py-3 rounded-lg border border-purple-500 text-purple-600 font-semibold hover:bg-purple-50 transition text-base">
                       Add to cart
                     </button>
                     <div className="grid grid-cols-2 gap-3">
@@ -363,11 +363,11 @@ const TravelPlansMarket = () => {
               </div>
               <div className="flex gap-2">
                 <input
-                  className="flex-1 px-3 py-3 rounded border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#35b368] text-base"
+                  className="flex-1 px-3 py-3 rounded border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-400 text-base"
                   placeholder="Write your comment..."
                   disabled
                 />
-                <button className="px-4 py-3 rounded bg-[#35b368] text-white font-semibold opacity-60 cursor-not-allowed">Send</button>
+                <button className="px-4 py-3 rounded bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold opacity-60 cursor-not-allowed border-0">Send</button>
               </div>
             </div>
           </div>
