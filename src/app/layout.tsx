@@ -187,7 +187,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("w-full h-full", poppins.variable)}>
+    <html lang="en" className={cn("w-full", poppins.variable)}>
       <body className={cn(poppins.className, "flex flex-col w-full min-h-screen font-poppins relative")}>
         {/* Decorative floating elements */}
         <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -203,7 +203,7 @@ export default function RootLayout({
           <AuthProvider>
             <LanguageInitializer />
             <NavigationBar />
-            <main className="w-full flex-1 min-h-0 relative z-10">{children}</main>
+            <main className="w-full flex-1 relative z-10 overflow-y-auto">{children}</main>
             <LanguageDetectionStatus />
           </AuthProvider>
         </ErrorBoundary>

@@ -1,7 +1,12 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import { useAuthStore } from "@/store/authStore";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://travel-plan-server-less-node.vercel.app';
+// Support local development mode
+const USE_LOCAL_API = process.env.NEXT_PUBLIC_USE_LOCAL_API === 'true';
+const LOCAL_API_URL = 'http://localhost:3000';
+const API_BASE_URL = USE_LOCAL_API 
+  ? LOCAL_API_URL 
+  : (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://travel-plan-server-less-node.vercel.app');
 
 interface RequestOptions extends RequestInit {
   requiresAuth?: boolean;

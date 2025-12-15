@@ -530,6 +530,7 @@ const SharedPacketPage = () => {
           onLoadMap={() => {}} // Not needed for view-only
           createMarkerDialogIsOpen={false}
           openCreateMarkerDialog={() => {}} // Not needed for view-only
+          readOnly={true} // Shared page is read-only, disable marker adding
         />
         
         {/* Unified Navigation Panel */}

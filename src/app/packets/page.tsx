@@ -34,6 +34,8 @@ interface Packet {
   shareCode?: string;
   shareType?: string;
   shareViews?: number;
+  days?: number;
+  places?: number;
 }
 
 const PacketsPage = () => {
@@ -119,6 +121,11 @@ const PacketsPage = () => {
   };
 
   const getDaysCount = (packet: Packet) => {
+    // Priority: use backend calculated value if available
+    if (typeof packet.days === 'number') {
+      return packet.days;
+    }
+    // Fallback: calculate from itineraryDays if available
     if (packet.itineraryDays && Array.isArray(packet.itineraryDays)) {
       return packet.itineraryDays.length;
     }
@@ -126,6 +133,11 @@ const PacketsPage = () => {
   };
 
   const getMarkersCount = (packet: Packet) => {
+    // Priority: use backend calculated value if available
+    if (typeof packet.places === 'number') {
+      return packet.places;
+    }
+    // Fallback: calculate from itineraryDays if available
     if (packet.itineraryDays && Array.isArray(packet.itineraryDays)) {
       return packet.itineraryDays.reduce((total, day) => {
         return total + (day.markers ? day.markers.length : 0);
@@ -346,8 +358,8 @@ const PacketsPage = () => {
   }
 
   return (
-    <div className="w-full min-h-full">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="w-full min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-12">
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
