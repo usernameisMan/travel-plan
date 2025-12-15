@@ -1,23 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { http } from "@/lib/http";
 import { useAuthStore } from "@/store/authStore";
 import { useMapStore } from "@/app/store/mapStore";
 import MapboxMap from "@/components/mapbox";
-import { ArrowLeft, Map, Eye, ChevronDown, ChevronUp, MapPin, Navigation, ExternalLink, Share2, Copy, Check } from "lucide-react";
+import { ArrowLeft, Map, Eye, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, MapPin, Navigation, ExternalLink, Share2, Copy, Check } from "lucide-react";
 import Link from "next/link";
 import mapboxgl from "mapbox-gl";
 import { getAvailableMapApps, openInMapApp, type MapApp } from "@/lib/mapUtils";
@@ -61,9 +53,12 @@ const PacketViewPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [tracks, setTracks] = useState<DayTrack[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isPanelVisible, setIsPanelVisible] = useState(false);
   const [showMapApps, setShowMapApps] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState<any>(null);
   const [availableMapApps, setAvailableMapApps] = useState<MapApp[]>([]);
+  const [hasInitializedFocus, setHasInitializedFocus] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   // Share-related state
   const [showShareConfirmDialog, setShowShareConfirmDialog] = useState(false);
@@ -345,7 +340,7 @@ const PacketViewPage = () => {
   }, [selectedMarker]);
 
   // Display selected day's markers and routes
-  const displayDay = useCallback(async (dayIndex: number) => {
+  const displayDay = useCallback(async (dayIndex: number, shouldFocus: boolean = true) => {
     if (!mapInstance || !tracks[dayIndex] || !tracks[dayIndex].markers) return;
 
     clearMapContent();
@@ -439,8 +434,8 @@ const PacketViewPage = () => {
       }
     }
 
-    // Fit map to markers
-    if (dayMarkers.length > 0) {
+    // Fit map to markers (only if shouldFocus is true)
+    if (shouldFocus && dayMarkers.length > 0) {
       const bounds = new mapboxgl.LngLatBounds();
       dayMarkers.forEach((marker: any) => {
         if (marker.location) {
@@ -452,25 +447,81 @@ const PacketViewPage = () => {
         mapInstance.fitBounds(bounds, {
           padding: 50,
           maxZoom: 15,
+          duration: 1000, // Add smooth animation
         });
       }
     }
   }, [mapInstance, tracks, clearMapContent, addMarkerToMap]);
+
+  // Focus on all markers when page loads
+  const focusOnAllMarkers = useCallback(() => {
+    if (!mapInstance || tracks.length === 0) return;
+
+    const bounds = new mapboxgl.LngLatBounds();
+    let hasMarkers = false;
+
+    tracks.forEach((track) => {
+      if (track.markers && Array.isArray(track.markers)) {
+        track.markers.forEach((marker: any) => {
+          if (marker && marker.location && marker.location.lng && marker.location.lat) {
+            bounds.extend([marker.location.lng, marker.location.lat]);
+            hasMarkers = true;
+          }
+        });
+      }
+    });
+
+    if (hasMarkers && !bounds.isEmpty()) {
+      mapInstance.fitBounds(bounds, {
+        padding: { top: 50, bottom: 50, left: 50, right: 350 }, // Extra padding on right for panel
+        maxZoom: 15,
+        duration: 1500,
+      });
+    }
+  }, [mapInstance, tracks]);
 
   // Handle day selection change
   const handleDayChange = (dayIndex: string) => {
     const index = parseInt(dayIndex);
     setSelectedDay(index);
     setIsExpanded(false); // Collapse when switching days
-    displayDay(index);
+    displayDay(index, true); // Focus when user manually changes day
+    
+    // Scroll to selected day
+    if (scrollContainerRef.current) {
+      const button = scrollContainerRef.current.children[index] as HTMLElement;
+      if (button) {
+        button.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+  };
+
+  // Navigate to previous/next day
+  const navigateDay = (direction: 'prev' | 'next') => {
+    if (direction === 'prev' && selectedDay > 0) {
+      handleDayChange((selectedDay - 1).toString());
+    } else if (direction === 'next' && selectedDay < tracks.length - 1) {
+      handleDayChange((selectedDay + 1).toString());
+    }
   };
 
   // Initialize display when map and data are ready
   useEffect(() => {
     if (mapInstance && tracks.length > 0 && !loading) {
-      displayDay(selectedDay);
+      // On first load, display markers but don't focus yet
+      if (!hasInitializedFocus) {
+        displayDay(selectedDay, false); // Don't focus on individual day
+        // Focus on all markers when page first loads (only once)
+        setTimeout(() => {
+          focusOnAllMarkers();
+          setHasInitializedFocus(true);
+        }, 500);
+      } else {
+        // After initialization, normal behavior
+        displayDay(selectedDay, true);
+      }
     }
-  }, [mapInstance, tracks, selectedDay, loading, displayDay]);
+  }, [mapInstance, tracks, selectedDay, loading, displayDay, focusOnAllMarkers, hasInitializedFocus]);
 
   if (isLoading) {
     return (
@@ -540,21 +591,20 @@ const PacketViewPage = () => {
 
   return (
     <div className="w-full h-screen flex flex-col bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3 shadow-sm">
-        <div className="flex items-center gap-3">
+      {/* Header - Mobile Optimized */}
+      <div className="bg-white border-b border-gray-200 px-3 py-2.5 shadow-sm z-10">
+        <div className="flex items-center gap-2">
           <Link href="/packets">
-            <Button variant="ghost" size="sm" className="flex items-center gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back
+            <Button variant="ghost" size="sm" className="h-9 w-9 p-0 flex items-center justify-center">
+              <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
           <div className="min-w-0 flex-1">
-            <h1 className="text-lg font-semibold text-gray-900 truncate" title={packet.name}>
+            <h1 className="text-base font-semibold text-gray-900 truncate" title={packet.name}>
               {packet.name}
             </h1>
             {packet.description && (
-              <p className="text-sm text-gray-600 truncate" title={packet.description}>
+              <p className="text-xs text-gray-600 truncate" title={packet.description}>
                 {packet.description}
               </p>
             )}
@@ -565,14 +615,16 @@ const PacketViewPage = () => {
             onClick={handleShare}
             disabled={shareLoading}
             className={cn(
-              "flex items-center gap-2 font-medium shadow-sm",
+              "h-9 px-3 flex items-center gap-1.5 font-medium shadow-sm",
               packet.shareCode 
                 ? "text-purple-600 border-purple-500 hover:bg-purple-50" 
                 : "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0"
             )}
           >
             <Share2 className="h-4 w-4" />
-            {shareLoading ? "Sharing..." : packet.shareCode ? "Shared" : "Share"}
+            <span className="hidden sm:inline">
+              {shareLoading ? "Sharing..." : packet.shareCode ? "Shared" : "Share"}
+            </span>
           </Button>
         </div>
       </div>
@@ -585,110 +637,286 @@ const PacketViewPage = () => {
           onLoadMap={() => {}} // Not needed for view-only
           createMarkerDialogIsOpen={false}
           openCreateMarkerDialog={() => {}} // Not needed for view-only
+          readOnly={true} // View page is read-only, disable marker adding
         />
         
-        {/* Unified Navigation Panel */}
+        {/* Backdrop Overlay - Mobile Only */}
+        {isPanelVisible && tracks.length > 0 && (
+          <div 
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-20 sm:hidden"
+            onClick={() => {
+              setIsPanelVisible(false);
+              setIsExpanded(false);
+            }}
+          />
+        )}
+        
+        {/* Floating Day Selector Button - Mobile */}
         {tracks.length > 0 && (
-          <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg w-80 max-h-[calc(100vh-120px)] flex flex-col">
-            {/* Day Selection Header */}
-            <div className="p-4 border-b border-gray-100">
-              <div className="flex items-center gap-3 mb-3">
-                <Map className="h-5 w-5 text-purple-600" />
-                <div className="flex-1">
-                  <Select value={selectedDay.toString()} onValueChange={handleDayChange}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Day" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tracks.map((track, index) => (
-                        <SelectItem key={index} value={index.toString()}>
-                          <div className="flex items-center justify-between w-full">
-                            <span>{track.dayText}</span>
-                            <span className="text-gray-500 ml-2">({track.markers?.length || 0} stops)</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+          <button
+            onClick={() => {
+              setIsPanelVisible(!isPanelVisible);
+              if (!isPanelVisible) {
+                setIsExpanded(true);
+              }
+            }}
+            className="fixed bottom-20 right-4 sm:hidden z-40 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full w-14 h-14 shadow-lg flex items-center justify-center hover:from-purple-600 hover:to-pink-600 transition-all duration-300 active:scale-95"
+            aria-label="Toggle itinerary"
+          >
+            {isPanelVisible ? (
+              <ChevronDown className="h-6 w-6" />
+            ) : (
+              <Map className="h-6 w-6" />
+            )}
+          </button>
+        )}
+        
+        {/* Day Selection Banner - Always Visible Outside Panel (Hidden when panel is visible) */}
+        {tracks.length > 0 && !isPanelVisible && (
+          <div className="fixed bottom-4 left-4 right-20 sm:absolute sm:top-4 sm:left-4 sm:right-auto sm:bottom-auto z-40 max-w-[calc(100vw-120px)] sm:max-w-[500px]">
+            <div className="relative bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border-2 border-purple-100 overflow-hidden">
+              {/* Left Arrow */}
+              <button
+                onClick={() => navigateDay('prev')}
+                disabled={selectedDay === 0}
+                className={cn(
+                  "absolute left-0 top-0 bottom-0 z-20 w-16 flex items-center justify-center",
+                  "bg-gradient-to-r from-purple-500/10 to-transparent",
+                  "hover:from-purple-500/20 transition-all duration-200",
+                  "disabled:opacity-30 disabled:cursor-not-allowed",
+                  "active:scale-95"
+                )}
+              >
+                <ChevronLeft className={cn(
+                  "h-8 w-8 text-purple-600",
+                  selectedDay === 0 ? "opacity-30" : "opacity-100"
+                )} />
+              </button>
+
+              {/* Right Arrow */}
+              <button
+                onClick={() => navigateDay('next')}
+                disabled={selectedDay === tracks.length - 1}
+                className={cn(
+                  "absolute right-0 top-0 bottom-0 z-20 w-16 flex items-center justify-center",
+                  "bg-gradient-to-l from-purple-500/10 to-transparent",
+                  "hover:from-purple-500/20 transition-all duration-200",
+                  "disabled:opacity-30 disabled:cursor-not-allowed",
+                  "active:scale-95"
+                )}
+              >
+                <ChevronRight className={cn(
+                  "h-8 w-8 text-purple-600",
+                  selectedDay === tracks.length - 1 ? "opacity-30" : "opacity-100"
+                )} />
+              </button>
+
+              {/* Day Cards Container */}
+              <div 
+                ref={scrollContainerRef}
+                className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-smooth px-16 py-4"
+              >
+                {tracks.map((track, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleDayChange(index.toString())}
+                    className={cn(
+                      "flex-shrink-0 w-24 sm:w-28 rounded-xl font-semibold transition-all duration-300 snap-start",
+                      "border-2 shadow-lg active:scale-95",
+                      selectedDay === index
+                        ? "bg-gradient-to-br from-purple-500 to-pink-500 text-white border-purple-600 shadow-purple-500/40 scale-110 z-10"
+                        : "bg-white text-gray-700 border-purple-200 hover:border-purple-300 hover:bg-purple-50 hover:scale-105"
+                    )}
+                  >
+                    <div className="flex flex-col items-center justify-center gap-1.5 p-3">
+                      <span className={cn(
+                        "font-bold text-sm sm:text-base",
+                        selectedDay === index ? "text-white" : "text-gray-900"
+                      )}>
+                        {track.dayText}
+                      </span>
+                      <div className={cn(
+                        "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium",
+                        selectedDay === index
+                          ? "bg-white/20 text-white"
+                          : "bg-purple-100 text-purple-700"
+                      )}>
+                        <MapPin className="h-3 w-3" />
+                        <span>{track.markers?.length || 0}</span>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Page Indicator */}
+              <div className="flex justify-center gap-1.5 pb-3">
+                {tracks.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleDayChange(index.toString())}
+                    className={cn(
+                      "h-1.5 rounded-full transition-all duration-300",
+                      selectedDay === index
+                        ? "w-6 bg-purple-500"
+                        : "w-1.5 bg-purple-200 hover:bg-purple-300"
+                    )}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Floating Day Selector Button - Desktop */}
+        {tracks.length > 0 && (
+          <button
+            onClick={() => setIsPanelVisible(!isPanelVisible)}
+            className="hidden sm:flex absolute top-4 right-4 z-40 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full w-12 h-12 shadow-lg items-center justify-center hover:from-purple-600 hover:to-pink-600 transition-all duration-300 active:scale-95"
+            aria-label="Toggle itinerary"
+          >
+            {isPanelVisible ? (
+              <ChevronDown className="h-5 w-5" />
+            ) : (
+              <Map className="h-5 w-5" />
+            )}
+          </button>
+        )}
+
+        {/* Bottom Drawer - Mobile First Design */}
+        {tracks.length > 0 && isPanelVisible && (
+          <div className={cn(
+            "fixed inset-x-0 bg-white rounded-t-3xl shadow-2xl transition-transform duration-300 ease-out z-30 flex flex-col backdrop-blur-xl bg-white/95",
+            "sm:absolute sm:top-4 sm:right-4 sm:inset-x-auto sm:rounded-2xl sm:w-96 sm:max-h-[calc(100vh-120px)] sm:shadow-xl",
+            isExpanded 
+              ? "bottom-0 max-h-[85vh]" 
+              : "bottom-0 translate-y-[calc(100%-60px)] sm:translate-y-0"
+          )}>
+            {/* Drawer Handle - Mobile Only */}
+            <div className="flex justify-center pt-4 pb-3 sm:hidden cursor-grab active:cursor-grabbing" onClick={() => setIsExpanded(!isExpanded)}>
+              <div className="w-16 h-1.5 bg-gradient-to-r from-purple-200 via-pink-200 to-purple-200 rounded-full" />
+            </div>
+
+            {/* Day Selection Header - Enhanced Design */}
+            <div className="px-5 py-4 bg-gradient-to-br from-purple-50/50 to-pink-50/50 border-b border-purple-100/50">
+              
+              {/* Icon, Current Day Summary and Expand Button Row */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="hidden sm:flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/30 flex-shrink-0">
+                    <Map className="h-5 w-5 text-white" />
+                  </div>
+                  {currentTrack && (
+                    <div className="flex items-center gap-2 text-gray-700 min-w-0 flex-1">
+                      <div className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 animate-pulse flex-shrink-0" />
+                      <span className="font-semibold text-base truncate">{currentTrack.dayText}</span>
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-100 to-pink-100 border border-purple-200 flex-shrink-0 ml-auto">
+                        <MapPin className="h-3.5 w-3.5 text-purple-600" />
+                        <span className="text-sm font-bold text-purple-700">{currentMarkers.length}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => setIsExpanded(!isExpanded)}
-                  className="flex-shrink-0"
+                  onClick={() => {
+                    setIsExpanded(!isExpanded);
+                    if (!isExpanded) {
+                      setIsPanelVisible(false);
+                    }
+                  }}
+                  className="flex-shrink-0 h-10 w-10 p-0 rounded-xl hover:bg-purple-100 transition-colors ml-2"
                 >
                   {isExpanded ? (
-                    <ChevronUp className="h-4 w-4" />
+                    <ChevronUp className="h-5 w-5 text-purple-600" />
                   ) : (
-                    <ChevronDown className="h-4 w-4" />
+                    <ChevronDown className="h-5 w-5 text-purple-600" />
                   )}
                 </Button>
               </div>
-              
-              {/* Current Day Summary */}
-              {currentTrack && (
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Eye className="h-4 w-4" />
-                    <span>{currentTrack.dayText}</span>
-                  </div>
-                  <span className="text-gray-500">{currentMarkers.length} stops</span>
-                </div>
-              )}
             </div>
 
             {/* Expandable Content */}
             {isExpanded && currentTrack && (
-              <div className="flex-1 overflow-hidden flex flex-col">
+              <div className="flex-1 overflow-hidden flex flex-col min-h-0">
                 {/* Day Description */}
                 {currentTrack.description && (
-                  <div className="p-4 border-b border-gray-100">
-                    <p className="text-sm text-gray-600">{currentTrack.description}</p>
+                  <div className="px-5 py-3 bg-gradient-to-r from-purple-50/30 to-pink-50/30 border-b border-purple-100/50">
+                    <p className="text-sm text-gray-700 leading-relaxed">{currentTrack.description}</p>
                   </div>
                 )}
                 
                 {/* Markers List */}
-                <div className="flex-1 overflow-y-auto">
-                  <div className="p-3">
+                <div className="flex-1 overflow-y-auto overscroll-contain">
+                  <div className="p-5">
                     {currentMarkers.length > 0 ? (
-                      <div className="space-y-2">
-                        <div className="text-xs font-medium text-gray-500 uppercase tracking-wide px-1 mb-2">
-                          Itinerary Stops
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-purple-200 to-transparent" />
+                          <span className="text-xs font-bold text-purple-600 uppercase tracking-wider px-3 py-1 rounded-full bg-purple-50">
+                            Itinerary Stops
+                          </span>
+                          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-purple-200 to-transparent" />
                         </div>
                         {currentMarkers.map((marker: any, index: number) => (
                           <div
                             key={index}
-                            className="p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-purple-200 group"
+                            className="group relative p-5 rounded-2xl bg-gradient-to-br from-white to-purple-50/30 border-2 border-purple-100 hover:border-purple-300 transition-all duration-300 hover:shadow-lg hover:shadow-purple-100 active:scale-[0.98]"
                           >
-                            <div className="flex items-start gap-3">
-                              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-medium flex items-center justify-center">
-                                {index + 1}
+                            {/* Marker Icon Overlay - Bottom Right Corner */}
+                            {marker.type && (
+                              <div className="absolute bottom-4 right-4 w-8 h-8 rounded-lg bg-white border-2 border-purple-200 flex items-center justify-center shadow-md z-10">
+                                <img 
+                                  src={`/markers/resized/${marker.type}.png`} 
+                                  alt={marker.type}
+                                  className="w-5 h-5 object-contain"
+                                />
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <h4 className="font-medium text-gray-900 truncate group-hover:text-purple-600">
-                                    {marker.title || `Stop ${index + 1}`}
-                                  </h4>
+                            )}
+                            
+                            {/* Connection Line (except last item) */}
+                            {index < currentMarkers.length - 1 && (
+                              <div className="absolute left-8 top-16 w-0.5 h-4 bg-gradient-to-b from-purple-300 to-pink-300 opacity-50" />
+                            )}
+                            
+                            <div className="flex items-start gap-4 pr-12">
+                              {/* Marker Number Badge */}
+                              <div className="relative flex-shrink-0">
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 text-white text-base font-bold flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300">
+                                  {index + 1}
                                 </div>
+                              </div>
+                              
+                              <div className="flex-1 min-w-0 pt-1">
+                                <h4 className="font-bold text-gray-900 mb-1.5 text-lg group-hover:text-purple-700 transition-colors">
+                                  {marker.title || `Stop ${index + 1}`}
+                                </h4>
                                 {marker.description && (
-                                  <p className="text-sm text-gray-600 line-clamp-2 mb-1">
+                                  <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
                                     {marker.description}
                                   </p>
                                 )}
-                                <div className="flex items-center justify-between mt-2">
+                                
+                                {/* Action Buttons */}
+                                <div className="flex items-center gap-2 flex-wrap">
                                   <button
-                                    onClick={() => focusOnMarker(marker)}
-                                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-purple-600 transition-colors"
+                                    onClick={() => {
+                                      focusOnMarker(marker);
+                                      setIsExpanded(false);
+                                      setIsPanelVisible(false);
+                                    }}
+                                    className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-2.5 bg-white border-2 border-purple-200 rounded-xl text-sm font-semibold text-purple-700 hover:bg-purple-50 hover:border-purple-300 active:scale-95 transition-all duration-200 shadow-sm"
                                   >
-                                    <Navigation className="h-3 w-3" />
-                                    Focus on map
+                                    <Navigation className="h-4 w-4" />
+                                    Focus
                                   </button>
                                   <button
                                     onClick={() => openMapAppSelection(marker)}
-                                    className="flex items-center gap-1 px-2 py-1 text-xs text-purple-600 hover:bg-purple-50 rounded transition-colors"
+                                    className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-semibold hover:from-purple-600 hover:to-pink-600 active:scale-95 transition-all duration-200 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/40"
                                   >
-                                    <ExternalLink className="h-3 w-3" />
-                                    Use Local App
+                                    <ExternalLink className="h-4 w-4" />
+                                    Navigate
                                   </button>
                                 </div>
                               </div>
@@ -697,10 +925,12 @@ const PacketViewPage = () => {
                         ))}
                       </div>
                     ) : (
-                      <div className="p-6 text-center text-gray-500">
-                        <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                        <p className="text-sm font-medium mb-1">No stops planned</p>
-                        <p className="text-xs">This day has no itinerary items</p>
+                      <div className="p-12 text-center">
+                        <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+                          <MapPin className="h-10 w-10 text-purple-400" />
+                        </div>
+                        <p className="text-lg font-semibold text-gray-700 mb-2">No stops planned</p>
+                        <p className="text-sm text-gray-500">This day has no itinerary items</p>
                       </div>
                     )}
                   </div>
@@ -708,8 +938,8 @@ const PacketViewPage = () => {
               </div>
             )}
           </div>
-                  )}
-        </div>
+        )}
+      </div>
 
         {/* Map Apps Selection Modal */}
         {showMapApps && (
