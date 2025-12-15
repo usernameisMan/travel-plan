@@ -23,6 +23,8 @@ import { LanguageInitializer } from "@/components/language-initializer";
 import { LanguageDetectionStatus } from "@/components/language-detection-status";
 import { useLanguageStore } from "@/store/languageStore";
 import { useTranslation } from "@/lib/i18n";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const poppins = Poppins({ 
   subsets: ["latin"],
@@ -207,6 +209,8 @@ export default function RootLayout({
             <LanguageDetectionStatus />
           </AuthProvider>
         </ErrorBoundary>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
