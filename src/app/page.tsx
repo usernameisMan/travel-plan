@@ -117,7 +117,7 @@ function AiChatDemo({ t }: { t: any }) {
                     <span className="text-purple-800 font-medium">{day}</span>
                   </div>
                 ))}
-                <button className="mt-1 w-full py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-medium rounded-lg">
+                <button className="mt-1 w-full py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-xs font-medium rounded-lg transition-all duration-200 active:scale-95">
                   {t.aiChatApplyBtn}
                 </button>
               </div>
@@ -202,7 +202,7 @@ export default function Home() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="w-full border-2 border-purple-400 text-purple-600 hover:bg-purple-500 hover:text-white px-8 py-6 text-base sm:text-lg font-semibold rounded-2xl transition-all duration-300"
+                    className="w-full border-2 border-purple-400 text-purple-600 hover:bg-purple-500 hover:text-white px-8 py-6 text-base sm:text-lg font-semibold rounded-2xl transition-all duration-300 active:scale-95"
                   >
                     {t.startPlanningFree}
                   </Button>
@@ -331,7 +331,7 @@ export default function Home() {
                           <span>{d}</span>
                         </div>
                       ))}
-                      <button className="mt-2 w-full py-1.5 bg-white text-purple-600 text-xs font-bold rounded-lg">
+                      <button className="mt-2 w-full py-1.5 bg-white text-purple-600 text-xs font-bold rounded-lg transition-all duration-200 active:scale-95 hover:bg-purple-50">
                         {t.aiChatApplyBtn}
                       </button>
                     </div>

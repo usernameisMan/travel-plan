@@ -46,7 +46,8 @@ export default function AuthButton() {
 
   if (isLoading)
     return (
-      <div className="px-3 md:px-5 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold shadow hover:shadow-lg transition-all duration-300 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-purple-400">
+      <div className="px-3 md:px-5 py-2 rounded-xl bg-gradient-to-r from-purple-400 to-pink-400 text-white font-semibold shadow opacity-80 text-sm md:text-base flex items-center gap-2">
+        <div className="w-3.5 h-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
         {t.loading}
       </div>
     );
@@ -77,7 +78,7 @@ export default function AuthButton() {
           </span>
         </div>
         <button
-          className="px-3 md:px-5 py-2 rounded-lg bg-red-500 text-white font-semibold shadow hover:bg-red-600 transition-all duration-300 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-red-400"
+          className="px-3 md:px-5 py-2 rounded-xl bg-red-500 text-white font-semibold shadow hover:bg-red-600 transition-all duration-300 active:scale-95 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-red-400"
           onClick={() =>
             logout({
               logoutParams: { returnTo: window.location.origin },
@@ -91,7 +92,7 @@ export default function AuthButton() {
   }
   return (
     <Link href="/login">
-      <button className="px-3 md:px-5 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold shadow hover:shadow-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-300 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-purple-400">
+      <button className="px-3 md:px-5 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold shadow hover:shadow-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-300 active:scale-95 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-purple-400">
         {t.login}
       </button>
     </Link>

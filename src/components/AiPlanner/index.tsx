@@ -142,7 +142,7 @@ const RouteSuggestionCard: React.FC<{
         >
           {t.aiPlannerApplyRoute}
         </Button>
-        <Button size="sm" variant="outline" onClick={onDismiss} className="flex-shrink-0">
+        <Button size="sm" variant="outline" onClick={onDismiss} className="flex-shrink-0 active:scale-95 transition-all duration-200">
           {t.aiPlannerDismiss}
         </Button>
       </div>
@@ -384,13 +384,13 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
                   onKeyDown={handleKeyDown}
                   placeholder={t.aiPlannerPlaceholder}
                   rows={2}
-                  className="flex-1 resize-none text-sm rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200 min-h-[52px] max-h-[120px]"
+                  className="flex-1 resize-none text-sm rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200 min-h-[52px] max-h-[120px] transition-all duration-200"
                   disabled={isLoading}
                 />
                 <Button
                   onClick={sendMessage}
                   disabled={!input.trim() || isLoading}
-                  className="h-10 w-10 rounded-xl p-0 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0 flex-shrink-0"
+                  className="h-10 w-10 rounded-xl p-0 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0 flex-shrink-0 active:scale-95 transition-all duration-200"
                 >
                   <Send className="h-4 w-4" />
                 </Button>

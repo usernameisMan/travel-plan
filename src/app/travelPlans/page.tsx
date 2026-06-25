@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import Script from 'next/script';
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
+import { MapPin } from "lucide-react";
 
 const fontSans = FontSans({
     subsets: ["latin"],
@@ -100,7 +101,7 @@ const TravelPlansMarket = () => {
   return (
     <main
       className={cn(
-        "min-h-screen w-full overflow-x-hidden bg-gradient-to-br from-white via-[#f0f9f4] to-[#e6f5ed] relative"
+        "min-h-screen w-full overflow-x-hidden bg-gradient-to-br from-purple-50/40 via-pink-50/20 to-white relative"
       )}
     >
       {/* Decorative blobs */}
@@ -122,7 +123,7 @@ const TravelPlansMarket = () => {
         </div>
 
         {/* Search & filter bar */}
-        <div className="flex flex-col gap-4 mb-8 bg-white/80 rounded-xl shadow p-4">
+        <div className="flex flex-col gap-4 mb-8 bg-white/80 rounded-2xl shadow-sm border border-purple-100 p-4">
           <div className="flex flex-col md:flex-row gap-3 w-full">
             <input
               className="flex-1 px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white text-base"
@@ -160,8 +161,8 @@ const TravelPlansMarket = () => {
               <option value="price-desc">Price ↓</option>
               <option value="likes">Most Liked</option>
             </select>
-            <button className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-purple-100 text-purple-600 font-semibold hover:bg-purple-200 transition">
-              <i className="icon-[mdi--star-outline] text-lg" />
+            <button className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-100 text-purple-600 font-semibold hover:bg-purple-200 transition-all duration-200 active:scale-95">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
               <span className="hidden sm:inline">My Favorites</span>
               <span className="sm:hidden">Favorites</span>
             </button>
@@ -172,8 +173,8 @@ const TravelPlansMarket = () => {
         <div className="flex flex-wrap gap-2 mb-8 justify-center">
           <button
             className={cn(
-              "px-4 py-1 rounded-full border text-sm font-medium transition",
-              !selectedTag ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0" : "bg-white text-purple-600 border-purple-500 hover:bg-purple-50"
+              "px-4 py-1.5 rounded-full border text-sm font-medium transition-all duration-200 active:scale-95",
+              !selectedTag ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-sm" : "bg-white text-purple-600 border-purple-300 hover:bg-purple-50"
             )}
             onClick={() => setSelectedTag(null)}
           >
@@ -183,8 +184,8 @@ const TravelPlansMarket = () => {
             <button
               key={tag}
               className={cn(
-                "px-4 py-1 rounded-full border text-sm font-medium transition",
-                selectedTag === tag ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0" : "bg-white text-purple-600 border-purple-500 hover:bg-purple-50"
+                "px-4 py-1.5 rounded-full border text-sm font-medium transition-all duration-200 active:scale-95",
+                selectedTag === tag ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-sm" : "bg-white text-purple-600 border-purple-300 hover:bg-purple-50"
               )}
               onClick={() => setSelectedTag(tag)}
             >
@@ -196,12 +197,20 @@ const TravelPlansMarket = () => {
         {/* Card grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {filteredPlans.length === 0 && (
-            <div className="col-span-full text-center text-gray-400 py-12 text-lg">No travel plans found.</div>
+            <div className="col-span-full flex flex-col items-center justify-center py-20 gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+                <MapPin className="h-8 w-8 text-purple-400" />
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-semibold text-gray-700">No travel plans found</p>
+                <p className="text-sm text-gray-400 mt-1">Try adjusting your filters or search terms</p>
+              </div>
+            </div>
           )}
           {filteredPlans.map((plan) => (
             <div
               key={plan.id}
-              className="group bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col overflow-hidden transform hover:scale-105 border border-[#e6f5ed] relative cursor-pointer"
+              className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden hover:-translate-y-1 border border-purple-100 relative cursor-pointer active:scale-[0.98]"
               onClick={() => { setActivePlan(plan); setShowDetail(true); }}
             >
               {plan.featured && (
@@ -227,39 +236,43 @@ const TravelPlansMarket = () => {
                     alt={plan.author}
                     width={36}
                     height={36}
-                    className="rounded-full border border-[#e6f5ed] object-cover"
+                    className="rounded-full border border-purple-100 object-cover"
                   />
                   <span className="text-gray-700 font-medium text-base truncate flex items-center gap-1">
                     Sold by {plan.author}
-                    {plan.verified && <i className="icon-[mdi--check-decagram] text-purple-600 text-lg" title="Verified" />}
+                    {plan.verified && <svg className="h-4 w-4 text-purple-600 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-label="Verified"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>}
                   </span>
                 </div>
                 <div className="text-xl font-semibold text-gray-900 mb-1 truncate">{plan.title}</div>
-                <div className="text-gray-500 text-sm mb-4 line-clamp-2 flex-1 group-hover:line-clamp-none group-hover:bg-[#f0f9f4] group-hover:rounded transition-all duration-300 p-1">
+                <div className="text-gray-500 text-sm mb-4 line-clamp-2 flex-1 group-hover:line-clamp-none group-hover:bg-purple-50/50 group-hover:rounded-lg transition-all duration-300 p-1">
                   {plan.desc}
                 </div>
                 <div className="flex items-center justify-between text-gray-400 text-sm mb-4">
                   <span className="flex items-center gap-1">
                     <button
-                      className={cn("hover:text-pink-500 transition", favoriteIds.includes(plan.id) && "text-pink-500")}
+                      className={cn("p-1 rounded-lg hover:bg-pink-50 hover:text-pink-500 transition-all duration-200 active:scale-95", favoriteIds.includes(plan.id) && "text-pink-500")}
                       onClick={e => { e.stopPropagation(); toggleFavorite(plan.id); }}
                       title={favoriteIds.includes(plan.id) ? "Remove from favorites" : "Add to favorites"}
                     >
-                      <i className={favoriteIds.includes(plan.id) ? "icon-[mdi--heart]" : "icon-[mdi--heart-outline]"} />
+                      <svg className="h-4 w-4" fill={favoriteIds.includes(plan.id) ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                     </button>
                     {plan.likes}
                   </span>
                   <span className="flex items-center gap-1">
-                    <button className="hover:text-yellow-500 transition" onClick={e => e.stopPropagation()}><i className="icon-[mdi--star-outline]" /></button>
+                    <button className="p-1 rounded-lg hover:bg-yellow-50 hover:text-yellow-500 transition-all duration-200 active:scale-95" onClick={e => e.stopPropagation()}>
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+                    </button>
                     {plan.favorites}
                   </span>
                   <span className="flex items-center gap-1">
-                    <button onClick={e => { e.stopPropagation(); setActivePlan(plan); setShowComment(true); }} className="hover:text-blue-500 transition"><i className="icon-[mdi--comment-outline]" /></button>
+                    <button onClick={e => { e.stopPropagation(); setActivePlan(plan); setShowComment(true); }} className="p-1 rounded-lg hover:bg-blue-50 hover:text-blue-500 transition-all duration-200 active:scale-95">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                    </button>
                     {plan.comments}
                   </span>
                 </div>
                 <button
-                  className="w-full py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold transition mt-auto text-lg shadow-md border-0"
+                  className="w-full py-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold transition-all duration-200 active:scale-95 mt-auto text-base shadow-md border-0"
                   onClick={e => e.stopPropagation()}
                 >
                   Buy this plan
@@ -274,23 +287,26 @@ const TravelPlansMarket = () => {
       {showDetail && activePlan && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
-            <button
-              className="sticky top-4 right-4 ml-auto z-10 flex items-center justify-center w-8 h-8 bg-white rounded-full shadow-md text-gray-400 hover:text-gray-600 text-xl float-right"
-              onClick={() => setShowDetail(false)}
-            >
-              ×
-            </button>
-            <div className="p-6 pt-2">
+            <div className="sticky top-0 z-10 flex justify-end p-3 bg-white/90 backdrop-blur-sm border-b border-gray-100">
+              <button
+                className="flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-500 hover:text-gray-700 transition-all duration-200 active:scale-95"
+                onClick={() => setShowDetail(false)}
+                aria-label="Close"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="p-6 pt-4">
               <div className="flex flex-col lg:flex-row gap-6">
                 <div className="relative w-full lg:w-1/2 h-56 lg:h-64 rounded-xl overflow-hidden">
                   <Image src={activePlan.cover} alt={activePlan.title} fill className="object-cover" />
                 </div>
                 <div className="flex-1 flex flex-col">
                   <div className="flex items-center gap-3 mb-3">
-                    <Image src={activePlan.avatar} alt={activePlan.author} width={40} height={40} className="rounded-full border border-[#e6f5ed] object-cover" />
+                    <Image src={activePlan.avatar} alt={activePlan.author} width={40} height={40} className="rounded-full border border-purple-100 object-cover" />
                     <span className="text-gray-700 font-medium text-base flex items-center gap-1">
                       Seller: {activePlan.author}
-                      {activePlan.verified && <i className="icon-[mdi--check-decagram] text-[#35b368] text-lg" title="Verified" />}
+                      {activePlan.verified && <svg className="h-4 w-4 text-purple-600 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-label="Verified"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>}
                     </span>
                   </div>
                   <button className="mb-3 px-4 py-2 rounded-full border border-purple-500 text-purple-600 text-sm font-semibold hover:bg-purple-50 transition w-fit">View Seller Profile</button>
@@ -304,27 +320,27 @@ const TravelPlansMarket = () => {
                   <div className="flex flex-wrap items-center gap-4 mb-4">
                     <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent font-bold text-xl">${activePlan.price}</span>
                     <span className="flex items-center gap-1 text-gray-400 text-sm">
-                      <i className="icon-[mdi--heart-outline]" /> {activePlan.likes}
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg> {activePlan.likes}
                     </span>
                     <span className="flex items-center gap-1 text-gray-400 text-sm">
-                      <i className="icon-[mdi--star-outline]" /> {activePlan.favorites}
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg> {activePlan.favorites}
                     </span>
                     <span className="flex items-center gap-1 text-gray-400 text-sm">
-                      <i className="icon-[mdi--comment-outline]" /> {activePlan.comments}
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg> {activePlan.comments}
                     </span>
                   </div>
                   <div className="space-y-3">
-                    <button className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold transition text-lg shadow-md border-0">
+                    <button className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold transition-all duration-200 active:scale-95 text-base shadow-md border-0">
                       Buy this plan
                     </button>
-                    <button className="w-full py-3 rounded-lg border border-purple-500 text-purple-600 font-semibold hover:bg-purple-50 transition text-base">
+                    <button className="w-full py-3 rounded-xl border border-purple-300 text-purple-600 font-semibold hover:bg-purple-50 transition-all duration-200 active:scale-95 text-base">
                       Add to cart
                     </button>
                     <div className="grid grid-cols-2 gap-3">
-                      <button className="py-2 rounded-lg border border-gray-200 text-gray-500 font-semibold hover:bg-gray-100 transition text-base">
+                      <button className="py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition-all duration-200 active:scale-95 text-sm">
                         Share
                       </button>
-                      <button className="py-2 rounded-lg border border-blue-200 text-blue-500 font-semibold hover:bg-blue-50 transition text-base">
+                      <button className="py-2.5 rounded-xl border border-blue-200 text-blue-500 font-semibold hover:bg-blue-50 transition-all duration-200 active:scale-95 text-sm">
                         Contact Seller
                       </button>
                     </div>
@@ -343,31 +359,32 @@ const TravelPlansMarket = () => {
             <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
               <div className="text-lg font-bold truncate">Comments for {activePlan?.title}</div>
               <button
-                className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 text-xl"
+                className="flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-500 hover:text-gray-700 transition-all duration-200 active:scale-95"
                 onClick={() => setShowComment(false)}
+                aria-label="Close"
               >
-                ×
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="p-4">
               <div className="space-y-3 max-h-60 overflow-y-auto mb-4">
-                <div className="bg-gray-100 rounded p-3">
-                  <div className="font-semibold text-sm mb-1">User A</div>
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <div className="font-semibold text-sm mb-1 text-gray-800">User A</div>
                   <div className="text-gray-600 text-sm">Very detailed, great route!</div>
                 </div>
-                <div className="bg-gray-100 rounded p-3">
-                  <div className="font-semibold text-sm mb-1">User B</div>
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <div className="font-semibold text-sm mb-1 text-gray-800">User B</div>
                   <div className="text-gray-600 text-sm">Good value, rich content, recommended!</div>
                 </div>
                 {/* ...more static comments */}
               </div>
               <div className="flex gap-2">
                 <input
-                  className="flex-1 px-3 py-3 rounded border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-400 text-base"
+                  className="flex-1 px-3 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-400 text-base transition-all duration-200"
                   placeholder="Write your comment..."
                   disabled
                 />
-                <button className="px-4 py-3 rounded bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold opacity-60 cursor-not-allowed border-0">Send</button>
+                <button className="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold opacity-60 cursor-not-allowed border-0">Send</button>
               </div>
             </div>
           </div>

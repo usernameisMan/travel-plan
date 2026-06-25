@@ -359,13 +359,17 @@ const PacketsPage = () => {
             </div>
           </div>
         ) : error ? (
-          <div className="text-center py-12">
-            <div className="text-red-500 text-xl mb-4">❌</div>
-            <p className="text-red-600 mb-4">{error}</p>
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center">
+              <svg className="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            </div>
+            <div className="text-center">
+              <p className="font-semibold text-gray-800">{t.failedToFetch}</p>
+              <p className="text-sm text-red-500 mt-1">{error}</p>
+            </div>
             <Button
               onClick={fetchPackets}
-              variant="outline"
-              className="border-purple-300 text-purple-600 hover:bg-purple-500 hover:text-white transition-all duration-300"
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 transition-all duration-300 active:scale-95"
             >
               {t.reload}
             </Button>
@@ -484,7 +488,7 @@ const PacketsPage = () => {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="w-full hover:bg-purple-500 hover:text-white transition-all duration-300 hover:shadow-lg hover:scale-105 border-purple-200"
+                          className="w-full hover:bg-purple-500 hover:text-white transition-all duration-300 hover:shadow-lg active:scale-95 border-purple-200"
                         >
                           <Edit3 className="h-4 w-4 mr-1" />
                           {t.edit}
@@ -494,7 +498,7 @@ const PacketsPage = () => {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="w-full hover:bg-blue-500 hover:text-white transition-all duration-300 hover:shadow-lg hover:scale-105 border-blue-200"
+                          className="w-full hover:bg-blue-500 hover:text-white transition-all duration-300 hover:shadow-lg active:scale-95 border-blue-200"
                         >
                           <Eye className="h-4 w-4 mr-1" />
                           {t.view}
@@ -507,9 +511,9 @@ const PacketsPage = () => {
                         size="sm" 
                         onClick={() => handleShare(packet)}
                         className={cn(
-                          "w-full transition-all duration-300 hover:scale-105",
-                          packet.shareCode 
-                            ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl" 
+                          "w-full transition-all duration-300 active:scale-95",
+                          packet.shareCode
+                            ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl"
                             : "hover:bg-purple-500 hover:text-white border-purple-200 hover:shadow-lg"
                         )}
                       >
@@ -529,7 +533,7 @@ const PacketsPage = () => {
                         variant="outline" 
                         size="sm" 
                         onClick={() => setDeletingPacket(packet)}
-                        className="w-full hover:bg-red-500 hover:text-white transition-all duration-300 hover:shadow-lg hover:scale-105 border-red-200"
+                        className="w-full hover:bg-red-500 hover:text-white transition-all duration-300 hover:shadow-lg active:scale-95 border-red-200"
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
                         {t.delete}
