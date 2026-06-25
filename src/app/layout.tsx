@@ -105,7 +105,7 @@ function NavigationBar() {
           <AuthButton />
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-md text-purple-600 hover:bg-purple-100 transition-colors"
+            className="p-2 rounded-xl text-purple-600 hover:bg-purple-100 transition-all duration-200 active:scale-95"
             aria-label="Toggle mobile menu"
           >
             <svg
@@ -136,12 +136,12 @@ function NavigationBar() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 bg-white/95 backdrop-blur">
-          <div className="px-4 py-2 space-y-1">
+        <div className="md:hidden border-t border-purple-100 bg-white/95 backdrop-blur animate-in slide-in-from-top-2 duration-200">
+          <div className="px-4 py-3 space-y-1">
             <Link
               href="/"
               className={cn(
-                "block px-3 py-2 rounded-md text-base font-medium transition-colors",
+                "block px-3 py-2.5 rounded-xl text-base font-medium transition-all duration-200 active:scale-95",
                 passName === "/"
                   ? "text-purple-600 bg-purple-100"
                   : "text-gray-700 hover:text-purple-600 hover:bg-purple-50"
@@ -153,7 +153,7 @@ function NavigationBar() {
             {/* <Link
               href="/travelPlans"
               className={cn(
-                "block px-3 py-2 rounded-md text-base font-medium transition-colors",
+                "block px-3 py-2.5 rounded-xl text-base font-medium transition-all duration-200 active:scale-95",
                 passName === "/travelPlans"
                   ? "text-purple-600 bg-purple-100"
                   : "text-gray-700 hover:text-purple-600 hover:bg-purple-50"
@@ -166,7 +166,7 @@ function NavigationBar() {
               <Link
                 href="/packets"
                 className={cn(
-                  "block px-3 py-2 rounded-md text-base font-medium transition-colors",
+                  "block px-3 py-2.5 rounded-xl text-base font-medium transition-all duration-200 active:scale-95",
                   passName === "/packets"
                     ? "text-purple-600 bg-purple-100"
                     : "text-gray-700 hover:text-purple-600 hover:bg-purple-50"

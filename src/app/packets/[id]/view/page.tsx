@@ -363,69 +363,65 @@ const PacketViewPage = () => {
 
     // Generate routes if there are at least 2 markers
     if (dayMarkers.length >= 2) {
-      const colors = ["#FF0000", "#00FF00", "#0000FF", "#FFA500", "#800080"];
-      
+      const colors = ["#7C3AED","#0EA5E9","#10B981","#F59E0B","#EF4444","#EC4899","#6366F1","#14B8A6"];
+      const color = colors[dayIndex % colors.length];
+
       for (let i = 0; i < dayMarkers.length - 1; i++) {
         const from = dayMarkers[i];
         const to = dayMarkers[i + 1];
-        
+
         if (!from?.location || !to?.location) continue;
 
         const waypoints = `${from.location.lng},${from.location.lat};${to.location.lng},${to.location.lat}`;
-        
+
         try {
           const response = await fetch(
             `https://api.mapbox.com/directions/v5/mapbox/driving/${waypoints}?geometries=geojson&access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
           );
           const data = await response.json();
-          
+
           if (data.routes && data.routes.length > 0) {
             const geometry = data.routes[0].geometry;
             const segmentSourceId = `route-segment-${dayIndex}-${i}`;
-            
-            // Add source
             mapInstance.addSource(segmentSourceId, {
               type: "geojson",
-              data: {
-                type: "Feature",
-                properties: {},
-                geometry,
-              },
+              data: { type: "Feature", properties: {}, geometry },
             });
-            
-            // Add line layer
+            // White casing
+            mapInstance.addLayer({
+              id: `route-segment-casing-${dayIndex}-${i}`,
+              type: "line",
+              source: segmentSourceId,
+              layout: { "line-join": "round", "line-cap": "round" },
+              paint: { "line-color": "#ffffff", "line-width": 7, "line-opacity": 0.5 },
+            });
+            // Colored line
             mapInstance.addLayer({
               id: segmentSourceId,
               type: "line",
               source: segmentSourceId,
-              layout: {
-                "line-join": "round",
-                "line-cap": "round",
-              },
-              paint: {
-                "line-color": colors[dayIndex % colors.length],
-                "line-width": 6,
-                "line-opacity": 0.8,
-              },
+              layout: { "line-join": "round", "line-cap": "round" },
+              paint: { "line-color": color, "line-width": 4.5, "line-opacity": 0.9 },
             });
-
-            // Add arrows
+            // Direction arrows
             mapInstance.addLayer({
               id: `route-arrows-${dayIndex}-${i}`,
               type: "symbol",
               source: segmentSourceId,
               layout: {
                 "symbol-placement": "line",
-                "text-field": "→",
-                "text-size": 20,
-                "text-allow-overlap": true,
-                "text-ignore-placement": true,
-                "symbol-spacing": 100,
+                "text-field": "▶",
+                "text-size": 11,
+                "text-allow-overlap": false,
+                "text-ignore-placement": false,
+                "text-keep-upright": false,
+                "symbol-spacing": 120,
               },
               paint: {
-                "text-color": colors[dayIndex % colors.length],
-                "text-halo-color": "#ffffff",
-                "text-halo-width": 2,
+                "text-color": "#ffffff",
+                "text-halo-color": color,
+                "text-halo-width": 1.5,
+                "text-opacity": 0.85,
               },
             });
           }

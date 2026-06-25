@@ -34,7 +34,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   return (
     <div className={cn("flex items-center", className)}>
       <Select value={language} onValueChange={handleLanguageChange}>
-        <SelectTrigger className="w-auto min-w-[120px] h-9 border-0 bg-transparent hover:bg-gray-100 focus:ring-0 focus:ring-offset-0">
+        <SelectTrigger className="w-auto min-w-[120px] h-10 border-0 bg-transparent hover:bg-purple-50 focus:ring-0 focus:ring-offset-0 transition-colors duration-200 rounded-xl">
           <div className="flex items-center gap-2">
             <Globe className="h-4 w-4 text-gray-600" />
             <SelectValue />
