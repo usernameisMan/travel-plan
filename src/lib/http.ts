@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/authStore";
 // Support local development mode
 const USE_LOCAL_API = process.env.NEXT_PUBLIC_USE_LOCAL_API === 'true';
 const LOCAL_API_URL = 'http://localhost:3000';
-const API_BASE_URL = USE_LOCAL_API 
+export const API_BASE_URL = USE_LOCAL_API
   ? LOCAL_API_URL 
   : (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://travel-plan-server-less-node.vercel.app');
 

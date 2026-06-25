@@ -12,7 +12,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Sparkles, Send, X, ChevronDown, ChevronUp, MapPin, Bot, User } from "lucide-react";
-import { http } from "@/lib/http";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { API_BASE_URL, HttpError } from "@/lib/http";
+import { useAuthStore } from "@/store/authStore";
 import { useLanguageStore } from "@/store/languageStore";
 import { useTranslation } from "@/lib/i18n";
 import { DayTrack } from "@/components/traveTracks/Track";
@@ -21,6 +24,7 @@ interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   routeSuggestion?: RouteSuggestion | null;
+  isStreaming?: boolean;
 }
 
 interface PlaceSuggestion {
@@ -29,6 +33,7 @@ interface PlaceSuggestion {
   description: string;
   lng: number;
   lat: number;
+  travelTime?: string;
 }
 
 interface DaySuggestion {
@@ -116,15 +121,23 @@ const RouteSuggestionCard: React.FC<{
               )}
               <div className="space-y-1">
                 {day.places.map((place, j) => (
-                  <div key={j} className="flex items-start gap-2">
-                    <span className="mt-0.5 w-4 h-4 rounded-full bg-purple-100 text-purple-600 text-xs flex items-center justify-center flex-shrink-0 font-bold">
-                      {j + 1}
-                    </span>
-                    <div className="min-w-0">
-                      <span className="text-sm font-medium text-gray-800">{place.name}</span>
-                      {place.description && (
-                        <p className="text-xs text-gray-500 line-clamp-1">{place.description}</p>
-                      )}
+                  <div key={j}>
+                    {place.travelTime && (
+                      <div className="flex items-center gap-1.5 pl-1 py-1">
+                        <div className="w-px h-4 bg-purple-200 ml-1.5" />
+                        <span className="text-xs text-purple-400">{place.travelTime}</span>
+                      </div>
+                    )}
+                    <div className="flex items-start gap-2">
+                      <span className="mt-0.5 w-4 h-4 rounded-full bg-purple-100 text-purple-600 text-xs flex items-center justify-center flex-shrink-0 font-bold">
+                        {j + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <span className="text-sm font-medium text-gray-800">{place.name}</span>
+                        {place.description && (
+                          <p className="text-xs text-gray-500 line-clamp-1">{place.description}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -160,6 +173,7 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [progressMessage, setProgressMessage] = useState("");
   const [pendingRoute, setPendingRoute] = useState<RouteSuggestion | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [dismissedRoutes, setDismissedRoutes] = useState<Set<number>>(new Set());
@@ -178,39 +192,115 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
 
     const userMessage: ChatMessage = { role: "user", content };
     const nextMessages = [...messages, userMessage];
-    setMessages(nextMessages);
+    setMessages([...nextMessages, { role: "assistant", content: "", isStreaming: true }]);
     setInput("");
     setIsLoading(true);
+    setProgressMessage("");
+
+    const payload = {
+      messages: nextMessages
+        .filter((m) => m.role !== "assistant" || m !== messages[0])
+        .map((m) => ({ role: m.role, content: m.content })),
+    };
 
     try {
-      const payload = {
-        messages: nextMessages
-          .filter((m) => m.role !== "assistant" || m !== messages[0])
-          .map((m) => ({ role: m.role, content: m.content })),
-      };
+      const token = useAuthStore.getState().token;
+      const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(payload),
+      });
 
-      const res = (await http.post("/api/ai/chat", payload)) as any;
-      const { reply, routeSuggestion } = res.data || res;
+      if (!response.ok) {
+        throw new HttpError(response.status, `HTTP error! status: ${response.status}`);
+      }
 
-      const assistantMessage: ChatMessage = {
-        role: "assistant",
-        content: reply || t.aiPlannerError,
-        routeSuggestion: routeSuggestion || null,
-      };
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let textContent = "";
+      let routeSuggestion: RouteSuggestion | null = null;
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      outer: while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        // SSE blocks are separated by \n\n
+        const blocks = buffer.split("\n\n");
+        buffer = blocks.pop() ?? "";
+
+        for (const block of blocks) {
+          const line = block.trim();
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6);
+
+          let event: any;
+          try {
+            event = JSON.parse(jsonStr);
+          } catch {
+            continue;
+          }
+
+          if (event.type === "text") {
+            textContent += event.content;
+            setMessages((prev) => {
+              const updated = [...prev];
+              updated[updated.length - 1] = {
+                role: "assistant",
+                content: textContent,
+                isStreaming: true,
+              };
+              return updated;
+            });
+            // Auto-scroll as text streams in
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+          } else if (event.type === "progress") {
+            setProgressMessage(event.message);
+          } else if (event.type === "route") {
+            routeSuggestion = event.routeSuggestion ?? null;
+          } else if (event.type === "error") {
+            const errStatus = event.status ?? 500;
+            throw new HttpError(errStatus, event.message ?? "Unknown error");
+          } else if (event.type === "done") {
+            break outer;
+          }
+        }
+      }
+
+      // Finalise the streaming message
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          role: "assistant",
+          content: textContent || t.aiPlannerError,
+          isStreaming: false,
+          routeSuggestion,
+        };
+        return updated;
+      });
     } catch (err: any) {
       const errStatus = (err as any)?.status;
       const errMessage =
         errStatus && errStatus >= 500
           ? t.aiPlannerConfigMissing
           : t.aiPlannerError;
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: errMessage },
-      ]);
+      setMessages((prev) => {
+        const updated = [...prev];
+        const last = updated[updated.length - 1];
+        if (last?.isStreaming) {
+          updated[updated.length - 1] = { role: "assistant", content: errMessage, isStreaming: false };
+        } else {
+          updated.push({ role: "assistant", content: errMessage });
+        }
+        return updated;
+      });
     } finally {
       setIsLoading(false);
+      setProgressMessage("");
     }
   };
 
@@ -252,9 +342,7 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
           "fixed z-40 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg",
           "bg-gradient-to-r from-purple-500 to-pink-500 text-white",
           "hover:from-purple-600 hover:to-pink-600 active:scale-95 transition-all duration-200",
-          // Desktop: bottom-right above map controls
           "bottom-6 right-6",
-          // Hide when panel is open
           isOpen && "hidden"
         )}
         title={t.aiPlannerTitle}
@@ -275,9 +363,7 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
           <div
             className={cn(
               "fixed z-50 bg-white flex flex-col shadow-2xl",
-              // Mobile: bottom sheet
               "bottom-0 left-0 right-0 rounded-t-2xl max-h-[85vh]",
-              // Desktop: right side panel
               "md:bottom-4 md:right-4 md:left-auto md:rounded-2xl md:w-[380px] md:max-h-[calc(100vh-5rem)]"
             )}
           >
@@ -330,20 +416,61 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
                       msg.role === "user" && "flex flex-col items-end"
                     )}
                   >
-                    <div
-                      className={cn(
-                        "rounded-2xl px-3 py-2 text-sm leading-relaxed max-w-[90%]",
-                        msg.role === "user"
-                          ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-tr-sm"
-                          : "bg-gray-100 text-gray-800 rounded-tl-sm"
-                      )}
-                    >
-                      <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                    </div>
+                    {/* Typing / streaming bubble */}
+                    {msg.isStreaming && !msg.content ? (
+                      <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 inline-block">
+                        {progressMessage ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                            <span className="text-xs text-purple-600 font-medium">
+                              {progressMessage}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex gap-1 items-center">
+                            <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce [animation-delay:0ms]" />
+                            <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce [animation-delay:150ms]" />
+                            <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce [animation-delay:300ms]" />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div
+                        className={cn(
+                          "rounded-2xl px-3 py-2 text-sm leading-relaxed max-w-[90%]",
+                          msg.role === "user"
+                            ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-tr-sm"
+                            : "bg-gray-100 text-gray-800 rounded-tl-sm"
+                        )}
+                      >
+                        {msg.role === "assistant" ? (
+                          <div className="prose prose-sm max-w-none
+                            prose-p:my-1 prose-p:leading-relaxed
+                            prose-headings:font-semibold prose-headings:my-2
+                            prose-h1:text-base prose-h2:text-sm prose-h3:text-sm
+                            prose-ul:my-1 prose-ul:pl-4 prose-ol:my-1 prose-ol:pl-4
+                            prose-li:my-0.5
+                            prose-strong:font-semibold prose-strong:text-gray-900
+                            prose-code:text-purple-700 prose-code:bg-purple-50 prose-code:px-1 prose-code:rounded prose-code:text-xs
+                            prose-hr:my-2
+                            [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {msg.content}
+                            </ReactMarkdown>
+                            {msg.isStreaming && (
+                              <span className="inline-block w-0.5 h-4 bg-gray-500 ml-0.5 animate-pulse align-text-bottom" />
+                            )}
+                          </div>
+                        ) : (
+                          <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                        )}
+                      </div>
+                    )}
 
                     {/* Route suggestion card */}
                     {msg.role === "assistant" &&
                       msg.routeSuggestion &&
+                      !msg.isStreaming &&
                       !dismissedRoutes.has(i) && (
                         <div className="w-full">
                           <RouteSuggestionCard
@@ -357,21 +484,6 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
                   </div>
                 </div>
               ))}
-
-              {isLoading && (
-                <div className="flex gap-2">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center flex-shrink-0">
-                    <Bot className="h-4 w-4 text-gray-600" />
-                  </div>
-                  <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3">
-                    <div className="flex gap-1 items-center">
-                      <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce [animation-delay:0ms]" />
-                      <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce [animation-delay:150ms]" />
-                      <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce [animation-delay:300ms]" />
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <div ref={messagesEndRef} />
             </div>
