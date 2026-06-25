@@ -200,9 +200,11 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (err: any) {
-      const errMessage = err?.message?.includes("500")
-        ? t.aiPlannerConfigMissing
-        : t.aiPlannerError;
+      const errStatus = (err as any)?.status;
+      const errMessage =
+        errStatus && errStatus >= 500
+          ? t.aiPlannerConfigMissing
+          : t.aiPlannerError;
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: errMessage },
