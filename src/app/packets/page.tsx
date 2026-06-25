@@ -47,9 +47,11 @@ const PacketsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [deletingPacket, setDeletingPacket] = useState<Packet | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   // Share states
   const [sharingPacket, setSharingPacket] = useState<Packet | null>(null);
+  const [shareError, setShareError] = useState<string | null>(null);
   const [showShareConfirmDialog, setShowShareConfirmDialog] = useState(false);
   const [showShareLinkDialog, setShowShareLinkDialog] = useState(false);
   const [shareUrl, setShareUrl] = useState<string>("");
@@ -147,55 +149,37 @@ const PacketsPage = () => {
   };
 
   const handleDeletePacket = async (packet: Packet) => {
-    if (!packet.id) {
-      alert("Invalid packet ID");
-      return;
-    }
+    if (!packet.id) return;
 
     try {
       setDeleteLoading(true);
-      
-      // Ensure token exists with better error handling
+      setDeleteError(null);
+
       let token = useAuthStore.getState().token;
       if (!token) {
         try {
-          token = await getAccessTokenSilently({
-            cacheMode: 'on'
-          });
+          token = await getAccessTokenSilently({ cacheMode: 'on' });
           useAuthStore.getState().setToken(token);
         } catch (tokenError) {
           console.error("Failed to get access token:", tokenError);
-          alert("Authentication failed, please log in again");
+          setDeleteError(t.authenticationFailed);
           return;
         }
       }
 
-      const response = await http.delete(`/api/packets/${packet.id}`);
-      console.log("Delete response:", response);
-
-      // Remove deleted packet from list
+      await http.delete(`/api/packets/${packet.id}`);
       setPackets(prev => prev.filter(p => p.id !== packet.id));
-      
-      alert("Travel plan deleted successfully!");
+      setDeletingPacket(null);
     } catch (error) {
       console.error("Error deleting packet:", error);
-      
-      if (error instanceof Error) {
-        if (error.message.includes('401')) {
-          alert("Authentication failed, please log in again");
-        } else if (error.message.includes('404')) {
-          alert("Travel plan does not exist or has been deleted");
-          // Remove from list even if 404 (might have been deleted elsewhere)
-          setPackets(prev => prev.filter(p => p.id !== packet.id));
-        } else {
-          alert(`Delete failed: ${error.message}`);
-        }
+      if (error instanceof Error && error.message.includes('404')) {
+        setPackets(prev => prev.filter(p => p.id !== packet.id));
+        setDeletingPacket(null);
       } else {
-        alert("Unknown error occurred while deleting travel plan");
+        setDeleteError(error instanceof Error ? error.message : t.error);
       }
     } finally {
       setDeleteLoading(false);
-      setDeletingPacket(null);
     }
   };
 
@@ -217,20 +201,19 @@ const PacketsPage = () => {
 
   const handleConfirmShare = useCallback(async () => {
     if (!sharingPacket) return;
-    
+
     try {
       setShareLoading(true);
-      
+      setShareError(null);
+
       let token = useAuthStore.getState().token;
       if (!token) {
         try {
-          token = await getAccessTokenSilently({
-            cacheMode: 'on'
-          });
+          token = await getAccessTokenSilently({ cacheMode: 'on' });
           useAuthStore.getState().setToken(token);
         } catch (tokenError) {
           console.error("Failed to get access token:", tokenError);
-          alert("Authentication failed, please log in again");
+          setShareError(t.authenticationFailed);
           return;
         }
       }
@@ -243,86 +226,74 @@ const PacketsPage = () => {
         const shareCode = response.data.shareCode;
         const shareUrl = response.data.shareUrl;
         setShareUrl(shareUrl);
-        
-        // Update packets list
-        setPackets(prev => prev.map(p => 
-          p.id === sharingPacket.id 
+        setPackets(prev => prev.map(p =>
+          p.id === sharingPacket.id
             ? { ...p, shareCode, shareType: selectedShareType, shareViews: 0 }
             : p
         ));
-        
-        // Update sharing packet
         setSharingPacket(prev => prev ? {
           ...prev,
           shareCode,
           shareType: selectedShareType,
           shareViews: 0
         } : null);
-        
-        // Close confirmation dialog and show link dialog
         setShowShareConfirmDialog(false);
         setShowShareLinkDialog(true);
       }
     } catch (error) {
       console.error('Error enabling sharing:', error);
-      alert("Failed to create share link. Please try again.");
+      setShareError(t.error);
     } finally {
       setShareLoading(false);
     }
-  }, [sharingPacket, selectedShareType, getAccessTokenSilently]);
+  }, [sharingPacket, selectedShareType, getAccessTokenSilently, t]);
 
   const handleCopyLink = useCallback(async () => {
     if (!shareUrl) return;
-    
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error('Failed to copy link:', error);
-      alert("Failed to copy link");
     }
   }, [shareUrl]);
 
   const handleDisableShare = useCallback(async () => {
     if (!sharingPacket?.shareCode) return;
-    
+
     try {
       setShareLoading(true);
-      
+      setShareError(null);
+
       let token = useAuthStore.getState().token;
       if (!token) {
         try {
-          token = await getAccessTokenSilently({
-            cacheMode: 'on'
-          });
+          token = await getAccessTokenSilently({ cacheMode: 'on' });
           useAuthStore.getState().setToken(token);
         } catch (tokenError) {
           console.error("Failed to get access token:", tokenError);
-          alert("Authentication failed, please log in again");
+          setShareError(t.authenticationFailed);
           return;
         }
       }
 
       await http.delete(`/api/packets/${sharingPacket.id}/share`);
-      
-      // Update packets list
-      setPackets(prev => prev.map(p => 
-        p.id === sharingPacket.id 
+      setPackets(prev => prev.map(p =>
+        p.id === sharingPacket.id
           ? { ...p, shareCode: undefined, shareType: 'private' }
           : p
       ));
-      
       setShowShareLinkDialog(false);
       setShareUrl('');
       setSharingPacket(null);
     } catch (error) {
       console.error('Error disabling sharing:', error);
-      alert("Failed to stop sharing. Please try again.");
+      setShareError(t.error);
     } finally {
       setShareLoading(false);
     }
-  }, [sharingPacket, getAccessTokenSilently]);
+  }, [sharingPacket, getAccessTokenSilently, t]);
 
   if (isLoading) {
     return (
@@ -429,7 +400,7 @@ const PacketsPage = () => {
                       <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-md opacity-50 animate-pulse"></div>
                       <div className="relative px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full flex items-center gap-1">
                         <Sparkles className="h-3 w-3" />
-                        Public
+                        {t.publicBadge}
                       </div>
                     </div>
                   </div>
@@ -470,7 +441,7 @@ const PacketsPage = () => {
                           <Calendar className="h-4 w-4 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-xs text-gray-500 font-medium">Travel Dates</div>
+                          <div className="text-xs text-gray-500 font-medium">{t.travelDates}</div>
                           <div className="text-xs font-semibold text-gray-700 truncate">
                             {formatDate(packet.startDate)} - {formatDate(packet.endDate)}
                           </div>
@@ -483,7 +454,7 @@ const PacketsPage = () => {
                         <Calendar className="h-4 w-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs text-gray-500 font-medium">Days</div>
+                        <div className="text-xs text-gray-500 font-medium">{t.days}</div>
                         <div className="text-sm font-bold text-purple-600">{getDaysCount(packet)}</div>
                       </div>
                     </div>
@@ -493,7 +464,7 @@ const PacketsPage = () => {
                         <MapPin className="h-4 w-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs text-gray-500 font-medium">Places</div>
+                        <div className="text-xs text-gray-500 font-medium">{t.places}</div>
                         <div className="text-sm font-bold text-orange-600">{getMarkersCount(packet)}</div>
                       </div>
                     </div>
@@ -545,12 +516,12 @@ const PacketsPage = () => {
                         {packet.shareCode ? (
                           <>
                             <Sparkles className="h-4 w-4 mr-1 animate-pulse" />
-                            Shared
+                            {t.shared}
                           </>
                         ) : (
                           <>
                             <Share2 className="h-4 w-4 mr-1" />
-                            Share
+                            {t.shareAction}
                           </>
                         )}
                       </Button>
@@ -573,7 +544,7 @@ const PacketsPage = () => {
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={!!deletingPacket} onOpenChange={() => setDeletingPacket(null)}>
+      <Dialog open={!!deletingPacket} onOpenChange={() => { setDeletingPacket(null); setDeleteError(null); }}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>{t.confirmDeleteTitle}</DialogTitle>
@@ -585,11 +556,14 @@ const PacketsPage = () => {
             <p className="text-sm text-red-600 font-medium">
               {t.confirmDeleteWarning}
             </p>
+            {deleteError && (
+              <p className="text-sm text-red-600 mt-3 bg-red-50 rounded-lg px-3 py-2">{deleteError}</p>
+            )}
           </div>
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setDeletingPacket(null)}
+              onClick={() => { setDeletingPacket(null); setDeleteError(null); }}
               disabled={deleteLoading}
             >
               {t.cancel}
@@ -613,23 +587,21 @@ const PacketsPage = () => {
       </Dialog>
 
       {/* Share Confirmation Dialog */}
-      <Dialog open={showShareConfirmDialog} onOpenChange={setShowShareConfirmDialog}>
+      <Dialog open={showShareConfirmDialog} onOpenChange={(open) => { setShowShareConfirmDialog(open); if (!open) setShareError(null); }}>
         <DialogContent className="sm:max-w-md bg-gradient-to-br from-purple-50 to-pink-50">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl">
               <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
                 <Share2 className="h-6 w-6 text-white" />
               </div>
-              Share Your Travel Plan
+              {t.sharePlanTitle}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-gray-700">
-              Share your amazing travel plan with friends and the world! Choose how you want to share:
-            </p>
-            
+            <p className="text-sm text-gray-700">{t.shareDialogIntro}</p>
+
             <div className="space-y-3">
-              <div 
+              <div
                 className={cn(
                   "flex items-start space-x-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200",
                   selectedShareType === 'free'
@@ -649,66 +621,47 @@ const PacketsPage = () => {
                 />
                 <label htmlFor="free-share" className="flex-1 cursor-pointer">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-gray-900">Free Sharing</span>
+                    <span className="font-semibold text-gray-900">{t.freeSharing}</span>
                     <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">
-                      Recommended
+                      {t.recommended}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    Anyone with the link can view your travel plan for free
-                  </div>
+                  <div className="text-sm text-gray-600 mt-1">{t.freeSharingDesc}</div>
                   <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
                     <Sparkles className="h-3 w-3" />
-                    <span>Perfect for sharing with friends and family</span>
+                    <span>{t.perfectForSharing}</span>
                   </div>
                 </label>
               </div>
-              
-              <div 
-                className="flex items-start space-x-3 p-4 rounded-xl border-2 border-gray-200 bg-gray-50/50 opacity-60"
-              >
-                <input
-                  type="radio"
-                  id="paid-share"
-                  name="shareType"
-                  value="paid"
-                  disabled
-                  className="mt-1 w-4 h-4"
-                />
+
+              <div className="flex items-start space-x-3 p-4 rounded-xl border-2 border-gray-200 bg-gray-50/50 opacity-60">
+                <input type="radio" id="paid-share" name="shareType" value="paid" disabled className="mt-1 w-4 h-4" />
                 <label htmlFor="paid-share" className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-gray-500">Premium Sharing</span>
+                    <span className="font-semibold text-gray-500">{t.premiumSharing}</span>
                     <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full font-medium">
-                      Coming Soon
+                      {t.comingSoon}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    Charge for access to your travel plan
-                  </div>
+                  <div className="text-sm text-gray-500 mt-1">{t.premiumSharingDesc}</div>
                 </label>
               </div>
             </div>
 
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-              <div className="flex items-start gap-2">
-                <Share2 className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-purple-800">
-                  <strong>Tip:</strong> Your shared travel plan will be visible to anyone with the link. 
-                  You can stop sharing anytime.
-                </div>
-              </div>
-            </div>
+            {shareError && (
+              <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{shareError}</p>
+            )}
           </div>
           <DialogFooter className="flex gap-2">
             <Button
               variant="outline"
-              onClick={() => setShowShareConfirmDialog(false)}
+              onClick={() => { setShowShareConfirmDialog(false); setShareError(null); }}
               disabled={shareLoading}
               className="hover:bg-gray-100"
             >
-              Cancel
+              {t.cancel}
             </Button>
-            <Button 
+            <Button
               onClick={handleConfirmShare}
               disabled={shareLoading}
               className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 shadow-lg"
@@ -716,12 +669,12 @@ const PacketsPage = () => {
               {shareLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Creating...
+                  {t.creating}
                 </>
               ) : (
                 <>
                   <Sparkles className="h-4 w-4 mr-2" />
-                  Create Share Link
+                  {t.createShareLink}
                 </>
               )}
             </Button>
@@ -730,7 +683,7 @@ const PacketsPage = () => {
       </Dialog>
 
       {/* Share Link Dialog */}
-      <Dialog open={showShareLinkDialog} onOpenChange={setShowShareLinkDialog}>
+      <Dialog open={showShareLinkDialog} onOpenChange={(open) => { setShowShareLinkDialog(open); if (!open) setShareError(null); }}>
         <DialogContent className="sm:max-w-lg bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl">
@@ -740,13 +693,13 @@ const PacketsPage = () => {
                   <Check className="h-6 w-6 text-white" />
                 </div>
               </div>
-              Share Link Created! 🎉
+              {t.shareLinkCreated} 🎉
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="bg-white rounded-xl p-4 shadow-md border border-purple-100">
               <Label htmlFor="share-link" className="text-sm font-semibold text-gray-700 mb-2 block">
-                Your Share Link
+                {t.yourShareLink}
               </Label>
               <div className="flex gap-2">
                 <Input
@@ -761,27 +714,27 @@ const PacketsPage = () => {
                   onClick={handleCopyLink}
                   className={cn(
                     "transition-all duration-300",
-                    copied 
-                      ? "bg-green-500 hover:bg-green-600" 
+                    copied
+                      ? "bg-green-500 hover:bg-green-600"
                       : "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                   )}
                 >
                   {copied ? (
                     <>
                       <Check className="h-4 w-4 mr-1" />
-                      Copied!
+                      {t.copied}
                     </>
                   ) : (
                     <>
                       <Copy className="h-4 w-4 mr-1" />
-                      Copy
+                      {t.copy}
                     </>
                   )}
                 </Button>
               </div>
               <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
                 <Eye className="h-3 w-3" />
-                Anyone with this link can view your travel plan
+                {t.anyoneCanView}
               </p>
             </div>
 
@@ -790,7 +743,7 @@ const PacketsPage = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Eye className="h-5 w-5 text-purple-600" />
-                    <span className="text-sm font-medium text-gray-700">Total Views</span>
+                    <span className="text-sm font-medium text-gray-700">{t.totalViews}</span>
                   </div>
                   <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                     {sharingPacket.shareViews}
@@ -802,17 +755,21 @@ const PacketsPage = () => {
             <div className="grid grid-cols-3 gap-3 pt-2">
               <div className="bg-white rounded-lg p-3 text-center border border-purple-100">
                 <Share2 className="h-5 w-5 text-purple-500 mx-auto mb-1" />
-                <div className="text-xs text-gray-600">Shareable</div>
+                <div className="text-xs text-gray-600">{t.shareable}</div>
               </div>
               <div className="bg-white rounded-lg p-3 text-center border border-pink-100">
                 <Eye className="h-5 w-5 text-pink-500 mx-auto mb-1" />
-                <div className="text-xs text-gray-600">View Only</div>
+                <div className="text-xs text-gray-600">{t.viewOnly}</div>
               </div>
               <div className="bg-white rounded-lg p-3 text-center border border-blue-100">
                 <Sparkles className="h-5 w-5 text-blue-500 mx-auto mb-1" />
-                <div className="text-xs text-gray-600">Free</div>
+                <div className="text-xs text-gray-600">{t.freeLabel}</div>
               </div>
             </div>
+
+            {shareError && (
+              <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{shareError}</p>
+            )}
           </div>
           <DialogFooter className="flex gap-2">
             <Button
@@ -824,20 +781,17 @@ const PacketsPage = () => {
               {shareLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
-                  Stopping...
+                  {t.stopping}
                 </>
               ) : (
-                "Stop Sharing"
+                t.stopSharing
               )}
             </Button>
-            <Button 
-              onClick={() => {
-                setShowShareLinkDialog(false);
-                setSharingPacket(null);
-              }}
+            <Button
+              onClick={() => { setShowShareLinkDialog(false); setSharingPacket(null); setShareError(null); }}
               className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0"
             >
-              Done
+              {t.done}
             </Button>
           </DialogFooter>
         </DialogContent>

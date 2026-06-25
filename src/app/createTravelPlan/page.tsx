@@ -19,6 +19,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useLanguageStore } from "@/store/languageStore";
 import { useTranslation } from "@/lib/i18n";
+import AiPlanner from "@/components/AiPlanner";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -923,7 +924,7 @@ const TravelPlanWithSearchParams = () => {
 
         {/* Map Panel */}
         <div className={cn(
-          "md:flex-1 overflow-hidden",
+          "md:flex-1 overflow-hidden relative",
           isMobileView === "map" ? "flex-1" : "hidden"
         )}>
           <MapboxMap
@@ -935,6 +936,12 @@ const TravelPlanWithSearchParams = () => {
           />
         </div>
       </div>
+
+      {/* AI Route Planner — floats above map, accessible on both views */}
+      <AiPlanner
+        onApplyRoute={handleTracksChange}
+        currentTracksCount={tracks.reduce((acc, d) => acc + (d.markers?.length || 0), 0)}
+      />
     </div>
   );
 };

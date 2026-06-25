@@ -29,5 +29,5 @@ export default function TravelPlanLayout({ children }: { children: React.ReactNo
         };
     }, []);
 
-    return <section className={cn('w-full h-screen overflow-hidden')}>{children}</section>
+    return <section className={cn('w-full h-full overflow-hidden')}>{children}</section>
 }
