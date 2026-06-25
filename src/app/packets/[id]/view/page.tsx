@@ -13,6 +13,8 @@ import { ArrowLeft, Map, Eye, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
 import Link from "next/link";
 import mapboxgl from "mapbox-gl";
 import { getAvailableMapApps, openInMapApp, type MapApp } from "@/lib/mapUtils";
+import { useLanguageStore } from "@/store/languageStore";
+import { useTranslation } from "@/lib/i18n";
 import {
   Dialog,
   DialogContent,
@@ -45,6 +47,8 @@ const PacketViewPage = () => {
   const params = useParams();
   const router = useRouter();
   const packetId = params.id as string;
+  const { language } = useLanguageStore();
+  const t = useTranslation(language);
   
   const mapInstance = useMapStore((state) => state.mapboxInstance);
   const [packet, setPacket] = useState<Packet | null>(null);
@@ -282,11 +286,8 @@ const PacketViewPage = () => {
   const clearMapContent = useCallback(() => {
     if (!mapInstance) return;
 
-    // Clear markers
-    const markers = document.getElementsByClassName("marker");
-    while (markers.length > 0) {
-      markers[0].remove();
-    }
+    // Clear markers — remove the mapbox marker wrapper elements
+    document.querySelectorAll(".mapboxgl-marker").forEach((el) => el.remove());
 
     // Clear routes
     const layers = mapInstance.getStyle()?.layers || [];
@@ -525,10 +526,10 @@ const PacketViewPage = () => {
 
   if (isLoading) {
     return (
-      <div className="w-full h-screen flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
           <div className="text-2xl font-semibold text-gray-700 mb-4">
-            Verifying login status...
+            {t.verifyingLogin}
           </div>
           <div className="relative inline-flex">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 animate-pulse"></div>
@@ -541,14 +542,14 @@ const PacketViewPage = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="w-full h-screen flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center">
         <div className="text-center p-8 bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl max-w-md mx-4 border border-purple-100">
           <div className="text-6xl mb-6">🔒</div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">Login Required</h1>
-          <p className="text-gray-600 mb-6">Please log in to view this travel plan.</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">{t.loginRequired}</h1>
+          <p className="text-gray-600 mb-6">{t.loginToViewPlan}</p>
           <Link href="/login">
             <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 border-0 shadow-lg">
-              Go to Login
+              {t.goToLogin}
             </Button>
           </Link>
         </div>
@@ -558,13 +559,13 @@ const PacketViewPage = () => {
 
   if (loading) {
     return (
-      <div className="w-full h-screen flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
           <div className="relative inline-flex mb-4">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 animate-pulse"></div>
             <div className="relative animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
           </div>
-          <p className="text-gray-600">Loading travel plan...</p>
+          <p className="text-gray-600">{t.loadingPlan}</p>
         </div>
       </div>
     );
@@ -572,13 +573,13 @@ const PacketViewPage = () => {
 
   if (error || !packet) {
     return (
-      <div className="w-full h-screen flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center">
         <div className="text-center p-8 bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl max-w-md mx-4 border border-purple-100">
           <div className="text-red-500 text-xl mb-4">❌</div>
-          <p className="text-red-600 mb-4">{error || "Travel plan not found"}</p>
+          <p className="text-red-600 mb-4">{error || t.sharedPlanNotFound}</p>
           <Link href="/packets">
             <Button variant="outline" className="border-purple-300 text-purple-600 hover:bg-purple-500 hover:text-white transition-all duration-300">
-              Back to Travel Plans
+              {t.backToPlans}
             </Button>
           </Link>
         </div>
@@ -590,7 +591,7 @@ const PacketViewPage = () => {
   const currentMarkers = currentTrack?.markers || [];
 
   return (
-    <div className="w-full h-screen flex flex-col bg-gray-50">
+    <div className="w-full h-full flex flex-col bg-gray-50">
       {/* Header - Mobile Optimized */}
       <div className="bg-white border-b border-gray-200 px-3 py-2.5 shadow-sm z-10">
         <div className="flex items-center gap-2">
@@ -623,7 +624,7 @@ const PacketViewPage = () => {
           >
             <Share2 className="h-4 w-4" />
             <span className="hidden sm:inline">
-              {shareLoading ? "Sharing..." : packet.shareCode ? "Shared" : "Share"}
+              {shareLoading ? t.sharing : packet.shareCode ? t.shared : t.shareAction}
             </span>
           </Button>
         </div>
@@ -855,7 +856,7 @@ const PacketViewPage = () => {
                         <div className="flex items-center gap-2 mb-4">
                           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-purple-200 to-transparent" />
                           <span className="text-xs font-bold text-purple-600 uppercase tracking-wider px-3 py-1 rounded-full bg-purple-50">
-                            Itinerary Stops
+                            {t.itineraryStops}
                           </span>
                           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-purple-200 to-transparent" />
                         </div>
@@ -909,14 +910,14 @@ const PacketViewPage = () => {
                                     className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-2.5 bg-white border-2 border-purple-200 rounded-xl text-sm font-semibold text-purple-700 hover:bg-purple-50 hover:border-purple-300 active:scale-95 transition-all duration-200 shadow-sm"
                                   >
                                     <Navigation className="h-4 w-4" />
-                                    Focus
+                                    {t.focus}
                                   </button>
                                   <button
                                     onClick={() => openMapAppSelection(marker)}
                                     className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-semibold hover:from-purple-600 hover:to-pink-600 active:scale-95 transition-all duration-200 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/40"
                                   >
                                     <ExternalLink className="h-4 w-4" />
-                                    Navigate
+                                    {t.navigate}
                                   </button>
                                 </div>
                               </div>
@@ -929,8 +930,8 @@ const PacketViewPage = () => {
                         <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
                           <MapPin className="h-10 w-10 text-purple-400" />
                         </div>
-                        <p className="text-lg font-semibold text-gray-700 mb-2">No stops planned</p>
-                        <p className="text-sm text-gray-500">This day has no itinerary items</p>
+                        <p className="text-lg font-semibold text-gray-700 mb-2">{t.noStopsPlanned}</p>
+                        <p className="text-sm text-gray-500">{t.noItineraryItems}</p>
                       </div>
                     )}
                   </div>
@@ -960,10 +961,10 @@ const PacketViewPage = () => {
               {/* Header */}
               <div className="px-6 pb-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                  Open in Map App
+                  {t.openInMapApp}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Navigate to: {selectedMarker?.title || 'Location'}
+                  {t.navigate}: {selectedMarker?.title || ''}
                 </p>
               </div>
               
@@ -985,7 +986,7 @@ const PacketViewPage = () => {
                       <div className="flex-1 text-left">
                         <div className="font-medium text-gray-900">{app.name}</div>
                         <div className="text-sm text-gray-500">
-                          Open navigation in {app.name}
+                          {t.openNavigationIn} {app.name}
                         </div>
                       </div>
                       <ExternalLink className="h-5 w-5 text-gray-400" />
@@ -998,7 +999,7 @@ const PacketViewPage = () => {
                   onClick={() => setShowMapApps(false)}
                   className="w-full mt-4 py-3 px-4 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium text-gray-700 transition-colors"
                 >
-                  Cancel
+                  {t.cancel}
                 </button>
               </div>
             </div>
@@ -1011,14 +1012,11 @@ const PacketViewPage = () => {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Share2 className="h-5 w-5" />
-                Share Travel Plan
+                {t.shareTravelPlan}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                Share your travel plan with others. Choose how you want to share:
-              </p>
-              
+              <p className="text-sm text-gray-600">{t.shareDialogDesc}</p>
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <input
@@ -1031,45 +1029,29 @@ const PacketViewPage = () => {
                     className="w-4 h-4"
                   />
                   <label htmlFor="free-share" className="flex-1 cursor-pointer">
-                    <div className="font-medium text-gray-900">Free Sharing</div>
-                    <div className="text-sm text-gray-500">
-                      Anyone with the link can view your travel plan for free
-                    </div>
+                    <div className="font-medium text-gray-900">{t.freeSharing}</div>
+                    <div className="text-sm text-gray-500">{t.freeSharingDesc}</div>
                   </label>
                 </div>
-                
                 <div className="flex items-center space-x-2 opacity-50">
-                  <input
-                    type="radio"
-                    id="paid-share"
-                    name="shareType"
-                    value="paid"
-                    disabled
-                    className="w-4 h-4"
-                  />
+                  <input type="radio" id="paid-share" name="shareType" value="paid" disabled className="w-4 h-4" />
                   <label htmlFor="paid-share" className="flex-1">
-                    <div className="font-medium text-gray-400">Premium Sharing</div>
-                    <div className="text-sm text-gray-400">
-                      Charge for access to your travel plan (Coming Soon)
-                    </div>
+                    <div className="font-medium text-gray-400">{t.premiumSharing}</div>
+                    <div className="text-sm text-gray-400">{t.premiumSharingDesc} ({t.comingSoon})</div>
                   </label>
                 </div>
               </div>
             </div>
             <DialogFooter className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowShareConfirmDialog(false)}
-                disabled={shareLoading}
-              >
-                Cancel
+              <Button variant="outline" onClick={() => setShowShareConfirmDialog(false)} disabled={shareLoading}>
+                {t.cancel}
               </Button>
-              <Button 
+              <Button
                 onClick={handleConfirmShare}
                 disabled={shareLoading}
                 className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
               >
-                {shareLoading ? "Creating..." : "Create Share Link"}
+                {shareLoading ? t.creating : t.createShareLink}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1081,56 +1063,39 @@ const PacketViewPage = () => {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Share2 className="h-5 w-5" />
-                Share Link Created
+                {t.shareLinkCreated}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="share-link" className="text-sm font-medium">
-                  Share Link
-                </Label>
-                <div className="flex mt-2">
-                  <Input
-                    id="share-link"
-                    value={shareUrl}
-                    readOnly
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="ml-2"
-                    onClick={handleCopyLink}
+                <Label htmlFor="share-link" className="text-sm font-medium">{t.shareLink}</Label>
+                <div className="flex mt-2 gap-2">
+                  <Input id="share-link" value={shareUrl} readOnly className="flex-1" />
+                  <Button type="button" size="sm" onClick={handleCopyLink}
+                    className={cn("transition-all", copied ? "bg-green-500 hover:bg-green-600 text-white" : "")}
                   >
-                    {copied ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Anyone with this link can view your travel plan
-                </p>
+                <p className="text-xs text-gray-500 mt-1">{t.anyoneCanView}</p>
               </div>
-
               {packet?.shareViews !== undefined && packet.shareViews > 0 && (
-                <div className="text-sm text-gray-600">
-                  <Eye className="h-4 w-4 inline mr-1" />
-                  {packet.shareViews} view{packet.shareViews !== 1 ? 's' : ''}
+                <div className="text-sm text-gray-600 flex items-center gap-1">
+                  <Eye className="h-4 w-4" />
+                  {packet.shareViews} {t.views}
                 </div>
               )}
             </div>
             <DialogFooter className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={handleDisableShare}
-                disabled={shareLoading}
+              <Button variant="outline" onClick={handleDisableShare} disabled={shareLoading}
+                className="hover:bg-red-50 hover:text-red-600 hover:border-red-300"
               >
-                Stop Sharing
+                {shareLoading ? t.stopping : t.stopSharing}
               </Button>
-              <Button onClick={() => setShowShareLinkDialog(false)}>
-                Done
+              <Button onClick={() => setShowShareLinkDialog(false)}
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0"
+              >
+                {t.done}
               </Button>
             </DialogFooter>
           </DialogContent>

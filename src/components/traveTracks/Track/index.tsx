@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 import { markers } from "../../../constant";
 import { Button } from "@/components/ui/button";
 import { useMapStore } from "@/app/store/mapStore";
+import { useLanguageStore } from "@/store/languageStore";
+import { useTranslation } from "@/lib/i18n";
 
 // this track just show one day
 interface Props {
@@ -42,6 +44,8 @@ export interface DayTrack {
 
 const Track: React.FC<Props> = ({ step, onDelete, ...props }) => {
   const { type,location, title, description } = props.track;
+  const { language } = useLanguageStore();
+  const t = useTranslation(language);
 
   const { lng, lat } = location;
   const name = markers.find(({ fileName }) => fileName === type)?.name;
@@ -63,28 +67,28 @@ const Track: React.FC<Props> = ({ step, onDelete, ...props }) => {
 
   return (
     <Card
-      className={cn("w-full h-[150px] my-3 first:mt-0 last:mb-0 cursor-pointer hover:border-2 hover:border-blue-500")}
+      className={cn("w-full my-3 first:mt-0 last:mb-0 cursor-pointer hover:border-2 hover:border-blue-500")}
       onClick={onClick}
     >
       <CardHeader className="p-[15px]">
-        <div className="flex justify-between items-start">
-          <CardTitle>
-            <Button variant="link" className="px-0">
-              Marker #{step + 1}
-            </Button>
-            【{title}】
+        <div className="flex justify-between items-start gap-2">
+          <CardTitle className="flex-1 min-w-0">
+            <span className="text-sm font-medium text-purple-600">
+              {t.markerStop} #{step + 1}
+            </span>
+            <span className="block font-semibold text-gray-900 truncate">【{title}】</span>
           </CardTitle>
           <Button
             variant="ghost"
             size="sm"
-            className="text-red-500 hover:text-red-700 hover:bg-red-100"
+            className="flex-shrink-0 text-red-500 hover:text-red-700 hover:bg-red-100"
             onClick={handleDelete}
           >
-            Delete
+            {t.delete}
           </Button>
         </div>
-        <CardDescription>Type: {name}</CardDescription>
-        <CardDescription>Description: {description}</CardDescription>
+        <CardDescription>{t.type}: {name}</CardDescription>
+        <CardDescription className="line-clamp-2">{t.description}: {description}</CardDescription>
       </CardHeader>
     </Card>
   );
