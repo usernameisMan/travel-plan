@@ -557,25 +557,23 @@ const TravelPlanWithSearchParams = () => {
       }
     });
 
-    // Color array
     const colors = [
-      "#FF0000",
-      "#00FF00",
-      "#0000FF",
-      "#FFA500",
-      "#800080",
-      "#008080",
-      "#FFC0CB",
-      "#A52A2A",
-      "#808080",
-      "#000000",
+      "#7C3AED", // violet
+      "#0EA5E9", // sky
+      "#10B981", // emerald
+      "#F59E0B", // amber
+      "#EF4444", // red
+      "#EC4899", // pink
+      "#6366F1", // indigo
+      "#14B8A6", // teal
     ];
+    const color = colors[currentDayIndex % colors.length];
 
     // Request directions for each segment
     for (let i = 0; i < dayTracks.length - 1; i++) {
       const from = dayTracks[i];
       const to = dayTracks[i + 1];
-      
+
       if (!from || !to || !from.location || !to.location) {
         console.error("Invalid track data:", { from, to });
         continue;
@@ -592,49 +590,45 @@ const TravelPlanWithSearchParams = () => {
         if (!data.routes || data.routes.length === 0) continue;
         const geometry = data.routes[0].geometry;
         const segmentSourceId = `route-segment-${currentDayIndex}-${i}`;
-        // Add source
         mapInstance.addSource(segmentSourceId, {
           type: "geojson",
-          data: {
-            type: "Feature",
-            properties: {},
-            geometry,
-          },
+          data: { type: "Feature", properties: {}, geometry },
         });
-        // Add line layer
+        // White casing (outline)
+        mapInstance.addLayer({
+          id: `route-segment-casing-${currentDayIndex}-${i}`,
+          type: "line",
+          source: segmentSourceId,
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": "#ffffff", "line-width": 7, "line-opacity": 0.5 },
+        });
+        // Colored line
         mapInstance.addLayer({
           id: segmentSourceId,
           type: "line",
           source: segmentSourceId,
-          layout: {
-            "line-join": "round",
-            "line-cap": "round",
-          },
-          paint: {
-            "line-color": colors[currentDayIndex % colors.length],
-            "line-width": 8,
-            "line-opacity": 1,
-          },
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": color, "line-width": 4.5, "line-opacity": 0.9 },
         });
-        // Add arrow layer
+        // Direction arrows
         mapInstance.addLayer({
           id: `route-arrows-${currentDayIndex}-${i}`,
           type: "symbol",
           source: segmentSourceId,
           layout: {
             "symbol-placement": "line",
-            "text-field": `${currentDayIndex + 1}-${i + 1}>>`,
-            "text-size": 24,
-            "text-allow-overlap": true,
-            "text-ignore-placement": true,
+            "text-field": "▶",
+            "text-size": 11,
+            "text-allow-overlap": false,
+            "text-ignore-placement": false,
             "text-keep-upright": false,
-            "symbol-spacing": 20,
+            "symbol-spacing": 120,
           },
           paint: {
-            "text-color": colors[currentDayIndex % colors.length],
-            "text-halo-color": "#ffffff",
-            "text-halo-width": 2,
-            "text-opacity": 0.9,
+            "text-color": "#ffffff",
+            "text-halo-color": color,
+            "text-halo-width": 1.5,
+            "text-opacity": 0.85,
           },
         });
       } catch (error) {
@@ -671,29 +665,26 @@ const TravelPlanWithSearchParams = () => {
       }
     });
 
-    // Color array
     const colors = [
-      "#FF0000",
-      "#00FF00",
-      "#0000FF",
-      "#FFA500",
-      "#800080",
-      "#008080",
-      "#FFC0CB",
-      "#A52A2A",
-      "#808080",
-      "#000000",
+      "#7C3AED", // violet
+      "#0EA5E9", // sky
+      "#10B981", // emerald
+      "#F59E0B", // amber
+      "#EF4444", // red
+      "#EC4899", // pink
+      "#6366F1", // indigo
+      "#14B8A6", // teal
     ];
 
     for (let dayIndex = 0; dayIndex < tracks.length; dayIndex++) {
       const dayTracks = tracks[dayIndex].markers;
-      if (dayTracks.length < 2) {
-        continue;
-      }
+      if (dayTracks.length < 2) continue;
+      const color = colors[dayIndex % colors.length];
+
       for (let i = 0; i < dayTracks.length - 1; i++) {
         const from = dayTracks[i];
         const to = dayTracks[i + 1];
-        
+
         if (!from || !to || !from.location || !to.location) {
           console.error("Invalid track data:", { from, to });
           continue;
@@ -710,49 +701,45 @@ const TravelPlanWithSearchParams = () => {
           if (!data.routes || data.routes.length === 0) continue;
           const geometry = data.routes[0].geometry;
           const segmentSourceId = `route-segment-${dayIndex}-${i}`;
-          // Add source
           mapInstance.addSource(segmentSourceId, {
             type: "geojson",
-            data: {
-              type: "Feature",
-              properties: {},
-              geometry,
-            },
+            data: { type: "Feature", properties: {}, geometry },
           });
-          // Add line layer
+          // White casing (outline)
+          mapInstance.addLayer({
+            id: `route-segment-casing-${dayIndex}-${i}`,
+            type: "line",
+            source: segmentSourceId,
+            layout: { "line-join": "round", "line-cap": "round" },
+            paint: { "line-color": "#ffffff", "line-width": 7, "line-opacity": 0.5 },
+          });
+          // Colored line
           mapInstance.addLayer({
             id: segmentSourceId,
             type: "line",
             source: segmentSourceId,
-            layout: {
-              "line-join": "round",
-              "line-cap": "round",
-            },
-            paint: {
-              "line-color": colors[dayIndex % colors.length],
-              "line-width": 8,
-              "line-opacity": 1,
-            },
+            layout: { "line-join": "round", "line-cap": "round" },
+            paint: { "line-color": color, "line-width": 4.5, "line-opacity": 0.9 },
           });
-          // Add arrow layer
+          // Direction arrows
           mapInstance.addLayer({
             id: `route-arrows-${dayIndex}-${i}`,
             type: "symbol",
             source: segmentSourceId,
             layout: {
               "symbol-placement": "line",
-              "text-field": `${dayIndex + 1}-${i + 1}>>`,
-              "text-size": 24,
-              "text-allow-overlap": true,
-              "text-ignore-placement": true,
+              "text-field": "▶",
+              "text-size": 11,
+              "text-allow-overlap": false,
+              "text-ignore-placement": false,
               "text-keep-upright": false,
-              "symbol-spacing": 20,
+              "symbol-spacing": 120,
             },
             paint: {
-              "text-color": colors[dayIndex % colors.length],
-              "text-halo-color": "#ffffff",
-              "text-halo-width": 2,
-              "text-opacity": 0.9,
+              "text-color": "#ffffff",
+              "text-halo-color": color,
+              "text-halo-width": 1.5,
+              "text-opacity": 0.85,
             },
           });
         } catch (error) {
