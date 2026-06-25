@@ -36,6 +36,7 @@ const TravelPlanWithSearchParams = () => {
   const [createMarkerDialogIsOpen, setOpenCreateMarkerDialog] =
     useState<any>(false);
   const [routeProfile, setRouteProfile] = useState<string>("driving");
+  const [pendingDrawMode, setPendingDrawMode] = useState<string | null>(null);
   const [currentDayIndex, setCurrentDayIndex] = useState<number>(0);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isMobileView, setIsMobileView] = useState<"tracks" | "map">("map");
@@ -782,6 +783,49 @@ const TravelPlanWithSearchParams = () => {
     }
   };
 
+  // Draw route lines after tracks state is updated (used by handleApplyAiRoute)
+  useEffect(() => {
+    if (!pendingDrawMode || !mapInstance || tracks.length === 0) return;
+    createAllTracksPath(pendingDrawMode);
+    setPendingDrawMode(null);
+  }, [tracks, pendingDrawMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Called when user applies an AI-generated route:
+  // fits the map to all markers then auto-draws route lines
+  const handleApplyAiRoute = (newTracks: DayTrack[]) => {
+    handleTracksChange(newTracks);
+
+    if (!mapInstance) return;
+
+    // Collect all coordinates from the new tracks
+    const coords: [number, number][] = [];
+    newTracks.forEach((day) => {
+      day.markers?.forEach((marker: any) => {
+        const lng = parseFloat(marker.location?.lng);
+        const lat = parseFloat(marker.location?.lat);
+        if (!isNaN(lng) && !isNaN(lat)) coords.push([lng, lat]);
+      });
+    });
+    if (coords.length === 0) return;
+
+    if (coords.length === 1) {
+      mapInstance.flyTo({ center: coords[0], zoom: 14, duration: 1500 });
+    } else {
+      const bounds = coords.reduce(
+        (b, c) => b.extend(c as mapboxgl.LngLatLike),
+        new mapboxgl.LngLatBounds(coords[0], coords[0])
+      );
+      mapInstance.fitBounds(bounds, {
+        padding: { top: 80, bottom: 80, left: 80, right: 80 },
+        maxZoom: 14,
+        duration: 1500,
+      });
+    }
+
+    // Trigger route drawing once tracks state settles
+    setPendingDrawMode(routeProfile || "driving");
+  };
+
   const handleDeleteTrack = (dayIndex: number, trackIndex: number) => {
     try {
       if (!Array.isArray(tracks)) {
@@ -926,7 +970,7 @@ const TravelPlanWithSearchParams = () => {
 
       {/* AI Route Planner — floats above map, accessible on both views */}
       <AiPlanner
-        onApplyRoute={handleTracksChange}
+        onApplyRoute={handleApplyAiRoute}
         currentTracksCount={tracks.reduce((acc, d) => acc + (d.markers?.length || 0), 0)}
       />
     </div>

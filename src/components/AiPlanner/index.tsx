@@ -173,7 +173,7 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [progressMessage, setProgressMessage] = useState("");
+  const [progressLog, setProgressLog] = useState<string[]>([]);
   const [pendingRoute, setPendingRoute] = useState<RouteSuggestion | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [dismissedRoutes, setDismissedRoutes] = useState<Set<number>>(new Set());
@@ -195,7 +195,7 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
     setMessages([...nextMessages, { role: "assistant", content: "", isStreaming: true }]);
     setInput("");
     setIsLoading(true);
-    setProgressMessage("");
+    setProgressLog([]);
 
     const payload = {
       messages: nextMessages
@@ -258,8 +258,8 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
             });
             // Auto-scroll as text streams in
             messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-          } else if (event.type === "progress") {
-            setProgressMessage(event.message);
+          } else if (event.type === "stage" || event.type === "progress") {
+            setProgressLog((prev) => [...prev, event.message].slice(-8));
           } else if (event.type === "route") {
             routeSuggestion = event.routeSuggestion ?? null;
           } else if (event.type === "error") {
@@ -300,7 +300,7 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
       });
     } finally {
       setIsLoading(false);
-      setProgressMessage("");
+      setProgressLog([]);
     }
   };
 
@@ -418,19 +418,34 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
                   >
                     {/* Typing / streaming bubble */}
                     {msg.isStreaming && !msg.content ? (
-                      <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 inline-block">
-                        {progressMessage ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-                            <span className="text-xs text-purple-600 font-medium">
-                              {progressMessage}
-                            </span>
-                          </div>
-                        ) : (
+                      <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 inline-block min-w-[160px] max-w-[280px]">
+                        {progressLog.length === 0 ? (
                           <div className="flex gap-1 items-center">
                             <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce [animation-delay:0ms]" />
                             <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce [animation-delay:150ms]" />
                             <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce [animation-delay:300ms]" />
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                            {progressLog.slice(-5).map((entry, i, arr) => {
+                              const isCurrent = i === arr.length - 1;
+                              return (
+                                <div
+                                  key={i}
+                                  className={cn(
+                                    "flex items-center gap-1.5 text-xs leading-snug",
+                                    isCurrent
+                                      ? "text-purple-700 font-medium"
+                                      : "text-gray-400"
+                                  )}
+                                >
+                                  <span className="flex-1">{entry}</span>
+                                  {isCurrent && (
+                                    <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse flex-shrink-0" />
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
