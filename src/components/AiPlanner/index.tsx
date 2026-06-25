@@ -33,6 +33,7 @@ interface PlaceSuggestion {
   description: string;
   lng: number;
   lat: number;
+  travelTime?: string;
 }
 
 interface DaySuggestion {
@@ -120,15 +121,23 @@ const RouteSuggestionCard: React.FC<{
               )}
               <div className="space-y-1">
                 {day.places.map((place, j) => (
-                  <div key={j} className="flex items-start gap-2">
-                    <span className="mt-0.5 w-4 h-4 rounded-full bg-purple-100 text-purple-600 text-xs flex items-center justify-center flex-shrink-0 font-bold">
-                      {j + 1}
-                    </span>
-                    <div className="min-w-0">
-                      <span className="text-sm font-medium text-gray-800">{place.name}</span>
-                      {place.description && (
-                        <p className="text-xs text-gray-500 line-clamp-1">{place.description}</p>
-                      )}
+                  <div key={j}>
+                    {place.travelTime && (
+                      <div className="flex items-center gap-1.5 pl-1 py-1">
+                        <div className="w-px h-4 bg-purple-200 ml-1.5" />
+                        <span className="text-xs text-purple-400">{place.travelTime}</span>
+                      </div>
+                    )}
+                    <div className="flex items-start gap-2">
+                      <span className="mt-0.5 w-4 h-4 rounded-full bg-purple-100 text-purple-600 text-xs flex items-center justify-center flex-shrink-0 font-bold">
+                        {j + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <span className="text-sm font-medium text-gray-800">{place.name}</span>
+                        {place.description && (
+                          <p className="text-xs text-gray-500 line-clamp-1">{place.description}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
