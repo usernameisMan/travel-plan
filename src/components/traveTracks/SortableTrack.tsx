@@ -31,20 +31,22 @@ export function SortableTrack({ id, track, onDelete }: SortableTrackProps) {
   } as const;
 
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      className={`relative group ${isDragging ? 'shadow-lg opacity-50' : ''}`}
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`relative group ${isDragging ? 'shadow-xl shadow-purple-500/20 opacity-60 scale-[1.02]' : ''} transition-shadow duration-200`}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-stretch gap-1.5">
+        {/* Drag handle — visible on mobile, fade-in on hover for desktop */}
         <div
           {...attributes}
           {...listeners}
-          className="flex items-center justify-center w-8 h-full cursor-grab active:cursor-grabbing hover:bg-gray-100 rounded transition-colors opacity-0 group-hover:opacity-100"
+          className="flex items-center justify-center min-w-[36px] cursor-grab active:cursor-grabbing rounded-xl hover:bg-gray-100 transition-colors duration-150 opacity-30 group-hover:opacity-80 touch:opacity-60"
+          aria-label="Drag to reorder"
         >
           <GripVertical className="h-5 w-5 text-gray-400" />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <Track track={track} step={id} onDelete={onDelete} />
         </div>
       </div>

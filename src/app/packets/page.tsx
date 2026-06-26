@@ -330,7 +330,7 @@ const PacketsPage = () => {
 
   return (
     <div className="w-full min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-[calc(3rem+env(safe-area-inset-bottom,0px))]">
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -485,20 +485,18 @@ const PacketsPage = () => {
                   <div className="flex flex-col gap-2 pt-2 border-t border-purple-100">
                     <div className="grid grid-cols-2 gap-2">
                       <Link href={`/createTravelPlan?packetId=${packet.id}`} className="col-span-1">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="w-full hover:bg-purple-500 hover:text-white transition-all duration-300 hover:shadow-lg active:scale-95 border-purple-200"
+                        <Button
+                          variant="outline"
+                          className="w-full min-h-[44px] rounded-xl hover:bg-purple-500 hover:text-white transition-all duration-200 active:scale-95 border-purple-200"
                         >
                           <Edit3 className="h-4 w-4 mr-1" />
                           {t.edit}
                         </Button>
                       </Link>
                       <Link href={`/packets/${packet.id}/view`} className="col-span-1">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="w-full hover:bg-blue-500 hover:text-white transition-all duration-300 hover:shadow-lg active:scale-95 border-blue-200"
+                        <Button
+                          variant="outline"
+                          className="w-full min-h-[44px] rounded-xl hover:bg-blue-500 hover:text-white transition-all duration-200 active:scale-95 border-blue-200"
                         >
                           <Eye className="h-4 w-4 mr-1" />
                           {t.view}
@@ -506,15 +504,14 @@ const PacketsPage = () => {
                       </Link>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
                         onClick={() => handleShare(packet)}
                         className={cn(
-                          "w-full transition-all duration-300 active:scale-95",
+                          "w-full min-h-[44px] rounded-xl transition-all duration-200 active:scale-95",
                           packet.shareCode
-                            ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl"
-                            : "hover:bg-purple-500 hover:text-white border-purple-200 hover:shadow-lg"
+                            ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600 shadow-lg"
+                            : "hover:bg-purple-500 hover:text-white border-purple-200"
                         )}
                       >
                         {packet.shareCode ? (
@@ -529,11 +526,10 @@ const PacketsPage = () => {
                           </>
                         )}
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
                         onClick={() => setDeletingPacket(packet)}
-                        className="w-full hover:bg-red-500 hover:text-white transition-all duration-300 hover:shadow-lg active:scale-95 border-red-200"
+                        className="w-full min-h-[44px] rounded-xl hover:bg-red-500 hover:text-white transition-all duration-200 active:scale-95 border-red-200"
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
                         {t.delete}
@@ -549,7 +545,7 @@ const PacketsPage = () => {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!deletingPacket} onOpenChange={() => { setDeletingPacket(null); setDeleteError(null); }}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] mx-4">
           <DialogHeader>
             <DialogTitle>{t.confirmDeleteTitle}</DialogTitle>
           </DialogHeader>
@@ -564,18 +560,19 @@ const PacketsPage = () => {
               <p className="text-sm text-red-600 mt-3 bg-red-50 rounded-lg px-3 py-2">{deleteError}</p>
             )}
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex gap-2 sm:flex-row flex-col">
             <Button
               variant="outline"
               onClick={() => { setDeletingPacket(null); setDeleteError(null); }}
               disabled={deleteLoading}
+              className="flex-1 min-h-[44px] rounded-xl active:scale-95 transition-all duration-200"
             >
               {t.cancel}
             </Button>
             <Button
               onClick={() => deletingPacket && handleDeletePacket(deletingPacket)}
               disabled={deleteLoading}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="flex-1 min-h-[44px] rounded-xl bg-red-600 hover:bg-red-700 text-white active:scale-95 transition-all duration-200"
             >
               {deleteLoading ? (
                 <>

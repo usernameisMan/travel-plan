@@ -884,8 +884,8 @@ const TravelPlanWithSearchParams = () => {
           <p className="text-gray-600 mb-6">
             {t.needToLogin}
           </p>
-          <Link href="/login">
-            <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 border-0 shadow-lg">
+          <Link href="/login" className="block w-full sm:w-auto">
+            <Button className="w-full sm:w-auto bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 border-0 shadow-lg active:scale-95">
               {t.goToLogin}
             </Button>
           </Link>
@@ -904,14 +904,14 @@ const TravelPlanWithSearchParams = () => {
       />
       
       {/* Mobile Toggle Buttons */}
-      <div className="md:hidden flex bg-white border-b border-gray-200 p-2 gap-2 flex-shrink-0">
+      <div className="md:hidden flex bg-white border-b border-gray-200 px-3 py-2 gap-2 flex-shrink-0">
         <button
           onClick={() => setIsMobileView("tracks")}
           className={cn(
-            "flex-1 py-2 px-4 rounded-lg font-medium transition-all duration-300",
+            "flex-1 min-h-[44px] px-4 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95",
             isMobileView === "tracks"
-              ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
           )}
         >
           {t.itineraryPlanning}
@@ -919,10 +919,10 @@ const TravelPlanWithSearchParams = () => {
         <button
           onClick={() => setIsMobileView("map")}
           className={cn(
-            "flex-1 py-2 px-4 rounded-lg font-medium transition-all duration-300",
+            "flex-1 min-h-[44px] px-4 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95",
             isMobileView === "map"
-              ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
           )}
         >
           {t.mapView}
