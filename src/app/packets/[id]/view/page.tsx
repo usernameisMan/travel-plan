@@ -56,8 +56,8 @@ const PacketViewPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tracks, setTracks] = useState<DayTrack[]>([]);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isPanelVisible, setIsPanelVisible] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [isPanelVisible, setIsPanelVisible] = useState(true);
   const [showMapApps, setShowMapApps] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState<any>(null);
   const [availableMapApps, setAvailableMapApps] = useState<MapApp[]>([]);

@@ -224,7 +224,7 @@ const PacketsPage = () => {
 
       if (response && response.data) {
         const shareCode = response.data.shareCode;
-        const shareUrl = response.data.shareUrl;
+        const shareUrl = `${window.location.origin}/shared/${shareCode}`;
         setShareUrl(shareUrl);
         setPackets(prev => prev.map(p =>
           p.id === sharingPacket.id
