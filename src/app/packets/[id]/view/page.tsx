@@ -165,8 +165,7 @@ const PacketViewPage = () => {
 
       if (response && response.data) {
         const shareCode = response.data.shareCode;
-        const shareUrl = response.data.shareUrl; // Use URL from backend
-        setShareUrl(shareUrl);
+        setShareUrl(`${window.location.origin}/shared/${shareCode}`);
         setIsSharing(true);
         
         // Update packet state
@@ -817,12 +816,7 @@ const PacketViewPage = () => {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => {
-                    setIsExpanded(!isExpanded);
-                    if (!isExpanded) {
-                      setIsPanelVisible(false);
-                    }
-                  }}
+                  onClick={() => setIsExpanded(!isExpanded)}
                   className="flex-shrink-0 h-10 w-10 p-0 rounded-xl hover:bg-purple-100 transition-colors ml-2"
                 >
                   {isExpanded ? (
@@ -900,8 +894,10 @@ const PacketViewPage = () => {
                                   <button
                                     onClick={() => {
                                       focusOnMarker(marker);
-                                      setIsExpanded(false);
-                                      setIsPanelVisible(false);
+                                      // On mobile, collapse the drawer so the map is visible
+                                      if (window.innerWidth < 640) {
+                                        setIsExpanded(false);
+                                      }
                                     }}
                                     className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-2.5 bg-white border-2 border-purple-200 rounded-xl text-sm font-semibold text-purple-700 hover:bg-purple-50 hover:border-purple-300 active:scale-95 transition-all duration-200 shadow-sm"
                                   >
