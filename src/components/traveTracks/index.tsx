@@ -431,26 +431,42 @@ const TravelTracksWithSearchParams: React.FC<Props> = ({
           </Button>
         </div>
 
-        <div className="relative mt-3">
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {Array.isArray(tracks) &&
-              tracks.map((dayTrack, index) => (
-                <button
-                  key={index}
-                  onClick={() => onDaySelect(index)}
-                  className={cn(
-                    "whitespace-nowrap flex-shrink-0 min-h-[40px] px-4 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95",
-                    currentDayIndex === index
-                      ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md shadow-purple-500/25"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  )}
-                >
+        <div className="flex items-center gap-2 mt-3">
+          <button
+            onClick={() => onDaySelect(Math.max(0, currentDayIndex - 1))}
+            disabled={currentDayIndex === 0}
+            className="flex-shrink-0 w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 disabled:opacity-30 flex items-center justify-center transition-all duration-200 active:scale-95"
+          >
+            <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
+          </button>
+
+          <Select
+            value={String(currentDayIndex)}
+            onValueChange={(v) => onDaySelect(Number(v))}
+          >
+            <SelectTrigger className="flex-1 min-h-[40px] rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 font-medium shadow-md shadow-purple-500/25 [&>svg]:text-white focus:ring-purple-300">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.isArray(tracks) && tracks.map((dayTrack, index) => (
+                <SelectItem key={index} value={String(index)}>
                   {dayTrack.dayText}
-                </button>
+                </SelectItem>
               ))}
-          </div>
-          {/* Fade hint for horizontal scroll */}
-          <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-white to-transparent" />
+            </SelectContent>
+          </Select>
+
+          <button
+            onClick={() => onDaySelect(Math.min(tracks.length - 1, currentDayIndex + 1))}
+            disabled={currentDayIndex === tracks.length - 1}
+            className="flex-shrink-0 w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 disabled:opacity-30 flex items-center justify-center transition-all duration-200 active:scale-95"
+          >
+            <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
+          </button>
+
+          <span className="flex-shrink-0 text-xs text-gray-400 font-medium">
+            {currentDayIndex + 1}/{tracks.length}
+          </span>
         </div>
       </div>
 
