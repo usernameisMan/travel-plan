@@ -9,6 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 import { markers } from "../../../constant";
 import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 import { useMapStore } from "@/app/store/mapStore";
 import { useLanguageStore } from "@/store/languageStore";
 import { useTranslation } from "@/lib/i18n";
@@ -67,28 +68,39 @@ const Track: React.FC<Props> = ({ step, onDelete, ...props }) => {
 
   return (
     <Card
-      className={cn("w-full my-3 first:mt-0 last:mb-0 cursor-pointer hover:border-2 hover:border-blue-500")}
+      className={cn(
+        "w-full cursor-pointer border-2 border-transparent transition-all duration-200",
+        "hover:border-purple-300 hover:shadow-md hover:shadow-purple-500/10",
+        "active:scale-[0.98] active:shadow-none"
+      )}
       onClick={onClick}
     >
-      <CardHeader className="p-[15px]">
-        <div className="flex justify-between items-start gap-2">
+      <CardHeader className="p-3">
+        <div className="flex justify-between items-center gap-2">
           <CardTitle className="flex-1 min-w-0">
-            <span className="text-sm font-medium text-purple-600">
-              {t.markerStop} #{step + 1}
+            <span className="text-xs font-semibold text-purple-500 uppercase tracking-wide">
+              {t.markerStop} {step + 1}
             </span>
-            <span className="block font-semibold text-gray-900 truncate">【{title}】</span>
+            <span className="block font-semibold text-gray-900 truncate mt-0.5">{title}</span>
           </CardTitle>
           <Button
             variant="ghost"
-            size="sm"
-            className="flex-shrink-0 text-red-500 hover:text-red-700 hover:bg-red-100"
+            size="icon"
+            className="flex-shrink-0 min-w-[40px] min-h-[40px] rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200 active:scale-95"
             onClick={handleDelete}
+            aria-label={t.delete}
           >
-            {t.delete}
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
-        <CardDescription>{t.type}: {name}</CardDescription>
-        <CardDescription className="line-clamp-2">{t.description}: {description}</CardDescription>
+        <div className="flex items-center gap-2 mt-1">
+          <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">
+            {name}
+          </span>
+        </div>
+        {description && (
+          <CardDescription className="line-clamp-2 mt-1 text-xs">{description}</CardDescription>
+        )}
       </CardHeader>
     </Card>
   );

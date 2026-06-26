@@ -254,14 +254,21 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, readOnly = false, ..
       // Only enable click-to-add-marker in non-read-only mode
       if (!readOnly) {
         mapInstance.on("click", (e) => {
-          // On mobile, marker placement is handled by long press — skip single tap
-          if (isMobileRef.current) return;
-          const { lng, lat } = e.lngLat;
+          // Mapbox fires 'click' for both mouse clicks and touch taps.
+          // Detect touch-originated events by checking originalEvent type —
+          // more reliable than screen-size/user-agent device detection.
+          const orig = e.originalEvent as PointerEvent & TouchEvent;
+          const isTouch =
+            orig.pointerType === "touch" ||
+            orig.type === "touchend" ||
+            (typeof TouchEvent !== "undefined" && orig instanceof TouchEvent);
+          if (isTouch) return;
+
           if (currentSelectMarkerType.current) {
             propsRef.current.onAddOneMarker(
               currentSelectMarkerType.current,
-              lng.toString(),
-              lat.toString()
+              e.lngLat.lng.toString(),
+              e.lngLat.lat.toString()
             );
             propsRef.current.openCreateMarkerDialog();
           }
