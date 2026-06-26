@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Sparkles, Send, X, ChevronDown, ChevronUp, MapPin, Bot, User } from "lucide-react";
+import { Sparkles, Send, X, ChevronDown, ChevronUp, MapPin, Bot, User, ImageIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { API_BASE_URL, HttpError } from "@/lib/http";
@@ -23,6 +23,7 @@ import { DayTrack } from "@/components/traveTracks/Track";
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  imageBase64?: string;
   routeSuggestion?: RouteSuggestion | null;
   isStreaming?: boolean;
 }
@@ -177,8 +178,10 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
   const [pendingRoute, setPendingRoute] = useState<RouteSuggestion | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [dismissedRoutes, setDismissedRoutes] = useState<Set<number>>(new Set());
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -186,21 +189,49 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
     }
   }, [messages, isOpen]);
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setPendingImage(reader.result as string);
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
   const sendMessage = async () => {
     const content = input.trim();
-    if (!content || isLoading) return;
+    if (!content && !pendingImage) return;
+    if (isLoading) return;
 
-    const userMessage: ChatMessage = { role: "user", content };
+    const imageBase64 = pendingImage;
+    const userMessage: ChatMessage = {
+      role: "user",
+      content: content || "请根据图片内容规划旅行路线",
+      imageBase64: imageBase64 ?? undefined,
+    };
     const nextMessages = [...messages, userMessage];
     setMessages([...nextMessages, { role: "assistant", content: "", isStreaming: true }]);
     setInput("");
+    setPendingImage(null);
     setIsLoading(true);
     setProgressLog([]);
 
     const payload = {
       messages: nextMessages
         .filter((m) => m.role !== "assistant" || m !== messages[0])
-        .map((m) => ({ role: m.role, content: m.content })),
+        .map((m) => {
+          if (m.role === "user" && m.imageBase64) {
+            const parts: object[] = [];
+            if (m.content && m.content !== "请根据图片内容规划旅行路线") {
+              parts.push({ type: "text", text: m.content });
+            } else if (m.content) {
+              parts.push({ type: "text", text: m.content });
+            }
+            parts.push({ type: "image_url", image_url: { url: m.imageBase64 } });
+            return { role: m.role, content: parts };
+          }
+          return { role: m.role, content: m.content };
+        }),
     };
 
     try {
@@ -441,7 +472,7 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
                                 >
                                   <span className="flex-1">{entry}</span>
                                   {isCurrent && (
-                                    <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse flex-shrink-0" />
+                                    <div className="w-2 h-2 rounded-full bg-purple-500 shadow-sm shadow-purple-300 animate-pulse flex-shrink-0" />
                                   )}
                                 </div>
                               );
@@ -473,11 +504,23 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
                               {msg.content}
                             </ReactMarkdown>
                             {msg.isStreaming && (
-                              <span className="inline-block w-0.5 h-4 bg-gray-500 ml-0.5 animate-pulse align-text-bottom" />
+                              <span className="inline-block w-[3px] h-[1em] bg-purple-500 ml-1 rounded-sm animate-pulse align-text-bottom" />
                             )}
                           </div>
                         ) : (
-                          <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                          <div className="space-y-1.5">
+                            {msg.imageBase64 && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={msg.imageBase64}
+                                alt="攻略截图"
+                                className="max-w-full rounded-xl object-cover max-h-48"
+                              />
+                            )}
+                            {msg.content && msg.content !== "请根据图片内容规划旅行路线" && (
+                              <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                            )}
+                          </div>
                         )}
                       </div>
                     )}
@@ -505,20 +548,58 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
 
             {/* Input */}
             <div className="flex-shrink-0 p-3 border-t border-gray-100">
+              {/* Image preview */}
+              {pendingImage && (
+                <div className="relative mb-2 inline-block">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={pendingImage}
+                    alt="待上传截图"
+                    className="h-20 rounded-xl object-cover border border-purple-200"
+                  />
+                  <button
+                    onClick={() => setPendingImage(null)}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gray-700 text-white flex items-center justify-center hover:bg-gray-900 transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
               <div className="flex gap-2 items-end">
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageSelect}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading}
+                  className={cn(
+                    "h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 border transition-all duration-200",
+                    pendingImage
+                      ? "border-purple-400 bg-purple-50 text-purple-600"
+                      : "border-gray-200 text-gray-400 hover:border-purple-300 hover:text-purple-500"
+                  )}
+                  title="上传攻略截图"
+                >
+                  <ImageIcon className="h-4 w-4" />
+                </button>
                 <Textarea
                   ref={textareaRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={t.aiPlannerPlaceholder}
+                  placeholder={pendingImage ? "描述需求，或直接发送让 AI 识别截图…" : t.aiPlannerPlaceholder}
                   rows={2}
                   className="flex-1 resize-none text-sm rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200 min-h-[52px] max-h-[120px] transition-all duration-200"
                   disabled={isLoading}
                 />
                 <Button
                   onClick={sendMessage}
-                  disabled={!input.trim() || isLoading}
+                  disabled={(!input.trim() && !pendingImage) || isLoading}
                   className="h-10 w-10 rounded-xl p-0 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0 flex-shrink-0 active:scale-95 transition-all duration-200"
                 >
                   <Send className="h-4 w-4" />

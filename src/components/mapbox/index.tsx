@@ -41,16 +41,25 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, readOnly = false, ..
   const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
   const [isLongPressing, setIsLongPressing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [markerTypeSelected, setMarkerTypeSelected] = useState(false);
+  const isMobileRef = useRef(false);
+  const propsRef = useRef(props);
   const touchHandlersRef = useRef<{
     handleTouchStart: ((e: TouchEvent) => void) | null;
     handleTouchEnd: (() => void) | null;
     handleTouchMove: ((e: TouchEvent) => void) | null;
   }>({ handleTouchStart: null, handleTouchEnd: null, handleTouchMove: null });
 
+  // Keep propsRef and isMobileRef in sync so closures always read latest values
+  useEffect(() => { propsRef.current = props; });
+  useEffect(() => { isMobileRef.current = isMobile; }, [isMobile]);
+
   // Detect mobile device
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+      const val = window.innerWidth < 640 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      setIsMobile(val);
+      isMobileRef.current = val;
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -145,11 +154,23 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, readOnly = false, ..
             const point = [touch.clientX - rect.left, touch.clientY - rect.top] as [number, number];
             const lngLat = map.current?.unproject(point);
             if (lngLat) {
-              setContextMenu({
-                x: rect.left + point[0],
-                y: rect.top + point[1],
-                lngLat: lngLat
-              });
+              if (currentSelectMarkerType.current) {
+                // Type already selected — place directly
+                propsRef.current.onAddOneMarker(
+                  currentSelectMarkerType.current,
+                  lngLat.lng.toString(),
+                  lngLat.lat.toString()
+                );
+                propsRef.current.openCreateMarkerDialog();
+                if (navigator.vibrate) navigator.vibrate(50);
+              } else {
+                // No type selected — show context menu
+                setContextMenu({
+                  x: rect.left + point[0],
+                  y: rect.top + point[1],
+                  lngLat: lngLat,
+                });
+              }
             }
           }, 500); // 500ms for long press
           
@@ -233,14 +254,16 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, readOnly = false, ..
       // Only enable click-to-add-marker in non-read-only mode
       if (!readOnly) {
         mapInstance.on("click", (e) => {
+          // On mobile, marker placement is handled by long press — skip single tap
+          if (isMobileRef.current) return;
           const { lng, lat } = e.lngLat;
           if (currentSelectMarkerType.current) {
-            props.onAddOneMarker(
+            propsRef.current.onAddOneMarker(
               currentSelectMarkerType.current,
               lng.toString(),
               lat.toString()
             );
-            props.openCreateMarkerDialog();
+            propsRef.current.openCreateMarkerDialog();
           }
         });
       }
@@ -253,6 +276,7 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, readOnly = false, ..
         mapInstance.getCanvas().style.cursor = "grab";
       }
       currentSelectMarkerType.current = "";
+      setMarkerTypeSelected(false);
     }
   }, [props.createMarkerDialogIsOpen, mapInstance]);
 
@@ -261,6 +285,7 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, readOnly = false, ..
     if (mapInstance) {
       mapInstance.getCanvas().style.cursor = `url('/markers/resized/${fileName}.png') 25 51, auto`;
       currentSelectMarkerType.current = fileName;
+      setMarkerTypeSelected(true);
     }
   };
 
@@ -332,8 +357,15 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, readOnly = false, ..
           
           {/* Instruction text for mobile users */}
           {isMobile && !showFloatingMenu && (
-            <div className="absolute bottom-4 left-4 z-30 bg-black/70 backdrop-blur-sm text-white text-xs px-3 py-2 rounded-lg shadow-lg border border-white/20">
-              {t.longPressToAddMarker}
+            <div
+              className={cn(
+                "absolute bottom-4 left-4 z-30 text-white text-xs px-3 py-2 rounded-lg shadow-lg border transition-all duration-300",
+                markerTypeSelected
+                  ? "bg-purple-600/90 border-purple-400/50 backdrop-blur-sm animate-pulse"
+                  : "bg-black/70 border-white/20 backdrop-blur-sm"
+              )}
+            >
+              {markerTypeSelected ? "长按地图放置标记 📍" : t.longPressToAddMarker}
             </div>
           )}
           
