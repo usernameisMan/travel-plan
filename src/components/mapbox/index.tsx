@@ -37,8 +37,8 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, readOnly = false, ..
   });
   
   const [showFloatingMenu, setShowFloatingMenu] = useState(false);
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
-  const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
   const [isLongPressing, setIsLongPressing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [markerTypeSelected, setMarkerTypeSelected] = useState(false);
@@ -147,15 +147,13 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, readOnly = false, ..
         if (e.touches.length === 1) {
           const touch = e.touches[0];
           const rect = canvas.getBoundingClientRect();
-          setTouchStartPos({ x: touch.clientX - rect.left, y: touch.clientY - rect.top });
-          
+          touchStartPosRef.current = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+
           const timer = setTimeout(() => {
-            // Long press detected
             const point = [touch.clientX - rect.left, touch.clientY - rect.top] as [number, number];
             const lngLat = map.current?.unproject(point);
             if (lngLat) {
               if (currentSelectMarkerType.current) {
-                // Type already selected — place directly
                 propsRef.current.onAddOneMarker(
                   currentSelectMarkerType.current,
                   lngLat.lng.toString(),
@@ -164,7 +162,6 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, readOnly = false, ..
                 propsRef.current.openCreateMarkerDialog();
                 if (navigator.vibrate) navigator.vibrate(50);
               } else {
-                // No type selected — show context menu
                 setContextMenu({
                   x: rect.left + point[0],
                   y: rect.top + point[1],
@@ -172,35 +169,34 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, readOnly = false, ..
                 });
               }
             }
-          }, 500); // 500ms for long press
-          
-          setLongPressTimer(timer);
+          }, 500);
+
+          longPressTimerRef.current = timer;
         }
       };
 
       const handleTouchEnd = () => {
-        if (longPressTimer) {
-          clearTimeout(longPressTimer);
-          setLongPressTimer(null);
+        if (longPressTimerRef.current) {
+          clearTimeout(longPressTimerRef.current);
+          longPressTimerRef.current = null;
         }
-        setTouchStartPos(null);
+        touchStartPosRef.current = null;
       };
 
       const handleTouchMove = (e: TouchEvent) => {
-        if (touchStartPos && e.touches.length === 1) {
+        if (touchStartPosRef.current && e.touches.length === 1) {
           const touch = e.touches[0];
           const rect = canvas.getBoundingClientRect();
           const currentPos = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
-          
-          // If user moves finger too much, cancel long press
+
           const distance = Math.sqrt(
-            Math.pow(currentPos.x - touchStartPos.x, 2) + 
-            Math.pow(currentPos.y - touchStartPos.y, 2)
+            Math.pow(currentPos.x - touchStartPosRef.current.x, 2) +
+            Math.pow(currentPos.y - touchStartPosRef.current.y, 2)
           );
-          
-          if (distance > 10 && longPressTimer) { // 10px threshold
-            clearTimeout(longPressTimer);
-            setLongPressTimer(null);
+
+          if (distance > 10 && longPressTimerRef.current) {
+            clearTimeout(longPressTimerRef.current);
+            longPressTimerRef.current = null;
           }
         }
       };
@@ -218,8 +214,9 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, readOnly = false, ..
     }
 
     return () => {
-      if (longPressTimer) {
-        clearTimeout(longPressTimer);
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
       }
       
       // Remove touch event listeners (only if they were added)
@@ -328,27 +325,24 @@ const MapboxMap: React.FC<Props> = React.memo(({ className, readOnly = false, ..
                 const timer = setTimeout(() => {
                   setShowFloatingMenu(true);
                   setIsLongPressing(false);
-                  // Haptic feedback if available
-                  if (navigator.vibrate) {
-                    navigator.vibrate(50);
-                  }
+                  if (navigator.vibrate) navigator.vibrate(50);
                 }, 500);
-                setLongPressTimer(timer);
+                longPressTimerRef.current = timer;
               }
             }}
             onTouchEnd={(e) => {
-              if (isMobile && longPressTimer) {
+              if (isMobile && longPressTimerRef.current) {
                 e.preventDefault();
-                clearTimeout(longPressTimer);
-                setLongPressTimer(null);
+                clearTimeout(longPressTimerRef.current);
+                longPressTimerRef.current = null;
                 setIsLongPressing(false);
               }
             }}
             onTouchMove={(e) => {
-              if (isMobile && longPressTimer) {
+              if (isMobile && longPressTimerRef.current) {
                 e.preventDefault();
-                clearTimeout(longPressTimer);
-                setLongPressTimer(null);
+                clearTimeout(longPressTimerRef.current);
+                longPressTimerRef.current = null;
                 setIsLongPressing(false);
               }
             }}
