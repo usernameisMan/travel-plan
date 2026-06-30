@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Sparkles, Send, X, ChevronDown, ChevronUp, MapPin, Bot, User, ImageIcon } from "lucide-react";
+import { Sparkles, Send, X, ChevronDown, ChevronUp, MapPin, Bot, User, ImageIcon, Trash2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { API_BASE_URL, HttpError } from "@/lib/http";
@@ -50,6 +50,37 @@ interface RouteSuggestion {
 interface Props {
   onApplyRoute: (tracks: DayTrack[]) => void;
   currentTracksCount: number;
+  /** 当前规划 ID（编辑已有计划时存在）；用于按规划隔离聊天记录 */
+  packetId?: string | null;
+}
+
+// ─── 聊天记录本地持久化 ───────────────────────────────────────────────────────
+// 按 packetId 分别存储，新建未保存的计划用 "new" 作为 key。
+const CHAT_STORAGE_PREFIX = "planpingo:ai-chat:";
+
+function chatStorageKey(packetId?: string | null): string {
+  return `${CHAT_STORAGE_PREFIX}${packetId ?? "new"}`;
+}
+
+// 读取除欢迎语之外的历史对话（欢迎语始终在运行时按当前语言重新生成）
+function loadStoredConversation(key: string): ChatMessage[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed as ChatMessage[];
+  } catch {
+    /* 损坏的数据忽略即可 */
+  }
+  return null;
+}
+
+function buildInitialMessages(key: string, welcome: string): ChatMessage[] {
+  const convo = loadStoredConversation(key);
+  return convo
+    ? [{ role: "assistant", content: welcome }, ...convo]
+    : [{ role: "assistant", content: welcome }];
 }
 
 const PLACE_TYPE_TO_MARKER: Record<string, string> = {
@@ -168,19 +199,22 @@ const RouteSuggestionCard: React.FC<{
   );
 };
 
-const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
+const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount, packetId }) => {
   const { language } = useLanguageStore();
   const t = useTranslation(language);
 
+  const storageKey = chatStorageKey(packetId);
+
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: "assistant", content: t.aiPlannerWelcome },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() =>
+    buildInitialMessages(storageKey, t.aiPlannerWelcome)
+  );
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [progressLog, setProgressLog] = useState<string[]>([]);
   const [pendingRoute, setPendingRoute] = useState<RouteSuggestion | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [dismissedRoutes, setDismissedRoutes] = useState<Set<number>>(new Set());
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -192,6 +226,32 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, isOpen]);
+
+  // 切换到另一个规划（packetId 变化）时，加载该规划的历史对话
+  useEffect(() => {
+    setMessages(buildInitialMessages(storageKey, t.aiPlannerWelcome));
+    setDismissedRoutes(new Set());
+    // 仅在 storageKey 变化时重载；t/welcome 文案变化不应清空对话
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey]);
+
+  // 持久化对话到 localStorage（跳过流式进行中的中间态，避免存入半截消息）
+  useEffect(() => {
+    if (typeof window === "undefined" || isLoading) return;
+    try {
+      const convo = messages
+        .slice(1) // 去掉欢迎语，运行时按语言重新生成
+        .filter((m) => !m.isStreaming)
+        .map(({ isStreaming, ...rest }) => rest);
+      if (convo.length === 0) {
+        window.localStorage.removeItem(storageKey);
+      } else {
+        window.localStorage.setItem(storageKey, JSON.stringify(convo));
+      }
+    } catch {
+      /* 配额满或隐私模式等情况静默忽略 */
+    }
+  }, [messages, isLoading, storageKey]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -383,6 +443,20 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
     });
   };
 
+  const handleClearChat = () => {
+    if (isLoading) return;
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.removeItem(storageKey);
+      } catch {
+        /* ignore */
+      }
+    }
+    setMessages([{ role: "assistant", content: t.aiPlannerWelcome }]);
+    setDismissedRoutes(new Set());
+    setShowClearConfirm(false);
+  };
+
   return (
     <>
       {/* Floating AI Button */}
@@ -426,12 +500,24 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
                   <p className="text-purple-100 text-xs">{t.aiPlannerSubtitle}</p>
                 </div>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
-              >
-                <X className="h-4 w-4 text-white" />
-              </button>
+              <div className="flex items-center gap-1.5">
+                {messages.length > 1 && (
+                  <button
+                    onClick={() => setShowClearConfirm(true)}
+                    disabled={isLoading}
+                    className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors disabled:opacity-40"
+                    title={language === "zh" ? "清空对话" : "Clear chat"}
+                  >
+                    <Trash2 className="h-4 w-4 text-white" />
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                >
+                  <X className="h-4 w-4 text-white" />
+                </button>
+              </div>
             </div>
 
             {/* Messages */}
@@ -672,6 +758,38 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
               className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0"
             >
               {t.aiPlannerConfirmBtn}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Clear Chat Dialog */}
+      <Dialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+        <DialogContent className="sm:max-w-[400px] mx-4">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-red-500" />
+              {language === "zh" ? "清空对话" : "Clear chat"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2 text-sm text-gray-600">
+            {language === "zh"
+              ? "确定要清空当前规划的全部聊天记录吗？此操作无法撤销。"
+              : "Clear all chat history for this plan? This cannot be undone."}
+          </div>
+          <DialogFooter className="flex gap-2 sm:flex-row flex-col">
+            <Button
+              variant="outline"
+              onClick={() => setShowClearConfirm(false)}
+              className="flex-1"
+            >
+              {t.cancel}
+            </Button>
+            <Button
+              onClick={handleClearChat}
+              className="flex-1 bg-red-500 hover:bg-red-600 text-white border-0"
+            >
+              {language === "zh" ? "清空" : "Clear"}
             </Button>
           </DialogFooter>
         </DialogContent>

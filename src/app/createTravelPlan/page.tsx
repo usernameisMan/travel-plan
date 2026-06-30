@@ -970,6 +970,7 @@ const TravelPlanWithSearchParams = () => {
 
       {/* AI Route Planner — floats above map, accessible on both views */}
       <AiPlanner
+        packetId={packetId}
         onApplyRoute={handleApplyAiRoute}
         currentTracksCount={tracks.reduce((acc, d) => acc + (d.markers?.length || 0), 0)}
       />
