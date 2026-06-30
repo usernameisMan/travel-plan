@@ -65,6 +65,10 @@ function getMarkerType(type: string): string {
   return PLACE_TYPE_TO_MARKER[type?.toLowerCase()] || "star";
 }
 
+// 当前后端模型（DeepSeek）不支持图片 base64 输入，暂时关闭上传截图功能。
+// 待换回支持多模态的模型后改为 true 即可恢复。
+const IMAGE_UPLOAD_ENABLED = false;
+
 function routeToTracks(suggestion: RouteSuggestion): DayTrack[] {
   return suggestion.days.map((day, i) => ({
     day: `Day ${i + 1}`,
@@ -564,7 +568,7 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
             {/* Input */}
             <div className="flex-shrink-0 p-3 border-t border-gray-100">
               {/* Image preview */}
-              {pendingImage && (
+              {IMAGE_UPLOAD_ENABLED && pendingImage && (
                 <div className="relative mb-2 inline-block">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -581,33 +585,37 @@ const AiPlanner: React.FC<Props> = ({ onApplyRoute, currentTracksCount }) => {
                 </div>
               )}
               <div className="flex gap-2 items-end">
-                {/* Hidden file input */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageSelect}
-                />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isLoading}
-                  className={cn(
-                    "h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 border transition-all duration-200",
-                    pendingImage
-                      ? "border-purple-400 bg-purple-50 text-purple-600"
-                      : "border-gray-200 text-gray-400 hover:border-purple-300 hover:text-purple-500"
-                  )}
-                  title="上传攻略截图"
-                >
-                  <ImageIcon className="h-4 w-4" />
-                </button>
+                {/* Hidden file input + upload button (DeepSeek 不支持图片，已关闭) */}
+                {IMAGE_UPLOAD_ENABLED && (
+                  <>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageSelect}
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isLoading}
+                      className={cn(
+                        "h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 border transition-all duration-200",
+                        pendingImage
+                          ? "border-purple-400 bg-purple-50 text-purple-600"
+                          : "border-gray-200 text-gray-400 hover:border-purple-300 hover:text-purple-500"
+                      )}
+                      title="上传攻略截图"
+                    >
+                      <ImageIcon className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
                 <Textarea
                   ref={textareaRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={pendingImage ? "描述需求，或直接发送让 AI 识别截图…" : t.aiPlannerPlaceholder}
+                  placeholder={IMAGE_UPLOAD_ENABLED && pendingImage ? "描述需求，或直接发送让 AI 识别截图…" : t.aiPlannerPlaceholder}
                   rows={2}
                   className="flex-1 resize-none text-sm rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200 min-h-[52px] max-h-[120px] transition-all duration-200"
                   disabled={isLoading}
